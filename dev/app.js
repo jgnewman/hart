@@ -1,7 +1,6 @@
 import {
   hart,
   app,
-  component,
   render,
   asyncPipe,
   tap,
@@ -111,11 +110,11 @@ const handleClickReverseItem = () => {
   })
 }
 
-const Span = component(({ value }) => (
+const Span = hart(({ value }) => (
   <span ref="myspancomponent">{value}</span>
 ))
 
-const ListItem = component(({ value }) => {
+const ListItem = hart(({ value }) => {
   const { getRefs, captureRefs, onmount, ondismount } = effects()
 
   const handleClick = (evt) => {
@@ -138,7 +137,7 @@ const ListItem = component(({ value }) => {
   )))
 })
 
-const RootComponent = component((props) => {
+const RootComponent = hart((props) => {
   const { onmount } = effects()
 
   const mounthandler = onmount(() => console.log("mounted root"))

@@ -24,9 +24,9 @@ const assertPureComponent = (fn) => {
   if (fn[PROOF] !== PROOF) {
     let err
     if (fn.name) {
-      err = `${fn.name} should be wrapped in a \`component\` call.`
+      err = `${fn.name} should be wrapped in a \`hart\` call.`
     } else {
-      err = `All components must be defined using the \`component\` function.`
+      err = `All components must be defined using the \`hart\` function.`
     }
     throw new Error(err)
   }
@@ -481,8 +481,10 @@ const render = (appFn, props={}) => {
   }
 }
 
+component.node = vNode
+
 export {
-  vNode as hart,
+  component as hart,
   app,
   render,
   component,

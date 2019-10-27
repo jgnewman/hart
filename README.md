@@ -1,14 +1,14 @@
 <p align="center">
-  <img src="https://github.com/jgnewman/hart/blob/master/assets/logo.svg" alt="Hart Logo" width="137" height="207"/>
+  <img src="https://github.com/jgnewman/hart/blob/master/assets/logo.svg" alt="Hart" width="137" height="207"/>
 </p>
 
-# Hart
+<hr/>
 
 Hart is a lithe, nimble core for scalable web apps. It's tiny, component-based, and optimized for speed.
 
 Hart makes use of some familiar patterns (it uses a virtual DOM and integrates with JSX) but it stands out by asking you to write purely functional apps. In other words, when you create a component with Hart, you do so with an understanding that as long as the component's input doesn't change, neither will its output. In fact, Hart goes so far as to compare each component's input against its previous input and will completely skip re-computing and re-rendering if the input hasn't changed.
 
-With this nuance in mind, and by scaling back on some unnecessary features, Hart is able to deliver insane performance with minimal size and boilerplate, and patterns that will scale as much as you need.
+With this nuance in mind, and by scaling back on some unnecessary features, Hart is able to deliver insane performance with minimal size and boilerplate, and with patterns that will scale as much as you need.
 
 ## Getting set up
 
@@ -18,25 +18,25 @@ Secondly, you'll probably want to configure Hart to work with JSX. You don't hav
 
 **Without JSX**
 ```javascript
-import { hart, component } from "hart"
+import { hart } from "hart"
 
-export default component(props => {
-  return hart("div", { id: "foo" }, "Hello, world!")
+export default hart(props => {
+  return hart.node("div", { id: "foo" }, "Hello, world!")
 })
 ```
 
 **With JSX**
 ```javascript
-import { hart, component } from "hart"
+import { hart } from "hart"
 
-export default component(props => (
+export default hart(props => (
   <div id="foo">
     Hello, world!
   </div>
 ))
 ```
 
-To configure JSX, you will need a JSX transpiler such as [@babel/plugin-transform-react-jsx](https://babeljs.io/docs/en/babel-plugin-transform-react-jsx). Read the docs for your transpiler of choice and learn how to set the "pragma" configuration option. All you have to do is set that value to "hart" and you're done! Here is an example webpack rule for reference:
+To configure JSX, you will need a JSX transpiler such as [@babel/plugin-transform-react-jsx](https://babeljs.io/docs/en/babel-plugin-transform-react-jsx). Read the docs for your transpiler of choice and learn how to set the "pragma" configuration option. All you have to do is set that value to "hart.node" and you're done! Here is an example webpack rule for reference:
 
 ```javascript
 {
@@ -46,7 +46,7 @@ To configure JSX, you will need a JSX transpiler such as [@babel/plugin-transfor
       loader: "babel-loader",
       options: {
         plugins: [["@babel/plugin-transform-react-jsx", {
-          pragma: "hart"
+          pragma: "hart.node"
         }]]
       }
     },
@@ -58,12 +58,18 @@ With JSX configured, you are ready to start building with Hart!
 
 ## Building apps
 
-A Hart app in its simplest form is a combination of a component function and an HTML element where that component will be rendered. To make this work, we call the `app` function and pass it these two items, then call the `render` function to start it up. This way, you can run multiple Hart apps on the same page without worry.
+A Hart app in its simplest form is a combination of a component function and an HTML element where that component will be rendered.
+
+Root elements are selected using whatever method you like, for example `document.getElementById`.
+
+Components are created by calling the `hart` function.
+
+Apps are created by calling the `app` function, and passing it a root element and a component. This way you can run multiple Hart apps on the same page without worry. To trigger any and all DOM updates, we call the `render` function.
 
 ```javascript
-import { hart, app, component, render } from "hart"
+import { hart, app, render } from "hart"
 
-const RootComponent = component(() => (
+const RootComponent = hart(() => (
   <div>
     Hello, world!
   </div>
@@ -75,12 +81,12 @@ render(myApp)
 
 ### Props
 
-Props are what we call a component function's input. We can pass props to our Hart app when we render it like so:
+Props are what we call a component function's input. We can pass props to our app when we render it like so:
 
 ```javascript
-import { hart, app, component, render } from "hart"
+import { hart, app, render } from "hart"
 
-const RootComponent = component((props) => (
+const RootComponent = hart((props) => (
   <div>
     Hello, {props.name}!
   </div>
@@ -97,13 +103,13 @@ In this example, our app will generate the sentence, "Hello, new Hart user!" Thi
 In Hart, as in most other component-based frameworks, we can render components as children of other components. We can then control which props are passed to our nested components.
 
 ```javascript
-import { hart, app, component, render } from "hart"
+import { hart, app, render } from "hart"
 
-const NestedComponent = component((props) => (
+const NestedComponent = hart((props) => (
   <p>Hart is {props.adjective}!</p>
 ))
 
-const RootComponent = component((props) => (
+const RootComponent = hart((props) => (
   <div>
     <h1>Hello, {props.name}!</h1>
     <NestedComponent adjective="cool" />
@@ -121,9 +127,9 @@ In this example, we included our `NestedComponent` inside of the `RootComponent`
 Obviously, Hart wouldn't be complete if it didn't have a nice, "reactive" way to update the DOM. To make this work, Hart provides a nice pattern and a few utilities, but you are free to devise your own methods as well. The general pattern is extremely simple and works like this: we define an `update` function whose job is to call `render` over and over again. Then we just call `update` whenever we want the DOM to change. For example...
 
 ```javascript
-import { hart, app, component, render } from "hart"
+import { hart, app, render } from "hart"
 
-const RootComponent = component((props) => (
+const RootComponent = hart((props) => (
   <div>
     {props.counter}
   </div>
@@ -143,12 +149,12 @@ Of course, this is an extremely basic example designed to illustrate a pattern. 
 A pipe in Hart is an observable object. You can tap the pipe with functions that will run when its value is updated and you can inject new values into the pipe which will be passed along to all of your tap functions. Let's rewrite our previous example now using pipes and a button that will trigger updates instead of an interval.
 
 ```javascript
-import { hart, app, component, render } from "hart"
+import { hart, app, render } from "hart"
 import { pipe, tap, inject } from "hart"
 
 const appData = pipe()
 
-const RootComponent = component((props) => (
+const RootComponent = hart((props) => (
   <div>
     {props.counter}
     <button onclick={() => inject(appData, { counter: props.counter + 1 })}>
@@ -170,7 +176,7 @@ In this example, our update function taps into the `appData` pipe. Whenever the 
 You may notice a couple of problems with this approach. For one, it's not very scalable and it's pretty prone to spaghetti. But now that you get the idea, let's introduce a more scalable pattern:
 
 ```javascript
-import { hart, app, component, render } from "hart"
+import { hart, app, render } from "hart"
 import { pipe, tap, leak, inject } from "hart"
 
 const appData = pipe()
@@ -202,7 +208,7 @@ const handleClickButton = () => {
   })
 }
 
-const RootComponent = component((props) => (
+const RootComponent = hart((props) => (
   <div>
     {props.counter}
     <button onclick={handleClickButton}>
@@ -240,7 +246,6 @@ To do this, just use the `asyncPipe` function instead of the `pipe` function. Yo
 import {
   hart,
   app,
-  component,
   render,
   asyncPipe,
   tap,
@@ -270,7 +275,7 @@ const updatePipe = (change) => {
   }
 }
 
-const RootComponent = component((props) => (
+const RootComponent = hart((props) => (
   <div>
     {props.counter}
   </div>
