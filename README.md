@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://github.com/jgnewman/hart/raw/master/assets/logo.svg" alt="Hart Logo" width="137" height="207"/>
+  <img src="https://github.com/jgnewman/hart/blob/master/assets/logo.svg" alt="Hart Logo" width="137" height="207"/>
 </p>
 
 # Hart
