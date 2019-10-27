@@ -1,0 +1,14 @@
+export const SVG_NS = "http://www.w3.org/2000/svg"
+export const TEXT = Symbol.for("TEXT")
+export const LIST = Symbol.for("LIST")
+export const PROOF = Symbol()
+export const ADD = "ADD"
+export const REMOVE = "REMOVE"
+export const REPLACE = "REPLACE"
+export const UPDATE = "UPDATE"
+export const REORDER = "REORDER"
+export const SET = "SET"
+export const DELETE = "DELETE"
+export const PIPE_INJECT = Symbol()
+export const PIPE_TAP = Symbol()
+export const PIPE_GET = Symbol()
