@@ -18,6 +18,11 @@ import {
 
 const attrMap = {
   className: "class",
+  htmlFor: "for",
+}
+
+const isInputTag = (tag) => {
+  return tag && tag.tagName && tag.tagName.toUpperCase() === "INPUT"
 }
 
 const assertPureFragment = (fn) => {
@@ -188,8 +193,9 @@ const changeObject = (type, prev, next, options) => ({
 
 const attachAttr = (target, isSVG, attrName, attrVal) => {
   attrName = attrMap[attrName] || attrName
+  const isInputValue = attrName === "value" && isInputTag(target)
 
-  if (/^on/.test(attrName)) {
+  if (isInputValue || /^on/.test(attrName)) {
     target[attrName] = attrVal
 
   } else if (isSVG) {
@@ -202,8 +208,12 @@ const attachAttr = (target, isSVG, attrName, attrVal) => {
 
 const detachAttr = (target, isSVG, attrName) => {
   attrName = attrMap[attrName] || attrName
+  const isInputValue = attrName === "value" && isInputTag(target)
 
-  if (/^on/.test(attrName)) {
+  if (isInputValue) {
+    target[attrName] = ""
+
+  } else if (/^on/.test(attrName)) {
     target[attrName] = null
 
   } else if (isSVG) {

@@ -16,7 +16,7 @@ With this nuance in mind, and by scaling back on some unnecessary features, Hart
 
 The first thing you'll want to do is install Hart, which can be done via `npm install hart` or `yarn add hart`.
 
-Secondly, you'll probably want to configure it to work with JSX. You don't have to, but it sure is nicer to work with. Here are your options for creating elements with and without JSX:
+Secondly, you'll probably want to configure it to work with JSX. You don't have to, but it sure is nicer to work with. Here are your options for creating fragments with and without JSX:
 
 **Without JSX**
 ```javascript
@@ -57,6 +57,8 @@ To configure JSX, you will need a JSX transpiler such as [@babel/plugin-transfor
 ```
 
 With JSX configured, you are ready to start building with Hart!
+
+> Note: Hart does not require you to use special, camel-cased attribute names in your JSX. For example, whereas React requires syntax such as `<div className="foo" tabIndex="1">`, Hart will allow the native HTML form: `<div class="foo" tabindex="1">`. However, some older browsers may not accept reserved words such as "class" to be used as object keys. In cases where JavaScript reserved words conflict with HTML attributes, Hart does support the React versions of these attributes (such as "className" and "htmlFor").
 
 ## Building apps
 

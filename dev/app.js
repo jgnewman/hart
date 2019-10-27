@@ -2,6 +2,7 @@ import {
   fragment,
   app,
   render,
+  pipe,
   asyncPipe,
   tap,
   inject,
@@ -25,6 +26,7 @@ const randomLetters = (len) => {
   return str
 }
 
+// const data = pipe()
 const data = asyncPipe()
 
 const updatePipe = (change) => {
@@ -41,6 +43,12 @@ const updatePipe = (change) => {
       return inject(data, {
         ...currentValue,
         counter: currentValue.counter + 1,
+      })
+
+    case "CHANGE_TEXT_FIELD":
+      return inject(data, {
+        ...currentValue,
+        textField: change.payload,
       })
 
     case "TOGGLE_WELCOME":
@@ -122,6 +130,16 @@ const handleClickToggleWelcome = () => {
   })
 }
 
+const handleChangeTextField = (evt) => {
+  // TODO: Form fields cause problems
+  console.log(evt)
+  // evt.preventDefault()
+  // updatePipe({
+  //   type: "CHANGE_TEXT_FIELD",
+  //   payload: evt.target.value,
+  // })
+}
+
 const Span = fragment(({ value }) => (
   <span ref="myspancomponent">{value}</span>
 ))
@@ -153,10 +171,11 @@ const RootFragment = fragment((props) => {
   const { onmount } = effects()
 
   const mounthandler = onmount(() => console.log("mounted root"))
-
+  // console.log("new props", props)
   return mounthandler(
     <div>
       {props.counter}
+      <input type="text" onkeypress={handleChangeTextField} value="poop"/>
       <button onclick={handleClickCounter}>Click me to update counter</button>
       <button onclick={handleClickAddItem}>Click me to add a list item</button>
       <button onclick={handleClickRemoveItem}>Click me to remove a list item</button>
@@ -179,7 +198,7 @@ const RootFragment = fragment((props) => {
 
 const myApp = app(document.getElementById("app"), RootFragment)
 tap(data, (props) => {
-  // console.log("new props", props.listData)
+  // console.log("new props", props)
   render(myApp, props)
 })
 
@@ -188,6 +207,7 @@ updatePipe({
   payload: {
     counter: 0,
     showWelcome: true,
+    textField: "",
     listData: [
       { id: randomLetters(10), val: randomLetters(5) },
       { id: randomLetters(10), val: randomLetters(5) },
