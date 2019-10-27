@@ -20,13 +20,13 @@ const attrMap = {
   className: "class",
 }
 
-const assertPureComponent = (fn) => {
+const assertPureFragment = (fn) => {
   if (fn[PROOF] !== PROOF) {
     let err
     if (fn.name) {
       err = `${fn.name} should be wrapped in a \`hart\` call.`
     } else {
-      err = `All components must be defined using the \`hart\` function.`
+      err = `All fragments must be defined using the \`hart\` function.`
     }
     throw new Error(err)
   }
@@ -134,17 +134,18 @@ const vNode = (tag, attrs, ...children) => {
   attrs = attrs || {}
 
   if (typeof tag === "function") {
-    assertPureComponent(tag)
+    assertPureFragment(tag)
     attrs.children = children
     const out = tag(attrs)
-    out.component = true
+    out.fragment = true
     if (attrs.key) { out.attrs.key = attrs.key }
     return out
   }
 
   const node = { tag, attrs, listed: false, html: null, parent: null }
 
-  node.children = children.map(child => {
+  node.children = []
+  children.forEach(child => {
     let childNode
 
     if (Array.isArray(child)) {
@@ -160,7 +161,10 @@ const vNode = (tag, attrs, ...children) => {
         childNode.keyCache[n.attrs.key] = { node: n, pos: i }
       })
 
-    } else if (child !== null && typeof child === "object") {
+    } else if (child === null || child === undefined || child === false) {
+      return
+
+    } else if (typeof child === "object") {
       childNode = child
 
     } else {
@@ -169,7 +173,7 @@ const vNode = (tag, attrs, ...children) => {
     }
 
     childNode.parent = node
-    return childNode
+    return node.children.push(childNode)
   })
 
   return node
@@ -412,7 +416,7 @@ const diff = (prev, next, queue=[]) => {
   return queue
 }
 
-const component = (fn) => {
+const fragment = (fn) => {
   let prevProps
   let prevNode
 
@@ -439,13 +443,13 @@ const component = (fn) => {
   return output
 }
 
-const app = (rootTarget, rootComponentFn) => {
-  assertPureComponent(rootComponentFn)
+const app = (rootTarget, rootFragmentFn) => {
+  assertPureFragment(rootFragmentFn)
   let prevTree = null
   return () => {
     return {
       rootTarget,
-      rootComponentFn,
+      rootFragmentFn,
       prevTree,
       setPrevTree: (vTree) => prevTree = vTree,
     }
@@ -453,9 +457,9 @@ const app = (rootTarget, rootComponentFn) => {
 }
 
 const render = (appFn, props={}) => {
-  const { rootTarget, rootComponentFn, prevTree, setPrevTree } = appFn()
+  const { rootTarget, rootFragmentFn, prevTree, setPrevTree } = appFn()
 
-  const nextTree = rootComponentFn(props)
+  const nextTree = rootFragmentFn(props)
   setPrevTree(nextTree)
 
   if (!prevTree) {
@@ -481,11 +485,10 @@ const render = (appFn, props={}) => {
   }
 }
 
-component.node = vNode
+fragment.hart = vNode
 
 export {
-  component as hart,
+  fragment,
   app,
   render,
-  component,
 }

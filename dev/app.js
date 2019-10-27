@@ -1,5 +1,5 @@
 import {
-  hart,
+  fragment,
   app,
   render,
   asyncPipe,
@@ -41,6 +41,12 @@ const updatePipe = (change) => {
       return inject(data, {
         ...currentValue,
         counter: currentValue.counter + 1,
+      })
+
+    case "TOGGLE_WELCOME":
+      return inject(data, {
+        ...currentValue,
+        showWelcome: !currentValue.showWelcome,
       })
 
     case "ADD_ITEM":
@@ -110,11 +116,17 @@ const handleClickReverseItem = () => {
   })
 }
 
-const Span = hart(({ value }) => (
+const handleClickToggleWelcome = () => {
+  updatePipe({
+    type: "TOGGLE_WELCOME",
+  })
+}
+
+const Span = fragment(({ value }) => (
   <span ref="myspancomponent">{value}</span>
 ))
 
-const ListItem = hart(({ value }) => {
+const ListItem = fragment(({ value }) => {
   const { getRefs, captureRefs, onmount, ondismount } = effects()
 
   const handleClick = (evt) => {
@@ -137,7 +149,7 @@ const ListItem = hart(({ value }) => {
   )))
 })
 
-const RootComponent = hart((props) => {
+const RootFragment = fragment((props) => {
   const { onmount } = effects()
 
   const mounthandler = onmount(() => console.log("mounted root"))
@@ -150,16 +162,22 @@ const RootComponent = hart((props) => {
       <button onclick={handleClickRemoveItem}>Click me to remove a list item</button>
       <button onclick={handleClickReorderItem}>Click me to reorder 2 items</button>
       <button onclick={handleClickReverseItem}>Click me to reverse items</button>
+      <button onclick={handleClickToggleWelcome}>Click me to toggle welcome message</button>
       <ul>
         {props.listData.map(datum => (
           <ListItem key={datum.id} value={datum.val}/>
         ))}
       </ul>
+      {props.showWelcome && (
+        <div>
+          This is the welcome message!
+        </div>
+      )}
     </div>
   )
 })
 
-const myApp = app(document.getElementById("app"), RootComponent)
+const myApp = app(document.getElementById("app"), RootFragment)
 tap(data, (props) => {
   // console.log("new props", props.listData)
   render(myApp, props)
@@ -169,6 +187,7 @@ updatePipe({
   type: "INIT",
   payload: {
     counter: 0,
+    showWelcome: true,
     listData: [
       { id: randomLetters(10), val: randomLetters(5) },
       { id: randomLetters(10), val: randomLetters(5) },
