@@ -2,11 +2,10 @@ const path = require("path")
 const webpack = require("webpack")
 const CleanWebpackPlugin = require("clean-webpack-plugin")
 const HtmlWebPackPlugin = require("html-webpack-plugin")
+const CompressionPlugin = require('compression-webpack-plugin')
 
 const config = {
-  entry: {
-    dev: "./dev/app.js",
-  },
+  entry: { /* See prod and dev config */ },
 
   output: {
     filename: "[name].js",
@@ -19,12 +18,6 @@ const config = {
 
   plugins: [
     new CleanWebpackPlugin(),
-
-    new HtmlWebPackPlugin({
-      template: "./dev/index.html",
-      filename: "./index.html",
-      vars: {}
-    }),
   ],
 
   module: {
@@ -48,7 +41,21 @@ const config = {
 }
 
 if (process.env.NODE_ENV === "development") {
+  config.entry.dev = "./dev/app.js"
+
   config.devtool = "source-map"
+
+  config.plugins.push(new HtmlWebPackPlugin({
+    template: "./dev/index.html",
+    filename: "./index.html",
+    vars: {}
+  }))
+}
+
+if (process.env.NODE_ENV === "production") {
+  config.entry.hart = "./index.js"
+
+  config.plugins.push(new CompressionPlugin())
 }
 
 module.exports = config
