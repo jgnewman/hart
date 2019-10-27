@@ -86,9 +86,9 @@ render(myApp)
 Props are what we call a fragment function's input. We can pass props to our app when we render it like so:
 
 ```javascript
-import { hart, app, render } from "fragment"
+import { fragment, app, render } from "hart"
 
-const RootFragment = hart((props) => (
+const RootFragment = fragment((props) => (
   <div>
     Hello, {props.name}!
   </div>
