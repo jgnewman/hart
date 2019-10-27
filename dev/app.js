@@ -11,6 +11,8 @@ import {
   effects,
 } from "../index"
 
+import Input from "../prefab/Input"
+
 const randomItem = items => {
   return items[Math.floor(Math.random()*items.length)]
 }
@@ -130,14 +132,11 @@ const handleClickToggleWelcome = () => {
   })
 }
 
-const handleChangeTextField = (evt) => {
-  // TODO: Form fields cause problems
-  console.log(evt)
-  // evt.preventDefault()
-  // updatePipe({
-  //   type: "CHANGE_TEXT_FIELD",
-  //   payload: evt.target.value,
-  // })
+const handleKeyupTextField = (evt) => {
+  updatePipe({
+    type: "CHANGE_TEXT_FIELD",
+    payload: evt.target.value,
+  })
 }
 
 const Span = fragment(({ value }) => (
@@ -175,7 +174,7 @@ const RootFragment = fragment((props) => {
   return mounthandler(
     <div>
       {props.counter}
-      <input type="text" onkeypress={handleChangeTextField} value="poop"/>
+      <Input type="text" onkeyup={handleKeyupTextField} value={props.textField}/>
       <button onclick={handleClickCounter}>Click me to update counter</button>
       <button onclick={handleClickAddItem}>Click me to add a list item</button>
       <button onclick={handleClickRemoveItem}>Click me to remove a list item</button>

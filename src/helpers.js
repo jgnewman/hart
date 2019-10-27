@@ -91,12 +91,14 @@ export const deepEqual = (a, b) => {
   return a !== a && b !== b
 }
 
+export const objectLoop = (obj, callback) => {
+  for (let i in obj) {
+    obj.hasOwnProperty(i) && callback(obj[i], i)
+  }
+}
+
 export const objectMap = (obj, callback) => {
   const out = {}
-  for (let i in obj) {
-    if (obj.hasOwnProperty(i)) {
-      out[i] = callback(obj[i], i)
-    }
-  }
+  objectLoop(obj, (val, key) => out[key] = callback(val, key))
   return out
 }
