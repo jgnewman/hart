@@ -21,6 +21,16 @@ const attrMap = {
   htmlFor: "for",
 }
 
+const isSpecialInputAttr = (attrName) => {
+  switch (attrName) {
+    case "value":
+    case "checked":
+      return true
+    default:
+      return false
+  }
+}
+
 const isInputTag = (tag) => {
   return tag && tag.tagName && tag.tagName.toUpperCase() === "INPUT"
 }
@@ -193,7 +203,9 @@ const changeObject = (type, prev, next, options) => ({
 
 const attachAttr = (target, isSVG, attrName, attrVal) => {
   attrName = attrMap[attrName] || attrName
-  const isInputValue = attrName === "value" && isInputTag(target)
+  if (attrName === "children") return
+
+  const isInputValue = isSpecialInputAttr(attrName) && isInputTag(target)
 
   if (isInputValue || /^on/.test(attrName)) {
     target[attrName] = attrVal
@@ -208,7 +220,9 @@ const attachAttr = (target, isSVG, attrName, attrVal) => {
 
 const detachAttr = (target, isSVG, attrName) => {
   attrName = attrMap[attrName] || attrName
-  const isInputValue = attrName === "value" && isInputTag(target)
+  if (attrName === "children") return
+
+  const isInputValue = isSpecialInputAttr(attrName) && isInputTag(target)
 
   if (isInputValue) {
     target[attrName] = ""
@@ -248,6 +262,7 @@ const buildHTML = (vTree, mounters, parentDismounters) => {
   } else {
     const isSVG = vTree.tag === "svg"
     const tag = isSVG ? document.createElementNS(SVG_NS, vTree.tag) : document.createElement(vTree.tag)
+
     vTree.html = tag
 
     const attrKeys = Object.keys(vTree.attrs)
@@ -258,7 +273,7 @@ const buildHTML = (vTree, mounters, parentDismounters) => {
 
       vTree.children.forEach(child => {
         buildHTML(child, mounters, dismounters)
-        frag.appendChild(child.html)
+        vTree.html.appendChild(child.html)
       })
 
       vTree.html.appendChild(frag)
@@ -427,26 +442,40 @@ const diff = (prev, next, queue=[]) => {
 }
 
 const fragment = (fn) => {
-  let prevProps
-  let prevNode
+  let prevData = {}
 
   const output = (props) => {
-    if (prevProps && prevNode && deepEqual(prevProps, props)) {
-      prevProps = props
-      return prevNode
+    const cacheId = props.id
 
-    } else {
-      const nextNode = fn(props)
-
-      if (prevNode) {
-        if (!nextNode.html && !prevNode.listed) { nextNode.html = prevNode.html }
-        if (prevNode.dismounters && !nextNode.dismounters) { nextNode.dismounters = prevNode.dismounters }
-      }
-
-      prevProps = props
-      prevNode = nextNode
-      return nextNode
+    if (!cacheId) {
+      return fn(props)
     }
+
+    const prevCache = prevData[cacheId] = prevData[cacheId] || {}
+    const prevProps = prevCache.props
+    const prevNode = prevCache.node
+    const dataIsUnchanged = prevProps && prevNode && deepEqual(prevProps, props)
+
+    if (dataIsUnchanged) {
+      prevCache.props = props
+      return prevNode
+    }
+
+    const nextNode = fn(props)
+    const shouldTransferHtml = prevNode && !prevNode.listed && !nextNode.html
+    const shouldTransferDismounters = prevNode && prevNode.dismounters && !nextNode.dismounters
+
+    if (shouldTransferHtml) {
+      nextNode.html = prevNode.html
+    }
+
+    if (shouldTransferDismounters) {
+      nextNode.dismounters = prevNode.dismounters
+    }
+
+    prevCache.props = props
+    prevCache.node = nextNode
+    return nextNode
   }
 
   output[PROOF] = PROOF

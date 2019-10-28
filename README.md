@@ -8,7 +8,7 @@ Hart is a lithe, nimble core for scalable web apps. It's tiny, component-based, 
 
 Hart makes use of some familiar patterns – it uses a virtual DOM and integrates with JSX – but it stands out in a few key ways. First, it's tiny. The core framework is **< 9kB** minified and **< 3.5kB** gzipped. Second: terminology. Components in Hart are called **fragments**. Lastly, Hart asks you to write purely functional apps.
 
-When you create a fragment with Hart, you do so with an understanding that as long as the fragment's input doesn't change, neither will its output. In fact, Hart goes so far as to compare each fragment's input to its previous input and will completely skip re-computing and re-rendering the fragment if its input hasn't changed.
+When you create a fragment with Hart, you do so with an understanding that as long as the fragment's input doesn't change, neither will its output. In fact, Hart can go so far as to compare each fragment's input to its previous input and completely skip re-computing and re-rendering the fragment if its input hasn't changed.
 
 With this nuance in mind, and by scaling back on some unnecessary features, Hart is able to deliver insane performance with minimal size and boilerplate, and with patterns that will scale as much as you need.
 
@@ -19,6 +19,8 @@ With this nuance in mind, and by scaling back on some unnecessary features, Hart
   - [Props](#rops)
   - [Nesting](#nesting)
   - [Updating](#updating)
+  - [Optimizing](#optimizing)
+- [Prefab Fragments](#prefab-fragments)
 
 ## Getting set up
 
@@ -313,3 +315,51 @@ setTimeout(() => {
 ```
 
 In this example, the DOM is updated exactly twice, even though 11 total changes are triggered. In the first event loop, the DOM is updated and rendered with initial data. In a separate run loop triggered by the timeout, the counter is incremented 10 times and the DOM updates only once at the end to display the number 10.
+
+### Optimizing
+
+Because all of your fragments are functions, by default, whenever your app is rendered, Hart will have to invoke every function all the way down the tree in order to find changes between renders and update the DOM appropriately. Other frameworks using virtual DOMs are similar and they often have some way of optimizing this process. For example, React provides a `shouldComponentUpdate` method allowing you to skip recalculating a given node and its children.
+
+In Hart this is a little simpler. If your fragments aren't trying to hack in some kind of local state, you can safely assume that they will return the same output when given the same props. In that case, you can tell Hart to skip re-computing and re-rendering any fragment whose input hasn't changed simply by giving that fragment an `id` prop.
+
+> Note that all `id`s must be unique to a given fragment, otherwise you'll get crazy behavior.
+
+In the following case, without using `id`s, `NestedFrag` will re-compute once every second.
+
+```javascript
+const rootFrag = fragment((props) => {
+  return <NestedFrag value={props.value}/>
+})
+
+const myApp = app(rootNode, rootFrag)
+
+setInterval(() => {
+  render(myApp, { value: "Hello, world!" })
+}, 1000)
+```
+
+However, by introducing the `id` prop, `NestedFrag` will only recompute when its props change. Since they never do, it will only compute once.
+
+```javascript
+const rootFrag = fragment((props) => {
+  return <NestedFrag id="foo" value={props.value}/>
+})
+
+const myApp = app(rootNode, rootFrag)
+
+setInterval(() => {
+  render(myApp, { value: "Hello, world!" })
+}, 1000)
+```
+
+Using `id`s is almost always the recommended course of action. The only reason this behavior isn't default is because it requires caching previous props. Since fragments are just functions, Hart needs a way to identify a cached group of previous props for any given invocation of the same function so its up to you to provide that identifier via an `id`.
+
+## Prefab Fragments
+
+Part of Hart's philosophy is that its core should be as tiny as possible to facilitate web apps everywhere. However, there are solutions to a few common use cases that lie outside the responsibilities of the core framework that you can include in your build as desired. Those solutions are...
+
+### Form Inputs
+
+> TODO: These are not working right at all lol. Essentially, when you get to the end of a field, it keeps jumping back to show you the beginning. Also, textareas get ALL jumbled. Need a better way to handle this.
+
+> TODO: Still haven't tested nesting children for fragments. Does it work? What happens when we compare children as part of props for an ID'd fragment? Will it always recalc? Get caught in a circular update loop forever?

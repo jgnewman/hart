@@ -53,6 +53,12 @@ const updatePipe = (change) => {
         textField: change.payload,
       })
 
+    case "CHANGE_CHECKBOX":
+      return inject(data, {
+        ...currentValue,
+        checkbox: change.payload,
+      })
+
     case "TOGGLE_WELCOME":
       return inject(data, {
         ...currentValue,
@@ -139,6 +145,13 @@ const handleKeyupTextField = (evt) => {
   })
 }
 
+const handleCheckbox = (evt) => {
+  updatePipe({
+    type: "CHANGE_CHECKBOX",
+    payload: evt.target.checked,
+  })
+}
+
 const Span = fragment(({ value }) => (
   <span ref="myspancomponent">{value}</span>
 ))
@@ -174,7 +187,8 @@ const RootFragment = fragment((props) => {
   return mounthandler(
     <div>
       {props.counter}
-      <Input type="text" onkeyup={handleKeyupTextField} value={props.textField}/>
+      <Input id="one" oop="foo" type="checkbox" onchange={handleCheckbox} checked={props.checkbox}/>
+      <Input id="two" type="text" onkeyup={handleKeyupTextField} value={props.textField}/>
       <button onclick={handleClickCounter}>Click me to update counter</button>
       <button onclick={handleClickAddItem}>Click me to add a list item</button>
       <button onclick={handleClickRemoveItem}>Click me to remove a list item</button>
@@ -207,6 +221,7 @@ updatePipe({
     counter: 0,
     showWelcome: true,
     textField: "",
+    checkbox: false,
     listData: [
       { id: randomLetters(10), val: randomLetters(5) },
       { id: randomLetters(10), val: randomLetters(5) },
