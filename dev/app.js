@@ -202,7 +202,7 @@ const RootFragment = fragment((props) => {
   const { onmount } = effects()
 
   const mounthandler = onmount(() => console.log("mounted root"))
-  // console.log("new props", props)
+  console.log("new props", props)
   return mounthandler(
     <div>
       {props.counter}
