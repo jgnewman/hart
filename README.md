@@ -71,7 +71,7 @@ With JSX configured, you are ready to start building with Hart!
 
 ## Building apps
 
-A Hart app in its simplest form is a combination of a fragment function and an HTML element where the fragment will be rendered.
+A Hart app in its simplest form is a combination of a fragment function and a root HTML element where the fragment will be rendered.
 
 Root elements can be selected using whatever method you like, for example `document.getElementById`.
 
@@ -82,13 +82,15 @@ Apps are created by calling the `app` function, and passing it a root element an
 ```javascript
 import { fragment, app, render } from "hart"
 
+const rootElement = document.getElementById("root")
+
 const RootFragment = fragment(() => (
   <div>
     Hello, world!
   </div>
 ))
 
-const myApp = app(document.getElementById("root"), RootFragment)
+const myApp = app(rootElement, RootFragment)
 render(myApp)
 ```
 
@@ -191,9 +193,9 @@ const update = () => render(myApp, { counter: counter++ })
 setInterval(update, 1000)
 ```
 
-In this example, our fragment is meant to display the current value of a counter. Our `update` function simply increments the counter and calls `render` to trigger updates to the DOM. We then set an interval to run this process once per second.
+In this example, our fragment is meant to display the current value of a counter. Our `update` function simply increments the counter and calls `render` to trigger updates to the DOM. We then set an interval to run this process once per second. This pattern is called the **Hart loop**.
 
-Of course, this is an extremely basic example designed to illustrate a pattern. What's a little more useful are Hart's reactive "pipes".
+Of course, this is an extremely basic example designed to illustrate a pattern. To help us put our loop together cleanly, we can use Hart's reactive "pipes".
 
 A pipe in Hart is an observable object. You can tap the pipe with functions that will run when its value is updated and you can inject new values into the pipe which will be passed along to all of your tap functions. Let's rewrite our previous example now using pipes and a button that will trigger updates instead of an interval.
 
@@ -220,9 +222,9 @@ tap(appData, update)
 inject(appData, { counter: 0 })
 ```
 
-In this example, our update function taps into the `appData` pipe. Whenever the pipe's value changes, the update function will run. We then inject an object with a counter into that pipe. This object becomes the props that are used to render the app. Within our fragment we also have a button. Whenever we click it, we will inject new data into the pipe, thus triggering the process to run again.
+In this example, our update function taps into the `appData` pipe. Whenever the pipe's value changes, the update function will run. We then inject an object with a counter into that pipe. This object becomes the props that are used to render the app. Within our fragment we also have a button. Whenever we click it, we will inject new data into the pipe, thus triggering the Hart loop to run again.
 
-You may notice a couple of problems with this approach. For one, it's not very scalable and it's pretty prone to spaghetti. But now that you get the idea, let's introduce a more scalable pattern:
+You may notice a couple of problems with this approach. For one, it's not very scalable and it's pretty prone to spaghetti. But now that you get the idea, let's introduce a more scalable technique:
 
 ```javascript
 import { fragment, app, render } from "hart"
@@ -277,7 +279,7 @@ updatePipe({
 
 We now have the beginnings of a highly scalable application architecture. In this example, the entire application responds to a single pipe. This pipe only gets updated in one way – via the `updatePipe` function. This function takes a "change object" and updates the pipe in a predictable way based on the type of change we give it. Notice that we've introduced a new function (`leak`) here, which just grabs the current value of a pipe. Whenever we inject new data into the pipe, we make sure to copy the old data as well.
 
-Within our fragment, the button click handler simply calls `updatePipe` and passes in a change object. Later, when we want to get the app started, we call `updatePipe` and pass in a change that sets our initial data. Because we have tapped our pipe with a function that triggers a render call, the DOM will respond whenever we fire a change.
+Within our fragment, the button's click handler simply calls `updatePipe` and passes in a change object. Later, when we want to get the app started, we call `updatePipe` and pass in a change that sets our initial data. Because we have tapped our pipe with a function that triggers a render call, the DOM will respond whenever we fire a change.
 
 If you've used [Redux](https://redux.js.org/) before, this should all look very familiar. However, since you will be manually calling the `updatePipe` function and the `inject` function, there is no need for plugins and magic middleware. Your updates can be synchronous or asynchronous, or become as complex as you like. It'll work with anything right out of the box.
 
@@ -287,9 +289,9 @@ Speaking of going asynchronous...
 
 Hart tries to avoid doing too many unexpected things behind the scenes. As such, updating your application is synchronous by default. This means that if you inject data into a pipe multiple times in quick succession (if you have some process that triggers a sequence of changes, for example), the DOM will update in response to each change.
 
-This may not be what you want, given that a Hart app is supposed to be declarative and purely functional. What would be really nice would be the ability to amalgamate all the data changes created within a single event loop and trigger a DOM update only once with a final value.
+This may not be what you want, given that a Hart app is supposed to be declarative and purely functional. What would be really nice would be the ability to combine all the data changes created within a single event loop and trigger a DOM update only once with a final value.
 
-To do this, just use the `asyncPipe` function instead of the `pipe` function. You don't need to change anything else about your application. Assuming you haven't hacked any non-functional code into it, everything should work the same way, but you'll be re-rendering a lot less frequently.
+To do this, just use the `asyncPipe` function instead of the `pipe` function. You don't need to change anything else about your application. Assuming you haven't hacked any non-functional code into it (which you shouldn't have!), everything should work the same way, but you'll be re-rendering a lot less frequently.
 
 ```javascript
 import {
