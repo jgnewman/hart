@@ -392,3 +392,5 @@ Using `id`s is almost always the recommended course of action. The only reason t
 ## Prefab Fragments
 
 Part of Hart's philosophy is that its core should be as tiny as possible to facilitate web apps everywhere. However, there are solutions to a few common use cases that lie outside the responsibilities of the core framework that you can include in your build as desired. Those solutions are _coming soon..._
+
+> **TODO:** Unit tests
