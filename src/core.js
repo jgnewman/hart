@@ -6,6 +6,7 @@ import {
   SVG_NS,
   TEXT,
   LIST,
+  CHILD,
   PROOF,
   ADD,
   REMOVE,
@@ -51,14 +52,16 @@ const positionSort = (a, b) => {
   return a.pos === b.pos ? 0 : (a.pos < b.pos ? -1 : 1)
 }
 
-const getAttrDiff = (prev, next) => {
+const getAttrDiff = (prev, next, inputController) => {
   const diff = []
   const checked = {}
 
   for (let i in prev) {
     if (prev.hasOwnProperty(i) && i !== "key") {
       checked[i] = true
-      prev[i] !== next[i] && diff.push(!next.hasOwnProperty(i) ? [DELETE, i] : [SET, i, next[i]])
+      if (prev[i] !== next[i] || i === inputController) {
+        diff.push(!next.hasOwnProperty(i) ? [DELETE, i] : [SET, i, next[i]])
+      }
     }
   }
 
@@ -145,22 +148,58 @@ const append = (target, nodes) => {
   }
 }
 
+const controlInputWithProp = (tag, attrs) => {
+  if (tag !== "input" && tag !== "textarea") return null
+
+  const hasValue = attrs.hasOwnProperty("value")
+  const hasChecked = attrs.hasOwnProperty("checked")
+
+  if (!hasValue && !hasChecked) return null
+  return hasChecked ? "checked" : "value"
+}
+
+const childPack = (children=null) => ({
+  [CHILD]: CHILD,
+  nodes: children,
+})
+
 const vNode = (tag, attrs, ...children) => {
   attrs = attrs || {}
+  const controllingProp = controlInputWithProp(tag, attrs)
 
   if (typeof tag === "function") {
     assertPureFragment(tag)
-    attrs.children = children
-    const out = tag(attrs)
+
+    const out = tag(attrs, childPack(children))
     out.fragment = true
-    if (attrs.key) { out.attrs.key = attrs.key }
+
+    if (attrs.key) {
+      out.attrs.key = attrs.key
+    }
+
+    if (controllingProp) {
+      out.controller = controllingProp
+    }
+
     return out
   }
 
-  const node = { tag, attrs, listed: false, html: null, parent: null }
+  const node = {
+    tag,
+    attrs,
+    listed: false,
+    html: null,
+    parent: null,
+  }
+
+  if (controllingProp) {
+    node.controller = controllingProp
+  }
 
   node.children = []
-  children.forEach(child => {
+  const childIterator = child => {
+    if (child[CHILD] === CHILD) return !child.nodes ? null : child.nodes.forEach(c => childIterator(c))
+
     let childNode
 
     if (Array.isArray(child)) {
@@ -189,7 +228,8 @@ const vNode = (tag, attrs, ...children) => {
 
     childNode.parent = node
     return node.children.push(childNode)
-  })
+  }
+  children.forEach(childIterator)
 
   return node
 }
@@ -415,7 +455,7 @@ const diff = (prev, next, queue=[]) => {
     return queue
   }
 
-  const attrDiff = getAttrDiff(prev.attrs, next.attrs)
+  const attrDiff = getAttrDiff(prev.attrs, next.attrs, next.controller)
   attrDiff.length && queue.push(changeObject(UPDATE, prev, next, attrDiff))
 
   const prevChildren = prev.children
@@ -444,24 +484,27 @@ const diff = (prev, next, queue=[]) => {
 const fragment = (fn) => {
   let prevData = {}
 
-  const output = (props) => {
+  const output = (props, children) => {
     const cacheId = props.id
 
     if (!cacheId) {
-      return fn(props)
+      return fn(props, children)
     }
 
     const prevCache = prevData[cacheId] = prevData[cacheId] || {}
     const prevProps = prevCache.props
     const prevNode = prevCache.node
-    const dataIsUnchanged = prevProps && prevNode && deepEqual(prevProps, props)
+    const nextChildLength = children && children.nodes ? children.nodes.length : 0
 
-    if (dataIsUnchanged) {
+    const noChildrenOverChange = prevCache.childLength === 0 && nextChildLength === 0
+    const prevChildLen = prevCache.childLength
+
+    if (prevNode && noChildrenOverChange && deepEqual(prevProps, props)) {
       prevCache.props = props
       return prevNode
     }
 
-    const nextNode = fn(props)
+    const nextNode = fn(props, children)
     const shouldTransferHtml = prevNode && !prevNode.listed && !nextNode.html
     const shouldTransferDismounters = prevNode && prevNode.dismounters && !nextNode.dismounters
 
@@ -475,6 +518,7 @@ const fragment = (fn) => {
 
     prevCache.props = props
     prevCache.node = nextNode
+    prevCache.childLength === nextChildLength
     return nextNode
   }
 

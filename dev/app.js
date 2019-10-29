@@ -11,8 +11,6 @@ import {
   effects,
 } from "../index"
 
-import Input from "../prefab/Input"
-
 const randomItem = items => {
   return items[Math.floor(Math.random()*items.length)]
 }
@@ -97,6 +95,12 @@ const updatePipe = (change) => {
         listData: newList,
       })
 
+    case "REMOVE_CHILD_NAME":
+      return inject(data, {
+        ...currentValue,
+        childNames: currentValue.childNames.slice(0, currentValue.childNames.length - 1),
+      })
+
     default:
       return
   }
@@ -117,6 +121,12 @@ const handleClickAddItem = () => {
 const handleClickRemoveItem = () => {
   updatePipe({
     type: "REMOVE_ITEM",
+  })
+}
+
+const handleClickRemoveChildName = () => {
+  updatePipe({
+    type: "REMOVE_CHILD_NAME",
   })
 }
 
@@ -151,6 +161,15 @@ const handleCheckbox = (evt) => {
     payload: evt.target.checked,
   })
 }
+
+const ChildRenderer = fragment((props, children) => {
+  return (
+    <div class="dib" style="background: black; color: white; margin-bottom: 5px;">
+      <div>{props.name}</div>
+      {children}
+    </div>
+  )
+})
 
 const Span = fragment(({ value }) => (
   <span ref="myspancomponent">{value}</span>
@@ -187,14 +206,15 @@ const RootFragment = fragment((props) => {
   return mounthandler(
     <div>
       {props.counter}
-      <Input id="one" oop="foo" type="checkbox" onchange={handleCheckbox} checked={props.checkbox}/>
-      <Input id="two" type="text" onkeyup={handleKeyupTextField} value={props.textField}/>
+      <input id="one" oop="foo" type="checkbox" onchange={handleCheckbox} checked={props.checkbox}/>
+      <input type="text" onkeyup={handleKeyupTextField} value={"foo"}/>
       <button onclick={handleClickCounter}>Click me to update counter</button>
       <button onclick={handleClickAddItem}>Click me to add a list item</button>
       <button onclick={handleClickRemoveItem}>Click me to remove a list item</button>
       <button onclick={handleClickReorderItem}>Click me to reorder 2 items</button>
       <button onclick={handleClickReverseItem}>Click me to reverse items</button>
       <button onclick={handleClickToggleWelcome}>Click me to toggle welcome message</button>
+      <button onclick={handleClickRemoveChildName}>Click me to remove a child name</button>
       <ul>
         {props.listData.map(datum => (
           <ListItem key={datum.id} value={datum.val}/>
@@ -205,6 +225,16 @@ const RootFragment = fragment((props) => {
           This is the welcome message!
         </div>
       )}
+      <ChildRenderer id="cr1" name="bill">
+        {!!props.childNames[0] && <div>{props.childNames[0]}</div>}
+        {!!props.childNames[1] && <div>{props.childNames[1]}</div>}
+        {!!props.childNames[2] && <div>{props.childNames[2]}</div>}
+      </ChildRenderer>
+      <ChildRenderer id="cr2" name="bob">
+        {!!props.childNames[0] && <div>{props.childNames[0]}</div>}
+        {!!props.childNames[1] && <div>{props.childNames[1]}</div>}
+        {!!props.childNames[2] && <div>{props.childNames[2]}</div>}
+      </ChildRenderer>
     </div>
   )
 })
@@ -222,6 +252,7 @@ updatePipe({
     showWelcome: true,
     textField: "",
     checkbox: false,
+    childNames: ["one", "two", "three"],
     listData: [
       { id: randomLetters(10), val: randomLetters(5) },
       { id: randomLetters(10), val: randomLetters(5) },

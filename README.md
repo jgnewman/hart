@@ -6,9 +6,9 @@
 
 Hart is a lithe, nimble core for scalable web apps. It's tiny, component-based, and optimized for speed.
 
-Hart makes use of some familiar patterns – it uses a virtual DOM and integrates with JSX – but it stands out in a few key ways. First, it's tiny. The core framework is **< 9kB** minified and **< 3.5kB** gzipped. Second: terminology. Components in Hart are called **fragments**. Lastly, Hart asks you to write purely functional apps.
+Hart makes use of some familiar patterns – it uses a virtual DOM and integrates with JSX – but it stands out in a few key ways. First, it's tiny. The core framework is **~ 9.5kB minified** and **~ 3.5kB gzipped**. Second: terminology. Components in Hart are called **fragments**. Lastly, Hart asks you to write purely functional apps. (_Don't be scared!_)
 
-When you create a fragment with Hart, you do so with an understanding that as long as the fragment's input doesn't change, neither will its output. In fact, Hart can go so far as to compare each fragment's input to its previous input and completely skip re-computing and re-rendering the fragment if its input hasn't changed.
+When you create a fragment with Hart, you do so with an understanding that as long as the fragment's input doesn't change, neither will its output. In fact, Hart can often go so far as to compare each fragment's input to its previous input and completely skip re-computing and re-rendering the fragment if its input hasn't changed.
 
 With this nuance in mind, and by scaling back on some unnecessary features, Hart is able to deliver insane performance with minimal size and boilerplate, and with patterns that will scale as much as you need.
 
@@ -16,8 +16,9 @@ With this nuance in mind, and by scaling back on some unnecessary features, Hart
 
 - [Getting set up](#getting-set-up)
 - [Building apps](#building-apps)
-  - [Props](#rops)
+  - [Props](#props)
   - [Nesting](#nesting)
+  - [Children](#children)
   - [Updating](#updating)
   - [Optimizing](#optimizing)
 - [Prefab Fragments](#prefab-fragments)
@@ -26,7 +27,7 @@ With this nuance in mind, and by scaling back on some unnecessary features, Hart
 
 The first thing you'll want to do is install Hart, which can be done via `npm install hart` or `yarn add hart`.
 
-Secondly, you'll probably want to configure it to work with JSX. You don't have to, but it sure is nicer to work with. Here are your options for creating fragments with and without JSX:
+Secondly, you'll probably want to configure it to work with JSX. You don't have to, but it sure is nice to work with. Here are your options for creating fragments with and without JSX:
 
 **Without JSX**
 ```javascript
@@ -42,9 +43,7 @@ export default fragment(props => {
 import { fragment } from "hart"
 
 export default fragment(props => (
-  <div id="foo">
-    Hello, world!
-  </div>
+  <div id="foo">Hello, world!</div>
 ))
 ```
 
@@ -68,7 +67,7 @@ To configure JSX, you will need a JSX transpiler such as [@babel/plugin-transfor
 
 With JSX configured, you are ready to start building with Hart!
 
-> Note: Hart does not require you to use special, camel-cased attribute names in your JSX. For example, whereas React requires syntax such as `<div className="foo" tabIndex="1">`, Hart will allow the native HTML form: `<div class="foo" tabindex="1">`. However, some older browsers may not accept reserved words such as "class" to be used as object keys. In cases where JavaScript reserved words conflict with HTML attributes, Hart does support the React versions of these attributes (such as "className" and "htmlFor").
+> Note: Hart does not require you to use special, camel-cased attribute names in your JSX. For example, whereas React requires syntax such as `<div className="foo" tabIndex="1">`, Hart will allow the native HTML form: `<div class="foo" tabindex="1">`. However, some older browsers may not accept reserved words such as "class" to be used as object keys. In cases where JavaScript reserved words conflict with HTML attributes, Hart supports the React versions of these attributes (such as "className" and "htmlFor").
 
 ## Building apps
 
@@ -137,6 +136,40 @@ render(myApp, { name: "new Hart user" })
 In this example, we included our `NestedFragment` inside of the `RootFragment` via JSX syntax. Its props were defined as if they were attributes on an HTML element!
 
 > Note that this only works if our fragments have capitalized names. If a fragment's name isn't capitalized, JSX syntax will try to render a native html element instead of executing your fragment function.
+
+### Children
+
+We've already seen how each fragment takes a props argument. However, fragments can take a second argument as well: children. Let's look at an example of how it works, and then we'll talk through it.
+
+```javascript
+const NestedFragment = fragment((props, children) => (
+  <p>{children}</p>
+))
+
+const RootFragment = fragment((props) => (
+  <div>
+    <NestedFragment>
+      <span></span>
+      <span></span>
+      <span></span>
+    </NestedFragment>
+  </div>
+))
+```
+
+This structure will produce the following output:
+
+```html
+<div>
+  <p>
+    <span></span>
+    <span></span>
+    <span></span>
+  </p>
+</div>
+```
+
+In Hart, you can nest children within your fragments by using opening/closing tag syntax instead of self-closing tag syntax. When you do, those children are wrapped up in a special object we call `children` so that you can determine where they should appear in your fragment's output.
 
 ### Updating
 
@@ -318,9 +351,9 @@ In this example, the DOM is updated exactly twice, even though 11 total changes 
 
 ### Optimizing
 
-Because all of your fragments are functions, by default, whenever your app is rendered, Hart will have to invoke every function all the way down the tree in order to find changes between renders and update the DOM appropriately. Other frameworks using virtual DOMs are similar and they often have some way of optimizing this process. For example, React provides a `shouldComponentUpdate` method allowing you to skip recalculating a given node and its children.
+Because all of your fragments are functions, by default, whenever your app is rendered, Hart will have to invoke every function all the way down the tree in order to find changes between renders and update the DOM appropriately. Other frameworks using virtual DOMs work similarly and they often have some way of optimizing this process. For example, React provides a `shouldComponentUpdate` method allowing you to skip recalculating a given node and its children.
 
-In Hart this is a little simpler. If your fragments aren't trying to hack in some kind of local state, you can safely assume that they will return the same output when given the same props. In that case, you can tell Hart to skip re-computing and re-rendering any fragment whose input hasn't changed simply by giving that fragment an `id` prop.
+In Hart this is a little simpler. As long as you aren't trying to hack some kind of local state into your fragments (which you shouldn't be!), Hart can safely assume that they will return the same output when given the same props and zero children. To capitalize on this, you can tell Hart to skip re-computing and re-rendering any fragment under safe conditions by simply by giving that fragment an `id` prop.
 
 > Note that all `id`s must be unique to a given fragment, otherwise you'll get crazy behavior.
 
@@ -352,14 +385,10 @@ setInterval(() => {
 }, 1000)
 ```
 
-Using `id`s is almost always the recommended course of action. The only reason this behavior isn't default is because it requires caching previous props. Since fragments are just functions, Hart needs a way to identify a cached group of previous props for any given invocation of the same function so its up to you to provide that identifier via an `id`.
+Using `id`s is almost always the recommended course of action. The only reason this behavior isn't default is because it requires caching previous props. Since fragments are just functions, Hart needs a way to identify a cached group of previous props for any given invocation of the same function so it's up to you to provide that identifier via an `id`.
 
 ## Prefab Fragments
 
 Part of Hart's philosophy is that its core should be as tiny as possible to facilitate web apps everywhere. However, there are solutions to a few common use cases that lie outside the responsibilities of the core framework that you can include in your build as desired. Those solutions are...
 
-### Form Inputs
-
-> TODO: These are not working right at all lol. Essentially, when you get to the end of a field, it keeps jumping back to show you the beginning. Also, textareas get ALL jumbled. Need a better way to handle this.
-
-> TODO: Still haven't tested nesting children for fragments. Does it work? What happens when we compare children as part of props for an ID'd fragment? Will it always recalc? Get caught in a circular update loop forever?
+> TODO: Make a router probably.
