@@ -6,7 +6,7 @@
 
 Hart is a lithe, nimble core for scalable web apps. It's tiny, component-based, and optimized for speed.
 
-Hart makes use of some familiar patterns – it uses a virtual DOM and integrates with JSX – but it stands out in a few key ways. First, it's tiny. The core framework is **~9.5kB minified** and **~3.5kB gzipped**. Second: terminology. Components in Hart are called **fragments**. Lastly, Hart asks you to write purely functional apps. (_Don't be scared!_)
+Hart makes use of some familiar patterns – it uses a virtual DOM and integrates with JSX – but it stands out in a few key ways. First, it's tiny. The core framework is **~9.5kB minified** and **~3kB gzipped**. Second: terminology. Components in Hart are called **fragments**. Lastly, Hart asks you to write purely functional apps. (_Don't be scared!_)
 
 When you create a fragment with Hart, you do so with an understanding that as long as the fragment's input doesn't change, neither will its output. In fact, Hart can often go so far as to compare each fragment's input to its previous input and completely skip re-computing and re-rendering the fragment if its input hasn't changed.
 

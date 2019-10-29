@@ -55,7 +55,10 @@ if (process.env.NODE_ENV === "development") {
 if (process.env.NODE_ENV === "production") {
   config.entry.hart = "./index.js"
 
-  config.plugins.push(new CompressionPlugin())
+  config.plugins.push(new CompressionPlugin({
+    algorithm: "brotliCompress",
+    compressionOptions: { level: 11 },
+  }))
 }
 
 module.exports = config
