@@ -392,7 +392,13 @@ Using `id`s is almost always the recommended course of action. The only reason t
 
 ### Effects
 
-As functional as Hart is, sometimes it's nice to be able to quickly and easily trigger certain effects at the moment when a fragment has mounted or dismounted the DOM.
+As functional as Hart is, sometimes it's nice to be able to quickly and easily trigger certain effects at the moment when a fragment has mounted or dismounted the DOM. Additionally, sometimes you need access to a real live DOM node in order to do things such as trigger a blur on a form field. Hart makes all of this easy with "effect" functions. Let's start with mount and dismount:
+
+#### Mounting & Dismounting
+
+Mounting describes the moment when a real DOM node is rendered onto the page. Similarly, dismounting (not "unmounting") describes the moment when a real DOM node is removed from the page.
+
+> **Fun fact:** The reason Hart uses the word "dismount" instead of "unmount" (as we find in similar frameworks) is pretty much only because, before engineers came up with the word "unmount" to describe the process of hopping off of things, "dismount" was already a perfectly good English word that meant the exact same thing. Anyway, "in computer jargon," an unmounted thing usually becomes completely inaccessible to the operating system. It's debatable whether that's really true with regard to a removed node in a case like this given that its "soul" (the component that generated it) lives on in the application, ready to rebuild an identical node at a moment's notice.
 
 > TODO: Finish this and also write docs for chains.
 
