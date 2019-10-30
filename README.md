@@ -21,6 +21,7 @@ With this nuance in mind, and by scaling back on some unnecessary features, Hart
   - [Children](#children)
   - [Updating](#updating)
   - [Optimizing](#optimizing)
+  - [Effects](#effects)
 - [Prefab Fragments](#prefab-fragments)
 
 ## Getting set up
@@ -388,6 +389,12 @@ setInterval(() => {
 ```
 
 Using `id`s is almost always the recommended course of action. The only reason this behavior isn't default is because it requires caching previous props. Since fragments are just functions, Hart needs a way to identify a cached group of previous props for any given invocation of the same function so it's up to you to provide that identifier via an `id`.
+
+### Effects
+
+As functional as Hart is, sometimes it's nice to be able to quickly and easily trigger certain effects at the moment when a fragment has mounted or dismounted the DOM.
+
+> TODO: Finish this and also write docs for chains.
 
 ## Prefab Fragments
 
