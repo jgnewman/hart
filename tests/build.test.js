@@ -1,7 +1,7 @@
-const assert = require('assert')
-const path = require('path')
-const fs = require('fs')
-const Chromatica = require('chromatica')
+const assert = require("assert")
+const path = require("path")
+const fs = require("fs")
+const Chromatica = require("chromatica")
 
 const SERVER_PORT = 3000
 const SERVER_ROUTES = [
@@ -11,7 +11,7 @@ const SERVER_ROUTES = [
   },
   {
     test: null,
-    file: fs.readFileSync(path.resolve(__dirname, './templates/base.html'))
+    file: fs.readFileSync(path.resolve(__dirname, "./templates/base.html"))
   },
 ]
 
@@ -33,8 +33,8 @@ describe("Behavior", function () {
     await this.browser.closeBrowser()
   })
 
-  describe('Build', function () {
-    it('exports all expected values', async function () {
+  describe("Build", function () {
+    it("exports all expected values", async function () {
       const result = await this.page.evaluate(() => {
         const hart = window.hart || {}
         const out = {}
