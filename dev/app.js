@@ -176,10 +176,10 @@ const Span = fragment(({ value }) => (
 ))
 
 const ListItem = fragment(({ value }) => {
-  const { getRefs, captureRefs, onmount, ondismount } = effects()
+  const { refs, captureRefs, onmount, ondismount } = effects()
 
   const handleClick = (evt) => {
-    console.log("ref, evt:", getRefs(), evt)
+    console.log("ref, evt:", refs(), evt)
   }
 
   const handlemount = onmount(() => {

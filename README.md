@@ -22,6 +22,7 @@ With this nuance in mind, and by scaling back on some unnecessary features, Hart
   - [Updating](#updating)
   - [Optimizing](#optimizing)
   - [Effects](#effects)
+  - [Chains](#chains)
 - [Prefab Fragments](#prefab-fragments)
 
 ## Getting set up
@@ -398,12 +399,123 @@ As functional as Hart is, sometimes it's nice to be able to quickly and easily t
 
 Mounting describes the moment when a real DOM node is rendered onto the page. Similarly, dismounting (not "unmounting") describes the moment when a real DOM node is removed from the page.
 
-> **Fun fact:** The reason Hart uses the word "dismount" instead of "unmount" (as we find in similar frameworks) is pretty much only because, before engineers came up with the word "unmount" to describe the process of hopping off of things, "dismount" was already a perfectly good English word that meant the exact same thing. Anyway, "in computer jargon," an unmounted thing usually becomes completely inaccessible to the operating system. It's debatable whether that's really true with regard to a removed node in a case like this given that its "soul" (the component that generated it) lives on in the application, ready to rebuild an identical node at a moment's notice.
+> **Fun fact:** The reason Hart uses the word "dismount" instead of "unmount" (as we find in similar frameworks) is pretty much only because, before engineers came up with the word "unmount" to describe the process of hopping off of things, "dismount" was already a perfectly good English word that meant the exact same thing. Anyway, "in computer jargon," an unmounted thing usually becomes completely inaccessible to the operating system. It's debatable whether what happens in a case like ours is really all that similar given that the same application that removes the node remains ready to rebuild and append an identical node at a moment's notice. So, effectively, we like to say it's more of a dismount.
 
-> TODO: Finish this and also write docs for chains.
+To run a function when a fragment is initially mounted, you will want to generate a collection of effect functions within your fragment, one of which is `onmount`. You will use this to create a mount handler which you can then use to wrap your fragment's output. For example:
+
+```javascript
+const Frag = fragment(props => {
+  const { onmount } = effects()
+
+  const handleMount = onmount(() => {
+    console.log("I mounted!")
+  })
+
+  return handleMount(
+    <div>Hello, world!</div>
+  )
+})
+```
+
+The above example will log "I mounted!" only when its output div is rendered into the DOM. The mount handler will not run for any subsequent invocations of the fragment function, unless it is removed from the DOM and then mounted again later.
+
+Similarly, we can create dismount handlers, which will run only when a fragment's output is removed from the DOM. In fact, we can combine mount and dismount handlers:
+
+```javascript
+const Frag = fragment(props => {
+  const { onmount, ondismount } = effects()
+
+  const handleMount = onmount(() => {
+    console.log("I mounted!")
+  })
+
+  const handleDismount = ondismount(() => {
+    console.log("I dismounted!")
+  })
+
+  return handleDismount(handleMount(
+    <div>Hello, world!</div>
+  ))
+})
+```
+
+The order in which we call our mount and dismount handlers does not matter. However, each handler can only be called once per fragment. In other words, the following won't execute two mount handlers; instead the outer call will simply override the inner call:
+
+```javascript
+// Overrides a mount handler
+handleMount(handleMount(<div></div>))
+```
+
+#### Referencing Real DOM Nodes
+
+Getting a reference to a live DOM node is an effect that combines two functions: `refs` and `captureRefs`. You'll use `captureRefs` to wrap a fragment's output and you'll use `refs` to access the live DOM nodes that were captured on the most recent invocation of the fragment function. In order for a node to be captured you must give it a `ref` attribute with a value unique to all refs in that fragment.
+
+```javascript
+const Frag = fragment(props => {
+  const { refs, captureRefs } = effects()
+
+  const input1focushandler = () => {
+    refs().input2.blur()
+  }
+
+  const input2focushandler = () => {
+    refs().input.blur()
+  }
+
+  return captureRefs(
+    <div>
+      <input class="input1" ref="input1" onfocus={input1focushandler} />
+      <input class="input2" ref="input2" onfocus={input2focushandler} />
+    </div>
+  )
+})
+```
+
+In this example, because we have wrapped the output with the `captureRefs` function, each of our live input elements has become available by calling `refs`. Note that `captureRefs` can be combined with mount and dismount handlers.
+
+### Chains
+
+Because Hart encourages functional style when writing your apps, you might sometimes end up with a lot of nested function calls, for example:
+
+```javascript
+handleMount(handleDismount(captureRefs(<div></div>)))
+```
+
+If you are uncomfortable with this, Hart provides a utility function called `pass` that allows you to simplify your syntax. Using `pass`, the above example becomes the following:
+
+```javascript
+import { pass } from "hart"
+
+// ...
+
+pass(<div></div>).to(captureRefs).to(handleDismount).to(handleMount)()
+```
+
+Each invocation of `to` in this example takes as many arguments as you would like to provide. The first argument should be a function and the rest should be arguments that will be passed to that function. Additionally, `to` will take the value of whatever came before it and pass that along as the final argument to the function as well. This is a little tricky to describe, so let's look at another example.
+
+```javascript
+const add = (x, y) => {
+  return x + y
+}
+
+pass(2).to(add, 3)()
+//=> returns 5
+
+const combineStr = (toAdd, prevStr) => {
+  return prevStr + toAdd
+}
+
+pass("Hello")
+  .to(combineStr, " ")
+  .to(combineStr, "world")
+  .to(combineStr, "!")()
+//=> returns "Hello world!"
+```
+
+In these examples, you should be able to see how arguments are passed down the chain.
 
 ## Prefab Fragments
 
 Part of Hart's philosophy is that its core should be as tiny as possible to facilitate web apps everywhere. However, there are solutions to a few common use cases that lie outside the responsibilities of the core framework that you can include in your build as desired. Those solutions are _coming soon..._
 
-> **TODO:** Unit tests
+> **TODO:** Finish unit tests. Should chains be in the core?
