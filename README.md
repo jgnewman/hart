@@ -19,7 +19,7 @@ With this nuance in mind, and by scaling back on some unnecessary features, Hart
   - [Props](#props)
   - [Nesting](#nesting)
   - [Children](#children)
-  - [Updating](#updating)
+  - [Architecture](#architecture)
   - [Optimizing](#optimizing)
   - [Effects](#effects)
   - [Chains](#chains)
@@ -76,15 +76,15 @@ With JSX configured, you are ready to start building with Hart!
 A Hart app in its simplest form is a glorified recursive function. Consider the following:
 
 ```javascript
-const copycatApp = (value) => {
+const copycat = (value) => {
   console.log(value)
-  readNextInput(newValue => copycatApp(newValue))
+  readNextInput(newValue => copycat(newValue))
 }
 
-copycatApp("I'm ready to start copying you!")
+copycat("I'm ready to start copying you!")
 ```
 
-In this pseudo-code example, every time the function is called it logs out its value, waits for user input, and then calls itself again with the value it got from the user. Because there is no mutable state, the function has to be called with a new value in order to produce new results. This is essentially how Hart works. With that in mind, here is an example of an extremely basic Hart app:
+In this pseudo-code example, every time the `copycat` function is called it logs out its value, waits for user input, and then calls itself again with the value it got from the user. Because there is no mutable state, the function has to be called with a new value in order to produce new results. This is essentially how Hart works. With that in mind, here is an example of an extremely basic Hart app:
 
 ```javascript
 import { fragment, app } from "hart"
@@ -108,7 +108,7 @@ This example illustrates what we call the **Hart loop**. We begin by importing t
 
 Our app (which we've called `renderer`) is a combination of our fragment and an HTML container where the app should appear. When we call `renderer.update`, the data we pass in is handed to the fragment and Hart takes care of updating the actual DOM. Whenever the user types into our text field, it will trigger another update call, passing in a copy of the previous data, along with the new field value. This model allows us to avoid mutable state altogether and also allows us to run multiple Hart apps on the same page at once.
 
-Interestingly, a Hart app doesn't strictly have to render HTML into the DOM. You could create an app that simply implements a counter, for example:
+Interestingly, a Hart app doesn't strictly have to render HTML into the DOM. You could create an app that simply implements a counter, for example. Take a look:
 
 ```javascript
 import { app } from "hart"
@@ -127,16 +127,17 @@ This may not seem like a very useful pattern at first. However, what makes it po
 ```javascript
 import { fragment, app } from "hart"
 
-const Root = fragment((data) => {
-  return <div>{data.value}</div>
+const renderer = app(
+  fragment((data) => <div>{data.value}</div>),
+  document.getElementById("app")
+)
+
+const counter = app((data) => {
+  setTimeout(() => counter.update({
+    ...data,
+    counter: data.value + 1,
+  }), 1000)
 })
-
-const inc = (data) => {
-  setTimeout(() => counter.update({ ...data, counter: data.value + 1 }), 1000)
-}
-
-const renderer = app(Root, document.getElementById("app"))
-const counter = app(inc)
 
 counter.watch(newData => renderer.update(newData))
 counter.update({ value: 0 })
@@ -189,7 +190,7 @@ renderer.update({ name: "new Hart user" })
 
 In this example, we included our `NestedFragment` inside of the `RootFragment` via JSX syntax. Its props were defined as if they were attributes on an HTML element!
 
-> Note that this only works if our fragments have capitalized names. If a fragment's name isn't capitalized, JSX syntax will try to render a native html element instead of executing your fragment function.
+> Note that this only works if our fragments have capitalized names. If a fragment's name isn't capitalized, JSX syntax will assume you want to render a native html element instead of executing a fragment function.
 
 ### Children
 
@@ -225,7 +226,57 @@ This structure will produce the following output:
 
 In Hart, you can nest children within your fragments by using opening/closing tag syntax instead of self-closing tag syntax. When you do, those children are wrapped up in a special object we call `children` so that you can determine where they should appear in your fragment's output.
 
-### Updating
+### Architecture
+
+We've already seen how a Hart app can be updated by calling its `update` function and passing in new props. But the problem with relying on recursive syntax in such a basic form is that, just as your app will need to import its fragments, your fragments will also need to import your app in order to update it. If we try to spread the Hart loop out over multiple files, we'll start running into circular import problems.
+
+Fortunately, observable apps can come to our rescue here. The following example shows how we can create two apps (one for rendering and one for managing data), that work together to provide a beautifully scalable architecture.
+
+```javascript
+import { fragment, app } from "hart"
+
+const reducer = app((change, previousData) => {
+  switch (change.type) {
+
+    case "INIT":
+      return {
+        ...previousData,
+        ...change.payload,
+      }
+
+    case "UPDATE_COUNTER":
+      return {
+        ...previousData,
+        counter: previousData.counter + 1,
+      }
+
+    default:
+      return previousData
+  }
+})
+
+const handleButtonClick = () => {
+  reducer.update({ type: "UPDATE_COUNTER" })
+}
+
+const renderer = app(
+  fragment((props) => {
+    <div>
+      {props.counter}
+      <button onclick={handleClickButton}>Click me</button>
+    </div>
+  }),
+  document.getElementById("root")
+)
+
+reducer.watch(newData => renderer.update(newData))
+reducer.update({
+  type: "INIT",
+  payload: { counter: 0 }
+})
+```
+
+This example ought to feel very familiar to anyone who's ever used Redux.
 
 
 > TODO: Pick up here talking about the Hart loop and show how the new pattern works. Don't forget to explain the option of using appSync.
