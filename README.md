@@ -6,7 +6,7 @@
 
 Hart is a lithe, nimble core for scalable web apps. It's tiny, component-based, and optimized for speed.
 
-Hart makes use of some familiar patterns – it uses a virtual DOM and integrates with JSX – but it stands out in a few key ways. First, it's tiny. The core framework is **~9.5kB minified** and **~3kB gzipped**. Second: terminology. Components in Hart are called **fragments**. Lastly, Hart asks you to write purely functional apps. (_Don't be scared!_)
+Hart makes use of some familiar patterns – it uses a virtual DOM and integrates with JSX – but it stands out in a few key ways. First, it's tiny. The core framework is **<9.5kB minified** and **~3kB gzipped**. Second: terminology. Components in Hart are called **fragments**. Lastly, Hart asks you to write purely functional apps. (_Don't be scared!_)
 
 When you create a fragment with Hart, you do so with an understanding that as long as the fragment's input doesn't change, neither will its output. In fact, Hart can often go so far as to compare each fragment's input to its previous input and completely skip re-computing and re-rendering the fragment if its input hasn't changed.
 
@@ -69,39 +69,89 @@ To configure JSX, you will need a JSX transpiler such as [@babel/plugin-transfor
 
 With JSX configured, you are ready to start building with Hart!
 
-> Note: Hart does not require you to use special, camel-cased attribute names in your JSX. For example, whereas React requires syntax such as `<div className="foo" tabIndex="1">`, Hart will allow the native HTML form: `<div class="foo" tabindex="1">`. However, some older browsers may not accept reserved words such as "class" to be used as object keys. In cases where JavaScript reserved words conflict with HTML attributes, Hart supports the React versions of these attributes (such as "className" and "htmlFor").
+> Note: Hart does not require you to use special, camel-cased attribute names in your JSX. For example, whereas React requires syntax such as `<div className="foo" tabIndex="1">`, Hart requires the native HTML form: `<div class="foo" tabindex="1">`. However, some older browsers may not accept reserved words such as "class" to be used as object keys. In cases where JavaScript reserved words conflict with HTML attributes, Hart supports the React versions of these attributes (such as "className" and "htmlFor").
 
 ## Building apps
 
-A Hart app in its simplest form is a combination of a fragment function and a root HTML element where the fragment will be rendered.
-
-Root elements can be selected using whatever method you like, for example `document.getElementById`.
-
-Fragments are created by calling the `fragment` function.
-
-Apps are created by calling the `app` function, and passing it a root element and a fragment. This way you can run multiple Hart apps on the same page without worry. To trigger any and all DOM updates, we call the `render` function.
+A Hart app in its simplest form is a glorified recursive function. Consider the following:
 
 ```javascript
-import { fragment, app, render } from "hart"
+const copycatApp = (value) => {
+  console.log(value)
+  readNextInput(newValue => copycatApp(newValue))
+}
 
-const rootElement = document.getElementById("root")
-
-const RootFragment = fragment(() => (
-  <div>
-    Hello, world!
-  </div>
-))
-
-const myApp = app(rootElement, RootFragment)
-render(myApp)
+copycatApp("I'm ready to start copying you!")
 ```
+
+In this pseudo-code example, every time the function is called it logs out its value, waits for user input, and then calls itself again with the value it got from the user. Because there is no mutable state, the function has to be called with a new value in order to produce new results. This is essentially how Hart works. With that in mind, here is an example of an extremely basic Hart app:
+
+```javascript
+import { fragment, app } from "hart"
+
+const Root = fragment((data) => {
+  return (
+    <input
+      type="text"
+      value={data.value}
+      onkeyup={(evt) => renderer.update({ ...data, value: evt.target.value })}
+    />
+  )
+})
+
+const renderer = app(Root, document.getElementById("app"))
+
+renderer.update({ value: "foo" })
+```
+
+This example illustrates what we call the **Hart loop**. We begin by importing two Hart functions – `fragment` and `app` – which will, respectively, allow us to create fragments and apps. Our fragment assumes it will take some data with a "value" property, and it returns an HTML text field whose value is controlled by that property.
+
+Our app (which we've called `renderer`) is a combination of our fragment and an HTML container where the app should appear. When we call `renderer.update`, the data we pass in is handed to the fragment and Hart takes care of updating the actual DOM. Whenever the user types into our text field, it will trigger another update call, passing in a copy of the previous data, along with the new field value. This model allows us to avoid mutable state altogether and also allows us to run multiple Hart apps on the same page at once.
+
+Interestingly, a Hart app doesn't strictly have to render HTML into the DOM. You could create an app that simply implements a counter, for example:
+
+```javascript
+import { app } from "hart"
+
+const inc = (data) => {
+  console.log(data.value)
+  setTimeout(() => counter.update({ ...data, counter: data.value + 1 }), 1000)
+}
+
+const counter = app(inc)
+counter.update({ value: 0 })
+```
+
+This may not seem like a very useful pattern at first. However, what makes it powerful is the fact that Hart apps are observable, meaning you can register a function to run whenever one of your apps is updated. With this in mind, it becomes possible to make 2 Hart apps work together toward a common goal:
+
+```javascript
+import { fragment, app } from "hart"
+
+const Root = fragment((data) => {
+  return <div>{data.value}</div>
+})
+
+const inc = (data) => {
+  setTimeout(() => counter.update({ ...data, counter: data.value + 1 }), 1000)
+}
+
+const renderer = app(Root, document.getElementById("app"))
+const counter = app(inc)
+
+counter.watch(newData => renderer.update(newData))
+counter.update({ value: 0 })
+```
+
+Here we have two apps working together. The `counter` app re-runs itself once per second, incrementing its value each time. When those updates occur, our watcher function picks up the new data and uses it to update the `renderer` app. The result is that a user viewing the page will be able to watch as the number slowly counts upward.
+
+We'll come back to this pattern shortly. For now, let's dig into more of the basics.
 
 ### Props
 
-Props are what we call a fragment function's input. We can pass props to our app when we render it like so:
+Up until now, we've been using the word "data" to describe a fragment's input. In reality, we usually say that a fragment receives "props". Props must always take the form of an object.
 
 ```javascript
-import { fragment, app, render } from "hart"
+import { fragment, app } from "hart"
 
 const RootFragment = fragment((props) => (
   <div>
@@ -109,8 +159,8 @@ const RootFragment = fragment((props) => (
   </div>
 ))
 
-const myApp = app(document.getElementById("root"), RootFragment)
-render(myApp, { name: "new Hart user" })
+const renderer = app(RootFragment, document.getElementById("root"))
+renderer.update({ name: "new Hart user" })
 ```
 
 In this example, our app will generate the sentence, "Hello, new Hart user!" This becomes even more interesting when we start nesting fragments.
@@ -120,7 +170,7 @@ In this example, our app will generate the sentence, "Hello, new Hart user!" Thi
 In Hart, as in most other component-based frameworks, we can render fragments as children of other fragments. We can then control which props are passed to our nested fragments.
 
 ```javascript
-import { fragment, app, render } from "hart"
+import { fragment, app } from "hart"
 
 const NestedFragment = fragment((props) => (
   <p>Hart is {props.adjective}!</p>
@@ -133,8 +183,8 @@ const RootFragment = fragment((props) => (
   </div>
 ))
 
-const myApp = app(document.getElementById("root"), RootFragment)
-render(myApp, { name: "new Hart user" })
+const renderer = app(RootFragment, document.getElementById("root"))
+renderer.update({ name: "new Hart user" })
 ```
 
 In this example, we included our `NestedFragment` inside of the `RootFragment` via JSX syntax. Its props were defined as if they were attributes on an HTML element!
@@ -177,54 +227,11 @@ In Hart, you can nest children within your fragments by using opening/closing ta
 
 ### Updating
 
-Obviously, Hart wouldn't be complete if it didn't have a nice, "reactive" way to update the DOM. To make this work, Hart provides a nice pattern and a few utilities, but you are free to devise your own methods as well. The general pattern is extremely simple and works like this: we define an `update` function whose job is to call `render` over and over again. Then we just call `update` whenever we want the DOM to change. For example...
 
-```javascript
-import { fragment, app, render } from "hart"
+> TODO: Pick up here talking about the Hart loop and show how the new pattern works. Don't forget to explain the option of using appSync.
 
-const RootFragment = fragment((props) => (
-  <div>
-    {props.counter}
-  </div>
-))
 
-const myApp = app(document.getElementById("root"), RootFragment)
 
-let counter = 0
-const update = () => render(myApp, { counter: counter++ })
-setInterval(update, 1000)
-```
-
-In this example, our fragment is meant to display the current value of a counter. Our `update` function simply increments the counter and calls `render` to trigger updates to the DOM. We then set an interval to run this process once per second. This pattern is called the **Hart loop**.
-
-Of course, this is an extremely basic example designed to illustrate a pattern. To help us put our loop together cleanly, we can use Hart's reactive "pipes".
-
-A pipe in Hart is an observable object. You can tap the pipe with functions that will run when its value is updated and you can inject new values into the pipe which will be passed along to all of your tap functions. Let's rewrite our previous example now using pipes and a button that will trigger updates instead of an interval.
-
-```javascript
-import { fragment, app, render } from "hart"
-import { pipe, tap, inject } from "hart"
-
-const appData = pipe()
-
-const RootFragment = fragment((props) => (
-  <div>
-    {props.counter}
-    <button onclick={() => inject(appData, { counter: props.counter + 1 })}>
-      Click me
-    </button>
-  </div>
-))
-
-const myApp = app(document.getElementById("root"), RootFragment)
-const update = (props) => render(myApp, props)
-
-tap(appData, update)
-
-inject(appData, { counter: 0 })
-```
-
-In this example, our update function taps into the `appData` pipe. Whenever the pipe's value changes, the update function will run. We then inject an object with a counter into that pipe. This object becomes the props that are used to render the app. Within our fragment we also have a button. Whenever we click it, we will inject new data into the pipe, thus triggering the Hart loop to run again.
 
 You may notice a couple of problems with this approach. For one, it's not very scalable and it's pretty prone to spaghetti. But now that you get the idea, let's introduce a more scalable technique:
 

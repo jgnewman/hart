@@ -1,12 +1,6 @@
 import {
   fragment,
   app,
-  render,
-  pipe,
-  asyncPipe,
-  tap,
-  inject,
-  leak,
   pass,
   effects,
 } from "../index"
@@ -26,137 +20,136 @@ const randomLetters = (len) => {
   return str
 }
 
-// const data = pipe()
-const data = asyncPipe()
 
-const updatePipe = (change) => {
-  const currentValue = leak(data)
-
+const updateApp = (change, currentValue) => {
   switch (change.type) {
     case "INIT":
-      return inject(data, {
+      return {
         ...currentValue,
         ...change.payload,
-      })
+      }
 
     case "UPDATE_COUNTER":
-      return inject(data, {
+      return {
         ...currentValue,
         counter: currentValue.counter + 1,
-      })
+      }
 
     case "CHANGE_TEXT_FIELD":
-      return inject(data, {
+      return {
         ...currentValue,
         textField: change.payload,
-      })
+      }
 
     case "CHANGE_CHECKBOX":
-      return inject(data, {
+      return {
         ...currentValue,
         checkbox: change.payload,
-      })
+      }
 
     case "TOGGLE_WELCOME":
-      return inject(data, {
+      return {
         ...currentValue,
         showWelcome: !currentValue.showWelcome,
-      })
+      }
 
     case "ADD_ITEM":
-      return inject(data, {
+      return {
         ...currentValue,
         listData: currentValue.listData.slice().concat({
           id: randomLetters(10),
           val: randomLetters(5),
         }),
-      })
+      }
 
     case "REMOVE_ITEM":
-      return inject(data, {
+      return {
         ...currentValue,
         listData: currentValue.listData.slice(0, currentValue.listData.length - 1),
-      })
+      }
 
     case "REVERSE_ITEM":
-      return inject(data, {
+      return {
         ...currentValue,
         listData: currentValue.listData.slice().reverse(),
-      })
+      }
 
     case "REORDER_ITEM":
       const curList = currentValue.listData
-      if (curList.length < 3) return
+      if (curList.length < 3) return currentValue
       const newList = curList.slice()
       newList[1] = curList[2]
       newList[2] = curList[1]
-      return inject(data, {
+      return {
         ...currentValue,
         listData: newList,
-      })
+      }
 
     case "REMOVE_CHILD_NAME":
-      return inject(data, {
+      return {
         ...currentValue,
         childNames: currentValue.childNames.slice(0, currentValue.childNames.length - 1),
-      })
+      }
 
     default:
-      return
+      return currentValue
   }
 }
 
+const reducer = app(updateApp)
+reducer.watch(newVal => console.log("NEW REDUCER VAL", newVal))
+
 const handleClickCounter = () => {
-  updatePipe({
+  reducer.update({
     type: "UPDATE_COUNTER",
   })
 }
 
 const handleClickAddItem = () => {
-  updatePipe({
+  reducer.update({
     type: "ADD_ITEM",
   })
 }
 
 const handleClickRemoveItem = () => {
-  updatePipe({
+  reducer.update({
     type: "REMOVE_ITEM",
   })
 }
 
 const handleClickRemoveChildName = () => {
-  updatePipe({
+  reducer.update({
     type: "REMOVE_CHILD_NAME",
   })
 }
 
 const handleClickReorderItem = () => {
-  updatePipe({
+  reducer.update({
     type: "REORDER_ITEM",
   })
 }
 
 const handleClickReverseItem = () => {
-  updatePipe({
+  reducer.update({
     type: "REVERSE_ITEM",
   })
 }
 
 const handleClickToggleWelcome = () => {
-  updatePipe({
+  reducer.update({
     type: "TOGGLE_WELCOME",
   })
 }
 
 const handleKeyupTextField = (evt) => {
-  updatePipe({
+  reducer.update({
     type: "CHANGE_TEXT_FIELD",
     payload: evt.target.value,
   })
 }
 
 const handleCheckbox = (evt) => {
-  updatePipe({
+  reducer.update({
     type: "CHANGE_CHECKBOX",
     payload: evt.target.checked,
   })
@@ -239,13 +232,10 @@ const RootFragment = fragment((props) => {
   )
 })
 
-const myApp = app(document.getElementById("app"), RootFragment)
-tap(data, (props) => {
-  // console.log("new props", props)
-  render(myApp, props)
-})
+const renderer = app(RootFragment, document.getElementById("app"))
+reducer.watch(newProps => renderer.update(newProps))
 
-updatePipe({
+reducer.update({
   type: "INIT",
   payload: {
     counter: 0,
@@ -272,51 +262,20 @@ console.log("chain:", chain)
 
 /*
 
-// old way
 
-    import { app, fragment, render, asyncPipe, inject, tap } from "hart"
-
-    const myPipe = asyncPipe()
-
-    const App = app(document.getElementById("app"), RootFragment) // necessary for tracking prev tree
-
-    const RootFragment = fragment(props => {
-      return <input type="text" value={props.value} onkeyup={(evt) => inject(myPipe, { value: evt.target.value })} />
-    })
-
-    tap(myPipe, (newVal) => render(App, newVal))
-
-    inject(myPipe, { value: "" })
-
-// new way
-
-    import { fragment, createLoop } from "hart"
+    import { fragment, app } from "hart"
 
     const Root = fragment(props => {
-      return <input type="text" value={props.value} onkeyup={(evt) => app.loop({ value: evt.target.value })} />
+      return <input type="text" value={props.value} onkeyup={(evt) => renderer.update({ value: evt.target.value })} />
     })
 
-    const app = createLoop(Root, document.getElementById("app")) // or createSyncLoop
+    const renderer = app(Root, document.getElementById("app")) // or appSync
 
-    app.loop({ value: "foo" })
+    renderer.update({ value: "foo" })
 
-To make this work:
-- IMPORTANT! We need the reducer to be able to live in a file other than where the app lives.
-  - The app and various fragments will live in separate files.
-  - The reducer must be available to the app (for binding) and to other files (for being called).
-  - Therefore the reducer CAN NOT depend on the app being available to it or any other files being available to it.
-  - It must be written in such a way that it can be imported by other files, and not import them.
-- Pipes no longer auto-grow. Values are just replaced.
-- createLoop will...
-  - if rootElem exists...
-    - create an asyncPipe
-    - create an app
-    - return a loop object that injects into the pipe
-  - if rootElem does not exist...
-    - just return a loop object with { onloop, loop }
-- We will also include createSyncLoop which will use a synchronous pipe
+// OR with a reducer...
 
-    const updater = createLoop((change, prevVal) => {
+    const reducer = app((change, prevVal) => {
       switch (change.type) {
         case "INIT":
           return { ...prevVal, ...action.payload }
@@ -325,7 +284,7 @@ To make this work:
       }
     })
 
-    updater.onloop(val => app.loop(val))
-    updater.loop({ type: "INIT", payload: { value: "foo" } }) // instead of app.loop above
+    reducer.watch(val => renderer.update(val))
+    reducer.update({ type: "INIT", payload: { value: "foo" } }) // instead of renderer.update above
 
 */

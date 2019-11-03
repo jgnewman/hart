@@ -3,6 +3,11 @@ import {
 } from "./helpers"
 
 import {
+  observable,
+  observableAsync,
+} from "./observables"
+
+import {
   SVG_NS,
   TEXT,
   LIST,
@@ -526,7 +531,7 @@ const fragment = (fn) => {
   return output
 }
 
-const app = (rootTarget, rootFragmentFn) => {
+const createApp = (rootFragmentFn, rootTarget) => {
   assertPureFragment(rootFragmentFn)
   let prevTree = null
   return () => {
@@ -568,10 +573,25 @@ const render = (appFn, props={}) => {
   }
 }
 
+const createObserver = (isAsync, fn, outputElem) => {
+  const observerCalc = outputElem ? null : fn
+  const observer = isAsync ? observableAsync(observerCalc) : observable(observerCalc)
+
+  if (outputElem) {
+    const app = createApp(fn, outputElem)
+    observer.watch(newVal => render(app, newVal))
+  }
+
+  return observer
+}
+
+const app = (fn, outputElem) => createObserver(true, fn, outputElem)
+const appSync = (fn, outputElem) => createObserver(false, fn, outputElem)
+
 fragment.hart = vNode
 
 export {
   fragment,
   app,
-  render,
+  appSync,
 }

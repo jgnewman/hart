@@ -10,6 +10,3 @@ export const UPDATE = "UPDATE"
 export const REORDER = "REORDER"
 export const SET = "SET"
 export const DELETE = "DELETE"
-export const PIPE_INJECT = Symbol()
-export const PIPE_TAP = Symbol()
-export const PIPE_GET = Symbol()
