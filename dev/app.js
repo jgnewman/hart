@@ -269,3 +269,63 @@ const mod = (toAdd, prevVal) => {
 
 const chain = pass("Hello").to(mod, " ").to(mod, "world").to(mod, "!")()
 console.log("chain:", chain)
+
+/*
+
+// old way
+
+    import { app, fragment, render, asyncPipe, inject, tap } from "hart"
+
+    const myPipe = asyncPipe()
+
+    const App = app(document.getElementById("app"), RootFragment) // necessary for tracking prev tree
+
+    const RootFragment = fragment(props => {
+      return <input type="text" value={props.value} onkeyup={(evt) => inject(myPipe, { value: evt.target.value })} />
+    })
+
+    tap(myPipe, (newVal) => render(App, newVal))
+
+    inject(myPipe, { value: "" })
+
+// new way
+
+    import { fragment, createLoop } from "hart"
+
+    const Root = fragment(props => {
+      return <input type="text" value={props.value} onkeyup={(evt) => app.loop({ value: evt.target.value })} />
+    })
+
+    const app = createLoop(Root, document.getElementById("app")) // or createSyncLoop
+
+    app.loop({ value: "foo" })
+
+To make this work:
+- IMPORTANT! We need the reducer to be able to live in a file other than where the app lives.
+  - The app and various fragments will live in separate files.
+  - The reducer must be available to the app (for binding) and to other files (for being called).
+  - Therefore the reducer CAN NOT depend on the app being available to it or any other files being available to it.
+  - It must be written in such a way that it can be imported by other files, and not import them.
+- Pipes no longer auto-grow. Values are just replaced.
+- createLoop will...
+  - if rootElem exists...
+    - create an asyncPipe
+    - create an app
+    - return a loop object that injects into the pipe
+  - if rootElem does not exist...
+    - just return a loop object with { onloop, loop }
+- We will also include createSyncLoop which will use a synchronous pipe
+
+    const updater = createLoop((change, prevVal) => {
+      switch (change.type) {
+        case "INIT":
+          return { ...prevVal, ...action.payload }
+        default:
+          return prevVal
+      }
+    })
+
+    updater.onloop(val => app.loop(val))
+    updater.loop({ type: "INIT", payload: { value: "foo" } }) // instead of app.loop above
+
+*/
