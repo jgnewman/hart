@@ -113,16 +113,15 @@ Interestingly, a Hart app doesn't strictly have to render HTML into the DOM. You
 ```javascript
 import { app } from "hart"
 
-const inc = (data) => {
+const counter = app((data) => {
   console.log(data.value)
   setTimeout(() => counter.update({ ...data, counter: data.value + 1 }), 1000)
-}
+})
 
-const counter = app(inc)
 counter.update({ value: 0 })
 ```
 
-This may not seem like a very useful pattern at first. However, what makes it powerful is the fact that Hart apps are observable, meaning you can register a function to run whenever one of your apps is updated. With this in mind, it becomes possible to make 2 Hart apps work together toward a common goal:
+This may not seem like a very useful pattern at first. However, what makes it powerful is the fact that Hart apps are observable, meaning you can register a function to run whenever one of your apps is updated. This allows us to make 2 Hart apps work together toward a common goal:
 
 ```javascript
 import { fragment, app } from "hart"
