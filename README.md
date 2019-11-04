@@ -261,10 +261,12 @@ const handleButtonClick = () => {
 
 const renderer = app(
   fragment((props) => {
-    <div>
-      {props.counter}
-      <button onclick={handleClickButton}>Click me</button>
-    </div>
+    return (
+      <div>
+        {props.counter}
+        <button onclick={handleClickButton}>Click me</button>
+      </div>
+    )
   }),
   document.getElementById("root")
 )
@@ -276,140 +278,49 @@ reducer.update({
 })
 ```
 
-This example ought to feel very familiar to anyone who's ever used Redux.
+This example ought to feel very familiar to anyone who's ever used [Redux](https://redux.js.org/). Here, we've created two apps. The `reducer` app does nothing but give us a predicable way to transform one object into another. It doesn't need to know about our `renderer` app at all and therefore allows us to avoid circular import problems. Additionally, by ensuring that all transformations happen in one place, we can avoid the spaghetti we would inevitably see if we were to perform these transformations all across our fragments.
 
+Our `renderer` app, on the other hand, relies on the data provided by the `reducer`. Whenever the reducer runs, our watcher function will take its value and call `update` on the renderer. This pattern makes it extremely easy to build Hart applications, no fancy middleware, or 3rd party tools required.
 
-> TODO: Pick up here talking about the Hart loop and show how the new pattern works. Don't forget to explain the option of using appSync.
+#### Batched updates
 
-
-
-
-You may notice a couple of problems with this approach. For one, it's not very scalable and it's pretty prone to spaghetti. But now that you get the idea, let's introduce a more scalable technique:
+By default, applications wrapped in Hart's `app` function are asynchronous. In other words, whenever you call `update`, your app function doesn't _immediately_ run. Instead, new data is generated from your update and your app function is queued to run again on the next native run loop. This allows us to avoid cases where we fire multiple updates in quick succession, recalculating every fragment, diffing the virtual DOM, and updating the real DOM for each of those updates. Rather, your app will re-render only once for every update triggered within a single native event loop. Consider the following:
 
 ```javascript
-import { fragment, app, render } from "hart"
-import { pipe, tap, leak, inject } from "hart"
+import { fragment, app } from "hart"
 
-const appData = pipe()
-
-const updatePipe = (change) => {
-  const currentValue = leak(appData)
-
+const reducer = app((change, prev) => {
   switch (change.type) {
-    case "INIT":
-      return inject(appData, {
-        ...currentValue,
-        ...change.payload,
-      })
-
-    case "UPDATE_COUNTER":
-      return inject(appData, {
-        ...currentValue,
-        counter: currentValue.counter + 1,
-      })
-
-    default:
-      return
+    case "INIT": return { ...prev, ...change.payload }
+    case "UPDATE_COUNTER": return { ...prev, counter: prev.counter + 1 }
+    default: return prev
   }
-}
-
-const handleClickButton = () => {
-  updatePipe({
-    type: "UPDATE_COUNTER",
-  })
-}
-
-const RootFragment = fragment((props) => (
-  <div>
-    {props.counter}
-    <button onclick={handleClickButton}>
-      Click me
-    </button>
-  </div>
-))
-
-const myApp = app(document.getElementById("root"), RootFragment)
-tap(appData, (props) => render(myApp, props))
-
-updatePipe({
-  type: "INIT",
-  payload: { counter: 0 },
 })
-```
 
-We now have the beginnings of a highly scalable application architecture. In this example, the entire application responds to a single pipe. This pipe only gets updated in one way – via the `updatePipe` function. This function takes a "change object" and updates the pipe in a predictable way based on the type of change we give it. Notice that we've introduced a new function (`leak`) here, which just grabs the current value of a pipe. Whenever we inject new data into the pipe, we make sure to copy the old data as well.
+const renderer = app(
+  fragment((props) => <div>{props.counter}</div>),
+  document.getElementById("root")
+)
 
-Within our fragment, the button's click handler simply calls `updatePipe` and passes in a change object. Later, when we want to get the app started, we call `updatePipe` and pass in a change that sets our initial data. Because we have tapped our pipe with a function that triggers a render call, the DOM will respond whenever we fire a change.
+reducer.watch(newData => renderer.update(newData))
 
-If you've used [Redux](https://redux.js.org/) before, this should all look very familiar. However, since you will be manually calling the `updatePipe` function and the `inject` function, there is no need for plugins and magic middleware. Your updates can be synchronous or asynchronous, or become as complex as you like. It'll work with anything right out of the box.
-
-Speaking of going asynchronous...
-
-#### Batching updates
-
-Hart tries to avoid doing too many unexpected things behind the scenes. As such, updating your application is synchronous by default. This means that if you inject data into a pipe multiple times in quick succession (if you have some process that triggers a sequence of changes, for example), the DOM will update in response to each change.
-
-This may not be what you want, given that a Hart app is supposed to be declarative and purely functional. What would be really nice would be the ability to combine all the data changes created within a single event loop and trigger a DOM update only once with a final value.
-
-To do this, just use the `asyncPipe` function instead of the `pipe` function. You don't need to change anything else about your application. Assuming you haven't hacked any non-functional code into it (which you shouldn't have!), everything should work the same way, but you'll be re-rendering a lot less frequently.
-
-```javascript
-import {
-  fragment,
-  app,
-  render,
-  asyncPipe,
-  tap,
-  inject,
-} from "hart"
-
-const appData = asyncPipe()
-
-const updatePipe = (change) => {
-  const currentValue = leak(appData)
-
-  switch (change.type) {
-    case "INIT":
-      return inject(appData, {
-        ...currentValue,
-        ...change.payload,
-      })
-
-    case "UPDATE_COUNTER":
-      return inject(appData, {
-        ...currentValue,
-        counter: currentValue.counter + 1,
-      })
-
-    default:
-      return
-  }
-}
-
-const RootFragment = fragment((props) => (
-  <div>
-    {props.counter}
-  </div>
-))
-
-const myApp = app(document.getElementById("root"), RootFragment)
-tap(appData, (props) => render(myApp, props))
-
-updatePipe({
+reducer.update({
   type: "INIT",
-  payload: { counter: 0 },
+  payload: { counter: 0 }
 })
 
 setTimeout(() => {
   let i = 0
   while (i < 10) {
     i++
-    updatePipe({ type: "UPDATE_COUNTER" })
+    reducer.update({ type: "UPDATE_COUNTER" })
   }
 }, 0)
 ```
 
-In this example, the DOM is updated exactly twice, even though 11 total changes are triggered. In the first event loop, the DOM is updated and rendered with initial data. In a separate run loop triggered by the timeout, the counter is incremented 10 times and the DOM updates only once at the end to display the number 10.
+In this example, although `reducer.update` is called 11 times, our renderer only recalculates and updates the DOM twice (once for the "INIT" update, and once for all 10 "UPDATE_COUNTER" updates).
+
+Normally, because Hart apps are functional, this nuance will be entirely invisible to you, provided you aren't trying to hack some kind of local state into your fragments (which you shouldn't be!). It will, however, allow your app to maximize its speed and efficiency. If, for some reason, you find yourself needing your app to run synchronously, you can achieve this by using the `appSync` function instead of the `app` function, although you will incur an efficiency penalty in doing so. Fortunately, that penalty will not be worse than using any other framework that re-renders synchronously for every update.
 
 ### Optimizing
 
@@ -422,28 +333,28 @@ In Hart this is a little simpler. As long as you aren't trying to hack some kind
 In the following case, without using `id`s, `NestedFrag` will re-compute once every second.
 
 ```javascript
-const rootFrag = fragment((props) => {
+const RootFrag = fragment((props) => {
   return <NestedFrag value={props.value}/>
 })
 
-const myApp = app(rootNode, rootFrag)
+const renderer = app(RootFrag, rootNode)
 
 setInterval(() => {
-  render(myApp, { value: "Hello, world!" })
+  renderer.update({ value: "Hello, world!" })
 }, 1000)
 ```
 
 However, by introducing the `id` prop, `NestedFrag` will only recompute when its props change. Since they never do, it will only compute once.
 
 ```javascript
-const rootFrag = fragment((props) => {
+const RootFrag = fragment((props) => {
   return <NestedFrag id="foo" value={props.value}/>
 })
 
-const myApp = app(rootNode, rootFrag)
+const renderer = app(RootFrag, rootNOde)
 
 setInterval(() => {
-  render(myApp, { value: "Hello, world!" })
+  renderer.update({ value: "Hello, world!" })
 }, 1000)
 ```
 

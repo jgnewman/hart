@@ -20,8 +20,7 @@ const randomLetters = (len) => {
   return str
 }
 
-
-const updateApp = (change, currentValue) => {
+const reducer = app((change, currentValue) => {
   switch (change.type) {
     case "INIT":
       return {
@@ -94,9 +93,8 @@ const updateApp = (change, currentValue) => {
     default:
       return currentValue
   }
-}
+})
 
-const reducer = app(updateApp)
 reducer.watch(newVal => console.log("NEW REDUCER VAL", newVal))
 
 const handleClickCounter = () => {
