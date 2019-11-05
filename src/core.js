@@ -45,9 +45,9 @@ const assertPureFragment = (fn) => {
   if (fn[PROOF] !== PROOF) {
     let err
     if (fn.name) {
-      err = `${fn.name} should be wrapped in a \`hart\` call.`
+      err = `${fn.name} should be wrapped in a \`fragment\` call.`
     } else {
-      err = `All fragments must be defined using the \`hart\` function.`
+      err = `All fragments must be defined using the \`fragment\` function.`
     }
     throw new Error(err)
   }

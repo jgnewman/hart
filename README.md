@@ -486,4 +486,4 @@ In these examples, you should be able to see how arguments are passed down the c
 
 Part of Hart's philosophy is that its core should be as tiny as possible to facilitate web apps everywhere. However, there are solutions to a few common use cases that lie outside the responsibilities of the core framework that you can include in your build as desired. Those solutions are _coming soon..._
 
-> **TODO:** Finish unit tests (apps, effects, dom updates). Also, I think chains could be better. Also, can we do some benchmarks?
+> **TODO:** Finish unit tests (effects, dom updates). Also, I think chains could be better. Also, can we do some benchmarks?

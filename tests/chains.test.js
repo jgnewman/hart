@@ -26,7 +26,7 @@ describe("Chains", function () {
     const page = await this.browser.getPage()
     this.page = page
 
-    this.page.on('console', msg => {
+    this.page.on("console", msg => {
       console.log(msg.text())
     })
 
