@@ -180,7 +180,7 @@ describe("Virtual Nodes", function () {
           }
           return error.message
         })
-        assert.equal(result, "FnNode should be wrapped in a `hart` call.")
+        assert.equal(result, "FnNode should be wrapped in a `fragment` call.")
       })
 
       it("succeeds if the function has been wrapped in `fragment`", async function () {
