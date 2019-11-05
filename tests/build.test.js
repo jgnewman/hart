@@ -15,7 +15,7 @@ const SERVER_ROUTES = [
   },
 ]
 
-describe("Behavior", function () {
+describe("Build", function () {
 
   before(async function () {
     this.browser = new Chromatica({
@@ -33,30 +33,23 @@ describe("Behavior", function () {
     await this.browser.closeBrowser()
   })
 
-  describe("Build", function () {
-    it("exports all expected values", async function () {
-      const result = await this.page.evaluate(() => {
-        const hart = window.hart || {}
-        const out = {}
-        for (let i in hart) {
-          if (hart.hasOwnProperty(i)) {
-            out[i] = !!hart[i]
-          }
+  it("exports all expected values", async function () {
+    const result = await this.page.evaluate(() => {
+      const hart = window.hart || {}
+      const out = {}
+      for (let i in hart) {
+        if (hart.hasOwnProperty(i)) {
+          out[i] = !!hart[i]
         }
-        return out
-      })
-
-      assert.ok(result.fragment, "Exports the `fragment` function")
-      assert.ok(result.app, "Exports the `app` function")
-      assert.ok(result.render, "Exports the `render` function")
-      assert.ok(result.pipe, "Exports the `pipe` function")
-      assert.ok(result.asyncPipe, "Exports the `asyncPipe` function")
-      assert.ok(result.tap, "Exports the `tap` function")
-      assert.ok(result.inject, "Exports the `inject` function")
-      assert.ok(result.leak, "Exports the `leak` function")
-      assert.ok(result.pass, "Exports the `pass` function")
-      assert.ok(result.effects, "Exports the `effects` function")
+      }
+      return out
     })
+
+    assert.ok(result.fragment, "Exports the `fragment` function")
+    assert.ok(result.app, "Exports the `app` function")
+    assert.ok(result.appSync, "Exports the `app` function")
+    assert.ok(result.pass, "Exports the `pass` function")
+    assert.ok(result.effects, "Exports the `effects` function")
   })
 
 })

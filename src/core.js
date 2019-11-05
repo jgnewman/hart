@@ -203,6 +203,8 @@ const vNode = (tag, attrs, ...children) => {
 
   node.children = []
   const childIterator = child => {
+    if (child === null || child === undefined || child === false) return
+
     if (child[CHILD] === CHILD) return !child.nodes ? null : child.nodes.forEach(c => childIterator(c))
 
     let childNode
@@ -219,9 +221,6 @@ const vNode = (tag, attrs, ...children) => {
         n.parent = node
         childNode.keyCache[n.attrs.key] = { node: n, pos: i }
       })
-
-    } else if (child === null || child === undefined || child === false) {
-      return
 
     } else if (typeof child === "object") {
       childNode = child
