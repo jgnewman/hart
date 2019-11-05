@@ -15,7 +15,7 @@ const SERVER_ROUTES = [
   },
 ]
 
-describe("Core", function () {
+describe("Virtual Nodes", function () {
 
   before(async function () {
     this.browser = new Chromatica({
@@ -25,6 +25,10 @@ describe("Core", function () {
 
     const page = await this.browser.getPage()
     this.page = page
+
+    this.page.on('console', msg => {
+      console.log(msg.text())
+    })
 
   })
 
@@ -163,41 +167,77 @@ describe("Core", function () {
       })
     })
 
-    context("when a child node is a function", function () {
-      // fails if it doesn't have fragment proof
-      // passes in props and children
-      // provides children as a single object
-      // passes key prop down to its output child
+    context("when a node is a function", function () {
+      it("fails if the function hasn't been wrapped in `fragment`", async function () {
+        const result = await this.page.evaluate(() => {
+          const node = hart.fragment.hart
+          const FnNode = () => node("span")
+          let error = null
+          try {
+            const tree = node(FnNode)
+          } catch (err) {
+            error = err
+          }
+          return error.message
+        })
+        assert.equal(result, "FnNode should be wrapped in a `hart` call.")
+      })
+
+      it("succeeds if the function has been wrapped in `fragment`", async function () {
+        const result = await this.page.evaluate(() => {
+          const node = hart.fragment.hart
+          const FnNode = hart.fragment(() => node("span"))
+          let error = null
+          try {
+            const tree = node(FnNode)
+          } catch (err) {
+            error = err
+          }
+          return error
+        })
+        assert.equal(result, null)
+      })
+
+      it("executes the function with correct props", async function () {
+        const result = await this.page.evaluate(() => {
+          const node = hart.fragment.hart
+          let receivedProps = null
+          const FnNode = hart.fragment((props) => {
+            receivedProps = { ...props }
+            return node("span")
+          })
+          const tree = node(FnNode, { id: "foo" })
+          return receivedProps
+        })
+        assert.deepEqual(result, { id: "foo" })
+      })
+
+      it("executes the function with a children object", async function () {
+        const result = await this.page.evaluate(() => {
+          const node = hart.fragment.hart
+          let receivedChildren = null
+          const FnNode = hart.fragment((_, children) => {
+            receivedChildren = { ...children }
+            return node("span")
+          })
+          const tree = node(FnNode, null, node("span"))
+          return receivedChildren.nodes.length
+        })
+        assert.equal(result, 1)
+      })
+
+      context("when there is a key prop", function () {
+        it("transfers the key to its output node", async function () {
+          const result = await this.page.evaluate(() => {
+            const node = hart.fragment.hart
+            const FnNode = hart.fragment(() => node("span"))
+            const tree = node(FnNode, { key: "foo" }, node("span"))
+            return tree.attrs
+          })
+          assert.deepEqual(result, { key: "foo" })
+        })
+      })
+
     })
-  })
-
-  describe("fragment", function () {
-    // it("passes an argument between functions", async function () {
-    //   const result = await this.page.evaluate(() => {
-    //     const mod = (toAdd, prevVal) => prevVal + toAdd
-    //     return hart.pass("Hello").to(mod, " ").to(mod, "world").to(mod, "!")()
-    //   })
-    //   assert.equal(result, "Hello world!")
-    // })
-  })
-
-  describe("app", function () {
-    // it("passes an argument between functions", async function () {
-    //   const result = await this.page.evaluate(() => {
-    //     const mod = (toAdd, prevVal) => prevVal + toAdd
-    //     return hart.pass("Hello").to(mod, " ").to(mod, "world").to(mod, "!")()
-    //   })
-    //   assert.equal(result, "Hello world!")
-    // })
-  })
-
-  describe("appSync", function () {
-    // it("passes an argument between functions", async function () {
-    //   const result = await this.page.evaluate(() => {
-    //     const mod = (toAdd, prevVal) => prevVal + toAdd
-    //     return hart.pass("Hello").to(mod, " ").to(mod, "world").to(mod, "!")()
-    //   })
-    //   assert.equal(result, "Hello world!")
-    // })
   })
 })

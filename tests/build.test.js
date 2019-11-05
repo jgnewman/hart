@@ -26,6 +26,10 @@ describe("Build", function () {
     const page = await this.browser.getPage()
     this.page = page
 
+    this.page.on('console', msg => {
+      console.log(msg.text())
+    })
+
   })
 
   after(async function () {

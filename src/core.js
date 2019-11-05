@@ -522,7 +522,7 @@ const fragment = (fn) => {
 
     prevCache.props = props
     prevCache.node = nextNode
-    prevCache.childLength === nextChildLength
+    prevCache.childLength = nextChildLength
     return nextNode
   }
 
