@@ -94,14 +94,15 @@ describe("Apps", function () {
       const result = await this.page.evaluate(async () => {
         const fragment = hart.fragment
         const node = hart.fragment.hart
+        const id = "a" + Math.random().toString().slice(2)
 
-        const Frag = fragment(props => node("span", {id: "my-span"}, props.name))
+        const Frag = fragment(props => node("span", {id: id}, props.name))
         const app = hart.app(Frag, document.querySelector("#root"))
 
         app.update({ name: "John" })
         await new Promise(resolve => setTimeout(resolve, 10))
 
-        const span = document.querySelector("#my-span")
+        const span = document.querySelector("#" + id)
         return span.innerHTML.trim()
       })
       assert.equal(result, "John")
@@ -165,14 +166,15 @@ describe("Apps", function () {
       const result = await this.page.evaluate(async () => {
         const fragment = hart.fragment
         const node = hart.fragment.hart
+        const id = "a" + Math.random().toString().slice(2)
 
-        const Frag = fragment(props => node("span", {id: "my-span"}, props.name))
+        const Frag = fragment(props => node("span", {id: id}, props.name))
         const app = hart.appSync(Frag, document.querySelector("#root"))
 
         app.update({ name: "John" })
         await new Promise(resolve => setTimeout(resolve, 10))
 
-        const span = document.querySelector("#my-span")
+        const span = document.querySelector("#" + id)
         return span.innerHTML.trim()
       })
       assert.equal(result, "John")

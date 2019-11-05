@@ -63,11 +63,6 @@ if (process.env.NODE_ENV === "production") {
 
 if (process.env.NODE_ENV === "test") {
   config.entry.hart = "./tests/templates/base.js"
-
-  config.plugins.push(new CompressionPlugin({
-    algorithm: "brotliCompress",
-    compressionOptions: { level: 11 },
-  }))
 }
 
 module.exports = config

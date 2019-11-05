@@ -7,7 +7,7 @@ const Frag = fragment(props => {
   }
 
   const input2focushandler = () => {
-    refs().input.blur()
+    refs().input1.blur()
   }
 
   const mount = onmount((props) => {
@@ -36,7 +36,7 @@ export const effects = () => {
       references[localRef] = vnode
     }
 
-    vnode.children.forEach(child => !child.component && captureRefs(child))
+    vnode.children.forEach(child => !child.fragment && captureRefs(child))
     return vnode
   }
 

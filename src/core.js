@@ -547,6 +547,7 @@ const render = (appFn, props={}) => {
   const { rootTarget, rootFragmentFn, prevTree, setPrevTree } = appFn()
 
   const nextTree = rootFragmentFn(props)
+  nextTree.parent = { html: rootTarget }
   setPrevTree(nextTree)
 
   if (!prevTree) {

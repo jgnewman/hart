@@ -71,13 +71,14 @@ describe("Fragments", function () {
         const result = await this.page.evaluate(() => {
           const node = hart.fragment.hart
           const fragment = hart.fragment
+          const id = "a" + Math.random().toString().slice(2)
           let inc = 0
           const frag = fragment(() => {
             inc += 1
             return node("span")
           })
-          frag({ id: "foo" }, { nodes: [node("span")] })
-          frag({ id: "foo" }, { nodes: [node("span")] })
+          frag({ id: id }, { nodes: [node("span")] })
+          frag({ id: id }, { nodes: [node("span")] })
           return inc
         })
         assert.equal(result, 2)
@@ -90,13 +91,14 @@ describe("Fragments", function () {
           const result = await this.page.evaluate(() => {
             const node = hart.fragment.hart
             const fragment = hart.fragment
+            const id = "a" + Math.random().toString().slice(2)
             let inc = 0
             const frag = fragment(() => {
               inc += 1
               return node("span")
             })
-            frag({ id: "foo", class: "bar" })
-            frag({ id: "foo", class: "baz" })
+            frag({ id: id, class: "bar" })
+            frag({ id: id, class: "baz" })
             return inc
           })
           assert.equal(result, 2)
@@ -108,14 +110,15 @@ describe("Fragments", function () {
           const result = await this.page.evaluate(() => {
             const node = hart.fragment.hart
             const fragment = hart.fragment
+            const id = "a" + Math.random().toString().slice(2)
             let inc = 0
             const frag = fragment(() => {
               inc += 1
               return node("span")
             })
-            frag({ id: "foo", class: "bar" })
-            frag({ id: "foo", class: "bar" })
-            frag({ id: "foo", class: "bar" })
+            frag({ id: id, class: "bar" })
+            frag({ id: id, class: "bar" })
+            frag({ id: id, class: "bar" })
             return inc
           })
           assert.equal(result, 1)
