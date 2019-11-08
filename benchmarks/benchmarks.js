@@ -1,78 +1,21 @@
 import { fragment, app, appSync } from "../index"
+import SvelteApp from "./svelte-benchmark"
+import {
+  largeArr,
+  smallArr,
+  defer,
+  next,
+  end,
+  populateOutput,
+  registerTest,
+  init
+} from "./setup"
 
 const hCreate = fragment.hart
 const rCreate = React.createElement
 const pCreate = preact.createElement
 
-const ITERATIONS = 10
-const MAX_ITEMS = 10000
-
-const largeArr = []
-const smallArr = []
-for (let i = 0; i < MAX_ITEMS; i += 1) {
-  largeArr.push(i)
-  i % 2 === 0 && smallArr[i % 3 === 0 ? 'unshift' : 'push'](i)
-}
-
-function average(arr) {
-  let total = 0;
-  arr.forEach(item => total += item)
-  const rawAvg = (total / arr.length) / 1000
-  return Math.round(rawAvg * 10000) / 10000
-}
-
-function defer(fn, time) {
-  setTimeout(fn, time || 0)
-}
-
-let timesRan = 0
-let durations = []
-let currentTest = null
-
-function next() {
-  const fns = [goHart, goVue, goReact, goPreact]
-  timesRan = 0
-  durations = []
-  if (!currentTest) {
-    currentTest = fns[0]
-    return currentTest()
-  }
-  const index = fns.indexOf(currentTest)
-  currentTest = fns[index + 1] || null
-  if (!currentTest) return;
-  return currentTest()
-}
-
-document.querySelector('#go').addEventListener('click', () => {
-  document.querySelector('#hart-output').innerHTML = ''
-  document.querySelector('#react-output').innerHTML = ''
-  document.querySelector('#preact-output').innerHTML = ''
-  document.querySelector('#vue-output').innerHTML = ''
-  currentTest = null
-  next()
-})
-
-function end(beginStamp, outputNode, rootNode, recurser) {
-  defer(() => {
-    const endStamp = performance.now()
-    timesRan += 1
-    durations.push(endStamp - beginStamp)
-    if (timesRan < ITERATIONS) {
-      outputNode.innerHTML = outputNode.innerHTML + '.'
-      recurser()
-    } else {
-      outputNode.innerHTML = `Average seconds: ${average(durations)}`
-      rootNode.innerHTML = ""
-      defer(next, 1000)
-    }
-  })
-}
-
-function populateOutput(outputNode) {
-  if (!outputNode.innerHTML.trim()) {
-    outputNode.innerHTML = 'Running...'
-  }
-}
+init()
 
 /*************************************************************************
 * Test functions after this point
@@ -97,6 +40,12 @@ function populateOutput(outputNode) {
 * Also make sure to clear the text from your associated output in the
 * click handler for the go button.
 *************************************************************************/
+
+registerTest(goHart)
+registerTest(goVue)
+registerTest(goReact)
+registerTest(goPreact)
+registerTest(goSvelte)
 
 // Test for Hart
 function goHart() {
@@ -262,7 +211,7 @@ function goPreact() {
   const output = document.querySelector('#preact-output')
   const rootNode = document.querySelector('#preact-app')
 
-  document.querySelector('#preact-app').innerHTML = ''
+  rootNode.innerHTML = ''
 
   const skip = document.querySelector('#preact-skip')
   if (skip.checked) return defer(next)
@@ -300,4 +249,31 @@ function goPreact() {
   beginStamp = performance.now()
   const instance = preact.createElement(MyApp)
   preact.render(instance, document.querySelector('#preact-app'))
+}
+
+// Test for Svelte
+function goSvelte() {
+  let beginStamp = null
+  const output = document.querySelector('#svelte-output')
+  const rootNode = document.querySelector('#svelte-app')
+
+  rootNode.innerHTML = ''
+
+  const skip = document.querySelector('#svelte-skip')
+  if (skip.checked) return defer(next)
+
+  populateOutput(output)
+
+  beginStamp = performance.now()
+
+  const svelteApp = new SvelteApp({
+    target: rootNode,
+    props: {
+      largeArr,
+      smallArr,
+      finish: () => {
+        defer(() => end(beginStamp, output, rootNode, goSvelte))
+      },
+    }
+  })
 }

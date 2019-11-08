@@ -13,7 +13,7 @@ const config = {
   },
 
   resolve: {
-    extensions: [".js", ".jsx"],
+    extensions: [".js", ".svelte"],
   },
 
   plugins: [
@@ -23,7 +23,7 @@ const config = {
   module: {
     rules: [
       {
-        test: /\.jsx?$/,
+        test: /\.js?$/,
         include: path.resolve(__dirname, "./dev"),
         use: [
           {
@@ -31,10 +31,18 @@ const config = {
             options: {
               plugins: [["@babel/plugin-transform-react-jsx", {
                 pragma: "fragment.hart"
-              }]]
-            }
+              }]],
+            },
           },
-        ]
+        ],
+      },
+      {
+        test: /\.svelte$/,
+        use: [
+          {
+            loader: "svelte-loader",
+          },
+        ],
       },
     ]
   }
@@ -53,7 +61,7 @@ if (process.env.NODE_ENV === "development") {
 }
 
 if (process.env.NODE_ENV === "benchmark") {
-  config.entry.benchmark = "./benchmarks/benchmark.js"
+  config.entry.benchmark = "./benchmarks/benchmarks.js"
 
   config.plugins.push(new HtmlWebPackPlugin({
     template: "./benchmarks/index.html",
