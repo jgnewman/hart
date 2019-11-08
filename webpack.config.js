@@ -52,6 +52,16 @@ if (process.env.NODE_ENV === "development") {
   }))
 }
 
+if (process.env.NODE_ENV === "benchmark") {
+  config.entry.benchmark = "./benchmarks/benchmark.js"
+
+  config.plugins.push(new HtmlWebPackPlugin({
+    template: "./benchmarks/index.html",
+    filename: "./index.html",
+    vars: {}
+  }))
+}
+
 if (process.env.NODE_ENV === "production") {
   config.entry.hart = "./index.js"
 

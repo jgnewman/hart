@@ -24,6 +24,7 @@ Though tiny (**<9.5kB minified** and **~3kB gzipped**), Hart is geared toward sc
   - [Referencing DOM nodes](#referencing-dom-nodes)
 - [Chains](#chains)
 - [Prefab fragments](#prefab-fragments)
+- [Benchmarks](#benchmarks)
 
 ## Getting set up
 
@@ -448,4 +449,26 @@ In these examples, you should be able to see how arguments are passed down the c
 
 Part of Hart's philosophy is that its core should be as tiny as possible to facilitate web apps everywhere. However, there are solutions to a few common use cases that lie outside the responsibilities of the core framework that you can include in your build as desired. Those solutions are _coming soon..._
 
-> **TODO:** I think chains could be better. Also, can we do some benchmarks?
+## Benchmarks
+
+To help you understand what kind of performance Hart delivers, I've put together some informal benchmarks that you can run yourself by cloning this repo, installing dependencies, and running `yarn benchmark`.
+
+The test pits Hart against a few popular frameworks, having each perform the following tasks over 10 iterations using the most optimized scenario for each (not including manually available optimizations), and then taking the mean time over the iterations:
+
+- Set up an app designed to respond to an array of numbers where each number represents an html list item to be rendered by the app
+- Populate a large array and a small array by the following algorithm: `largeArr.push(i); i % 2 === 0 && smallArr[i % 3 === 0 ? 'unshift' : 'push'](i)`
+- Render an empty `ul`
+- Recalculate using the large array
+- Recalculate using the small array
+- Recalculate using the large array
+
+These tasks are designed to force the framework to add, remove, and resort 10,000 items, which are some of the most DOM-intensive tasks. Performance, then will be based on the framework's ability to optimize data calculations and minimize reflows/repaints of the DOM. Here is how they stack up:
+
+```
+Hart v0.0.1            0.4532 seconds   ■■■■■■■■■■■■■■■
+Vue v2.6.10            0.5195 seconds   ■■■■■■■■■■■■■■■■■
+Preact v8.5.2          0.5637 seconds   ■■■■■■■■■■■■■■■■■■■
+React v16.10.2         1.0974 seconds   ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+```
+
+> **TODO:** Add Svelte to benchmarks

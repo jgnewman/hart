@@ -11,7 +11,7 @@ import {
   SVG_NS,
   TEXT,
   LIST,
-  CHILD,
+  CHILD_PACK,
   PROOF,
   ADD,
   REMOVE,
@@ -164,7 +164,7 @@ const controlInputWithProp = (tag, attrs) => {
 }
 
 const childPack = (children=null) => ({
-  [CHILD]: CHILD,
+  [CHILD_PACK]: CHILD_PACK,
   nodes: children,
 })
 
@@ -178,8 +178,12 @@ const vNode = (tag, attrs, ...children) => {
     const out = tag(attrs, childPack(children))
     out.fragment = true
 
-    if (attrs.key) {
+    if (attrs.hasOwnProperty("key")) {
       out.attrs.key = attrs.key
+    }
+
+    if (attrs.hasOwnProperty("id")) {
+      out.attrs.id = out.attrs.id || attrs.id
     }
 
     if (controllingProp) {
@@ -205,7 +209,7 @@ const vNode = (tag, attrs, ...children) => {
   const childIterator = child => {
     if (child === null || child === undefined || child === false) return
 
-    if (child[CHILD] === CHILD) return !child.nodes ? null : child.nodes.forEach(c => childIterator(c))
+    if (child[CHILD_PACK] === CHILD_PACK) return !child.nodes ? null : child.nodes.forEach(c => childIterator(c))
 
     let childNode
 

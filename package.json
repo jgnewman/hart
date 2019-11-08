@@ -29,7 +29,8 @@
   "scripts": {
     "dev": "NODE_ENV=development webpack-dev-server --mode development --progress --inline",
     "measure": "NODE_ENV=production webpack --mode production --progress --inline",
-    "test": "NODE_ENV=test webpack --mode development && mocha tests/${FILE:='*.test.js'} --timeout 10000"
+    "test": "NODE_ENV=test webpack --mode development && mocha tests/${FILE:='*.test.js'} --timeout 10000",
+    "benchmark": "NODE_ENV=benchmark webpack-dev-server --mode production --progress --inline"
   },
   "devDependencies": {
     "@babel/core": "^7.6.4",

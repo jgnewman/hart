@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>benchmarks</title>
+    <style type="text/css">
+      .container {
+        float: left;
+        width: 200px;
+        padding: 10px;
+        margin-top: 10px;
+        background: #eaeaea;
+      }
+      .container:nth-child(even) {
+        background: #fafafa;
+      }
+      .output {
+        display:block;
+        height: 25px;
+      }
+    </style>
+  </head>
+  <body>
+
+    <h1>Informal Benchmarks!</h1>
+    <p>This test requires Chrome 78 or higher.</p>
+    <p>We're going to render 10,000 elements, remove half of them and re-sort, then re-sort again while adding them back in.</p>
+    <p>
+      Worthy of note: I've had requests to benchmark against morphdom in the past.
+      The reason you don't see it here is because, when I tried to write a test
+      case for it, it turned out that manipulating the real DOM was so incredibly slow
+      and expensive that it repeatedly crashed the browser, even when I
+      attempted to reduce the test load by 90%. I have a suspicion that you
+      would get the same result from any similar real-DOM manipulation library.
+    </p>
+
+    <div>
+      <button id="go">Run test</button>
+    </div>
+
+    <!-- lightningDOM output -->
+    <div id="hart-container" class="container">
+      <input id="hart-skip" type="checkbox"/> Skip test
+      <h2>Hart</h2>
+      <span id="hart-output" class="output"></span>
+      <div id="hart-app"></div>
+    </div>
+
+    <!-- vue output -->
+    <div id="vue-container" class="container">
+      <input id="vue-skip" type="checkbox"/> Skip test
+      <h2>Vue</h2>
+      <span id="vue-output" class="output"></span>
+      <div id="vue-app">
+        <ul id="vue-list">
+          <li v-for="item in items" :key="item">{{item}}</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- react output -->
+    <div id="react-container" class="container">
+      <input id="react-skip" type="checkbox"/> Skip test
+      <h2>React</h2>
+      <span id="react-output" class="output"></span>
+      <div id="react-app"></div>
+    </div>
+
+    <!-- preact output -->
+    <div id="preact-container" class="container">
+      <input id="preact-skip" type="checkbox"/> Skip test
+      <h2>Preact</h2>
+      <span id="preact-output" class="output"></span>
+      <div id="preact-app"></div>
+    </div>
+
+    <!-- svelte output -->
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/16.10.2/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/16.10.2/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/preact/8.5.2/preact.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.10/vue.min.js"></script>
+
+  </body>
+</html>

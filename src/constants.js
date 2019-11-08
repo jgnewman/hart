@@ -1,7 +1,7 @@
 export const SVG_NS = "http://www.w3.org/2000/svg"
 export const TEXT = Symbol.for("TEXT")
 export const LIST = Symbol.for("LIST")
-export const CHILD = Symbol()
+export const CHILD_PACK = Symbol()
 export const PROOF = Symbol()
 export const ADD = "ADD"
 export const REMOVE = "REMOVE"
