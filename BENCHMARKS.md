@@ -26,23 +26,23 @@ These tasks are designed to force the framework to add, remove, and sort HTML ba
 Here is how our frameworks stack up (smaller is better):
 
 ```
-Hart v0.0.1            0.4205 seconds   ■■■■■■■■■■■■■■
-Vue v2.6.10            0.5195 seconds   ■■■■■■■■■■■■■■■■■
-Svelte v3.12.11        0.5540 seconds   ■■■■■■■■■■■■■■■■■■
-Preact v8.5.2          0.6064 seconds   ■■■■■■■■■■■■■■■■■■■■
-React v16.10.2         1.0596 seconds   ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+Hart v0.0.1            0.3226 seconds   ■■■■■■■■■■■
+Vue v2.6.10            0.4719 seconds   ■■■■■■■■■■■■■■■■■
+Svelte v3.12.11        0.6655 seconds   ■■■■■■■■■■■■■■■■■■■■■■■
+Preact v8.5.2          0.6770 seconds   ■■■■■■■■■■■■■■■■■■■■■■■
+React v16.10.2         0.9051 seconds   ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
 
-Environment: 2015 MacBook Pro (16GB RAM, 2.7GHz Intel Core i5, Chrome 78)
+Hardware: Lenovo X1 Carbon (16GB Ram, 2.7GHz Intel Core i7, Brave 0.62)
 ```
 
 ### Interpretation
 
-Although these benchmarks aren't scientifically rigorous, they do provide a roughly accurate picture of how well Hart performs relative to the other frameworks in our sample. Excitingly, it out-performs all of them by more than what we might expect to be within the margin of error.
+Although these benchmarks aren't scientifically rigorous, they do provide a roughly accurate picture of how well Hart performs relative to the other frameworks in our sample. Excitingly, it out-performs all of them by much more than what we might expect to be within the margin of error.
 
 Unsurprisingly, the frameworks that take the most actions behind the scenes are also the slowest performers. What is perhaps more enlightening is the fact that Svelte 3 is out-performed by both Hart and Vue.
 
 The comparison to Svelte is worth discussing with some depth because Svelte is less a framework and more a language, which makes its approach extremely exciting. Because Svelte is a non-virtual-DOM-based system that purports to shift the work that React and Vue do in the browser over to a compile step, we might have expected its "surgical" updates to be largely more efficient than we saw in our test.
 
-My guess as to why Svelte didn't perform better is that, while Svelte trades a dependency package for compiled output, runtime performance can't be compiled away and Svelte's compiled output is likely not optimized as well as Hart and Vue for DOM-intensive tasks. While Svelte is correct that virtual DOM diffing _can_ eat into frame budget and tax a garbage collector, Svelte's performance here may indicate that its lack of a virtual DOM necessitates more reflows and repaints _under certain circumstances._
+My guess as to why Svelte didn't perform better is that, while Svelte trades a dependency package for compiled output, runtime performance can't be compiled away and Svelte's compiled output is likely not optimized as well as Hart and Vue for DOM-intensive tasks. While Svelte is correct that virtual DOM diffing can eat into frame budget and tax a garbage collector, Svelte's performance here may indicate that its lack of a virtual DOM actually necessitates more reflows and repaints _under certain circumstances._
 
-Further tests would probably be a good idea since these results should not be taken to mean that Svelte is always slower than Hart. These results simply mean that when given a list of 10k items, Svelte is less optimized for removing half of them and re-sorting the remainder, then adding the other half back in and re-sorting again.
+Further tests would probably be a good idea since these results can't be taken to mean that Svelte is always slower than Hart. They simply mean that when given a list of 10k items, Svelte is less optimized for removing half of them, re-sorting the remainder, adding the other half back in, and then re-sorting again.
