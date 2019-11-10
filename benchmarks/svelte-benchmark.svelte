@@ -1,4 +1,5 @@
 <script>
+  import Nested from "./svelte-nested.svelte"
   export let largeArr
   export let smallArr
   export let finish
@@ -18,6 +19,6 @@
 
 <ul>
   {#each activeArr as item}
-    <li>{item}</li>
+    <Nested item={item}/>
   {/each}
 </ul>

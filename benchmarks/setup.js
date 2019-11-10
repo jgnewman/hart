@@ -1,5 +1,6 @@
 const ITERATIONS = 10
 const MAX_ITEMS = 10000
+let runForceRenderTests = false
 
 export const largeArr = []
 export const smallArr = []
@@ -9,8 +10,14 @@ for (let i = 0; i < MAX_ITEMS; i += 1) {
 }
 
 const TEST_ARRAY = []
+const TEST_ARRAY_FORCE = []
+
 export function registerTest(fn) {
   TEST_ARRAY.push(fn)
+}
+
+export function registerForceTest(fn) {
+  TEST_ARRAY_FORCE.push(fn)
 }
 
 function average(arr) {
@@ -29,7 +36,7 @@ let durations = []
 let currentTest = null
 
 export function next() {
-  const fns = TEST_ARRAY.slice()
+  const fns = runForceRenderTests ? TEST_ARRAY_FORCE : TEST_ARRAY
   timesRan = 0
   durations = []
   if (!currentTest) {
@@ -66,6 +73,17 @@ export function populateOutput(outputNode) {
 
 export function init() {
   document.querySelector('#go').addEventListener('click', () => {
+    runForceRenderTests = false
+    document.querySelector('#hart-output').innerHTML = ''
+    document.querySelector('#react-output').innerHTML = ''
+    document.querySelector('#preact-output').innerHTML = ''
+    document.querySelector('#vue-output').innerHTML = ''
+    currentTest = null
+    next()
+  })
+
+  document.querySelector('#go-force').addEventListener('click', () => {
+    runForceRenderTests = true
     document.querySelector('#hart-output').innerHTML = ''
     document.querySelector('#react-output').innerHTML = ''
     document.querySelector('#preact-output').innerHTML = ''

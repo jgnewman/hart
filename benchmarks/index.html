@@ -24,7 +24,12 @@
 
     <h1>Informal Benchmarks!</h1>
     <p>This test requires Chrome 78 or higher.</p>
-    <p>We're going to render 10,000 elements, remove half of them and re-sort, then re-sort again while adding them back in.</p>
+    <p>
+      We're going to render 10,000 elements, remove half of them and re-sort,
+      then re-sort again while adding them back in. The force render tests are
+      the same except that we guarantee that there are no skipped renders for
+      each test by doing each piece within its own run loop.
+    </p>
     <p>
       Worthy of note: I've had requests to benchmark against morphdom in the past.
       The reason you don't see it here is because, when I tried to write a test
@@ -33,9 +38,17 @@
       attempted to reduce the test load by 90%. I have a suspicion that you
       would get the same result from any similar real-DOM manipulation library.
     </p>
+    <p>
+      <b>
+        When testing a given framework, the page should be refreshed and all
+        other tests should be marked as "skipped" in order to fairly analyze
+        each test within a clean environment.
+      </b>
+    </p>
 
     <div>
       <button id="go">Run test</button>
+      <button id="go-force">Run force render test</button>
     </div>
 
     <!-- lightningDOM output -->
