@@ -59,7 +59,7 @@ Although these benchmarks aren't scientifically rigorous, they do provide a roug
 
 Unsurprisingly, React is consistently among the slowest performers, probably because it performs the most actions behind the scenes. Every option and feature provided by a framework will necessarily reduce its performance due to the additional data calculations and conditional checks they require. There are, however, two other more interesting points that merit discussion:
 
-1. Preact was the worst performer when it came to pure render efficiency but was middle of the road best when it came to Internal Optimizations.
+1. Preact was the worst performer when it came to pure render efficiency but was middle of the road when it came to Internal Optimizations.
 2. Svelte 3 is out-performed by Hart, Preact, and Vue when it comes to Internal Optimizations but is roughly tied for first place with Hart when it comes to Render Efficiency.
 
 #### Preact
