@@ -598,4 +598,5 @@ export {
   fragment,
   app,
   appSync,
+  FRAGMENT_PROOF: PROOF,
 }
