@@ -201,7 +201,7 @@ describe("Effects", function () {
     })
   })
 
-  describe("ondismount", function () {
+  describe("onunmount", function () {
     it("does not break rendering", async function () {
       const result = await this.page.evaluate(async () => {
         const fragment = hart.fragment
@@ -209,9 +209,9 @@ describe("Effects", function () {
         const id = "a" + Math.random().toString().slice(2)
 
         const Frag = fragment(() => {
-          const { ondismount } = hart.effects()
-          const dismountHandler = ondismount(() => { return })
-          return dismountHandler(node("span", { id: id }, "Hello, world!"))
+          const { onunmount } = hart.effects()
+          const unmountHandler = onunmount(() => { return })
+          return unmountHandler(node("span", { id: id }, "Hello, world!"))
         })
 
         const app = hart.appSync(Frag, document.querySelector("#root"))
@@ -223,7 +223,7 @@ describe("Effects", function () {
       assert.equal(result, 1)
     })
 
-    it("runs on dismount but not on update", async function () {
+    it("runs on unmount but not on update", async function () {
       const result = await this.page.evaluate(async () => {
         const fragment = hart.fragment
         const node = hart.fragment.hart
@@ -231,9 +231,9 @@ describe("Effects", function () {
         let runCount = 0
 
         const NestedFrag = fragment(() => {
-          const { ondismount } = hart.effects()
-          const dismountHandler = ondismount(() => { runCount += 1 })
-          return dismountHandler(node("span", null, "Hello, world!"))
+          const { onunmount } = hart.effects()
+          const unmountHandler = onunmount(() => { runCount += 1 })
+          return unmountHandler(node("span", null, "Hello, world!"))
         })
 
         const Frag = fragment((props) => {
@@ -260,9 +260,9 @@ describe("Effects", function () {
         let runCount = 0
 
         const NestedFrag = fragment(() => {
-          const { ondismount } = hart.effects()
-          const dismountHandler = ondismount(() => { runCount += 1 })
-          return dismountHandler(node("span", null, "Hello, world!"))
+          const { onunmount } = hart.effects()
+          const unmountHandler = onunmount(() => { runCount += 1 })
+          return unmountHandler(node("span", null, "Hello, world!"))
         })
 
         const Frag = fragment((props) => {

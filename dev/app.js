@@ -168,7 +168,7 @@ const Span = fragment(({ value }) => (
 ))
 
 const ListItem = fragment(({ value }) => {
-  const { refs, captureRefs, onmount, ondismount } = effects()
+  const { refs, captureRefs, onmount, onunmount } = effects()
 
   const handleClick = (evt) => {
     console.log("ref, evt:", refs(), evt)
@@ -178,11 +178,11 @@ const ListItem = fragment(({ value }) => {
     console.log("mounted!")
   })
 
-  const handledismount = ondismount(() => {
-    console.log("dismounted!")
+  const handleunmount = onunmount(() => {
+    console.log("unmounted!")
   })
 
-  return handledismount(handlemount(captureRefs(
+  return handleunmount(handlemount(captureRefs(
     <li ref="myli" onclick={handleClick}>
       <span ref="myspan"></span>
       <Span value={value} />

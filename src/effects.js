@@ -51,9 +51,9 @@ export const effects = () => {
     }
   }
 
-  const ondismount = (handler) => {
+  const onunmount = (handler) => {
     return (vnode) => {
-      vnode.ondismount = handler
+      vnode.onunmount = handler
       return vnode
     }
   }
@@ -62,6 +62,6 @@ export const effects = () => {
     captureRefs,
     refs,
     onmount,
-    ondismount,
+    onunmount,
   }
 }

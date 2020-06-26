@@ -20,7 +20,7 @@ Though tiny (**<9.5kB minified** and **~3kB gzipped**), Hart is geared toward sc
 - [Batched updates](#batched-updates)
 - [Optimizing](#optimizing)
 - [Effects](#effects)
-  - [Mounting and dismounting](#mounting-and-dismounting)
+  - [Mounting and unmounting](#mounting-and-unmounting)
   - [Referencing DOM nodes](#referencing-dom-nodes)
 - [Chains](#chains)
 - [Prefab fragments](#prefab-fragments)
@@ -325,11 +325,9 @@ Using `id`s is almost always the recommended course of action. In fact this beha
 
 As much as Hart would like you to build purely functional apps, there are actually a few instances in which it allows you to bend the paradigm just a little bit, specifically if you need access to a real DOM node in the page, if you want to do something only when a node is rendered into the DOM, or if you want to do something when it is removed. In Hart, these cases are handled with "effect" functions.
 
-### Mounting and dismounting
+### Mounting and unmounting
 
-Mounting describes the moment when a real DOM node is rendered onto the page. Similarly, dismounting (not "unmounting") describes the moment when a real DOM node is removed from the page.
-
-> **Fun fact:** The reason Hart uses the word "dismount" instead of "unmount" (as we find in similar frameworks) is pretty much only because, before engineers came up with the word "unmount" to describe the process of hopping off of things, "dismount" was already a perfectly good English word that meant the exact same thing. Anyway, "in computer jargon," an unmounted thing usually becomes completely inaccessible to the operating system. It's debatable whether what happens in a case like ours is really all that similar given that the same application that removes the node remains ready to rebuild and append an identical node at a moment's notice. So, effectively, we like to say it's more of a dismount.
+Mounting describes the moment when a real DOM node is rendered onto the page. Similarly, unmounting describes the moment when a real DOM node is removed from the page.
 
 To run a function when a fragment is mounted, you will want to generate a collection of effect functions within your fragment, one of which is `onmount`. You can use this to create a mount handler which you can then use to wrap your fragment's output. For example:
 
@@ -349,27 +347,27 @@ const Frag = fragment(props => {
 
 The above example will log "I mounted!" only its output div is rendered into the DOM, but not on subsequent invocations of the fragment function.
 
-Similarly, we can create dismount handlers, which will run only when a fragment's output is removed from the DOM. In fact, we can combine mount and dismount handlers:
+Similarly, we can create unmount handlers, which will run only when a fragment's output is removed from the DOM. In fact, we can combine mount and unmount handlers:
 
 ```javascript
 const Frag = fragment(props => {
-  const { onmount, ondismount } = effects()
+  const { onmount, onunmount } = effects()
 
   const handleMount = onmount(() => {
     console.log("I mounted!")
   })
 
-  const handleDismount = ondismount(() => {
-    console.log("I dismounted!")
+  const handleUnmount = onunmount(() => {
+    console.log("I unmounted!")
   })
 
-  return handleDismount(handleMount(
+  return handleUnmount(handleMount(
     <div>Hello, world!</div>
   ))
 })
 ```
 
-The order in which we call our mount and dismount handlers does not matter. However, each handler can only be called once per fragment. In other words, the following won't execute two mount handlers; instead the outer call will simply override the inner call:
+The order in which we call our mount and unmount handlers does not matter. However, each handler can only be called once per fragment. In other words, the following won't execute two mount handlers; instead the outer call will simply override the inner call:
 
 ```javascript
 // Overrides a mount handler
@@ -401,14 +399,14 @@ const Frag = fragment(props => {
 })
 ```
 
-In this example, because we have wrapped the output with the `captureRefs` function, each of our live input elements has become available by calling `refs`. Note that `captureRefs` can be combined with mount and dismount handlers.
+In this example, because we have wrapped the output with the `captureRefs` function, each of our live input elements has become available by calling `refs`. Note that `captureRefs` can be combined with mount and unmount handlers.
 
 ## Chains
 
 Because Hart encourages functional style when writing your apps, you might sometimes end up with a lot of nested function calls, for example:
 
 ```javascript
-handleMount(handleDismount(captureRefs(<div></div>)))
+handleMount(handleUnmount(captureRefs(<div></div>)))
 ```
 
 If you are uncomfortable with this, Hart provides a utility function called `pass` that allows you to simplify your syntax. Using `pass`, the above example becomes the following:
@@ -418,7 +416,7 @@ import { pass } from "hart"
 
 // ...
 
-pass(<div></div>).to(captureRefs).to(handleDismount).to(handleMount)()
+pass(<div></div>).to(captureRefs).to(handleUnmount).to(handleMount)()
 ```
 
 Each invocation of `to` in this example takes as many arguments as you would like to provide. The first argument should be a function and the rest should be arguments that will be passed to that function. Additionally, `to` will take the value of whatever came before it and pass that along as the final argument to the function as well. This is a little tricky to describe, so let's look at another example.

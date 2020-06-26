@@ -8,18 +8,19 @@ import {
 } from "./observables"
 
 import {
+  ADD,
+  CHILD_PACK,
+  DELETE,
+  EMPTY,
+  LIST,
+  PROOF,
+  REMOVE,
+  REORDER,
+  REPLACE,
+  SET,
   SVG_NS,
   TEXT,
-  LIST,
-  CHILD_PACK,
-  PROOF,
-  ADD,
-  REMOVE,
-  REPLACE,
   UPDATE,
-  REORDER,
-  SET,
-  DELETE,
 } from "./constants"
 
 const attrMap = {
@@ -27,7 +28,7 @@ const attrMap = {
   htmlFor: "for",
 }
 
-const isSpecialInputAttr = (attrName) => {
+function isSpecialInputAttr(attrName) {
   switch (attrName) {
     case "value":
     case "checked":
@@ -37,11 +38,11 @@ const isSpecialInputAttr = (attrName) => {
   }
 }
 
-const isInputTag = (tag) => {
+function isInputTag(tag) {
   return tag && tag.tagName && tag.tagName.toUpperCase() === "INPUT"
 }
 
-const assertPureFragment = (fn) => {
+function assertPureFragment(fn) {
   if (fn[PROOF] !== PROOF) {
     let err
     if (fn.name) {
@@ -53,31 +54,33 @@ const assertPureFragment = (fn) => {
   }
 }
 
-const positionSort = (a, b) => {
+function positionSort(a, b) {
   return a.pos === b.pos ? 0 : (a.pos < b.pos ? -1 : 1)
 }
 
-const getAttrDiff = (prev, next, inputController) => {
+function getAttrDiff(prevAttrs, nextAttrs) {
   const diff = []
   const checked = {}
 
-  for (let i in prev) {
-    if (prev.hasOwnProperty(i) && i !== "key") {
+  for (let i in prevAttrs) {
+    if (prevAttrs.hasOwnProperty(i) && i !== "key") {
       checked[i] = true
-      if (prev[i] !== next[i] || i === inputController) {
-        diff.push(!next.hasOwnProperty(i) ? [DELETE, i] : [SET, i, next[i]])
+
+      if (prevAttrs[i] !== nextAttrs[i]) {
+        diff.push(!nextAttrs.hasOwnProperty(i) ? [DELETE, i] : [SET, i, nextAttrs[i]])
       }
     }
   }
 
-  for (let i in next) {
-    i !== "key" && next.hasOwnProperty(i) && !checked[i] && diff.push([SET, i, next[i]])
+  for (let i in nextAttrs) {
+    const isNewlyAddedAttr = i !== "key" && nextAttrs.hasOwnProperty(i) && !checked[i]
+    isNewlyAddedAttr && diff.push([SET, i, nextAttrs[i]])
   }
 
   return diff
 }
 
-const getListDiff = (prev, next) => {
+function getListDiff(prev, next) {
   let reorder = false
   let prevLen = 0
 
@@ -143,7 +146,7 @@ const getListDiff = (prev, next) => {
   }
 }
 
-const append = (target, nodes) => {
+function append(target, nodes) {
   if (Array.isArray(nodes)) {
     const frag = document.createDocumentFragment()
     nodes.forEach(node => frag.appendChild(node))
@@ -153,24 +156,19 @@ const append = (target, nodes) => {
   }
 }
 
-const controlInputWithProp = (tag, attrs) => {
-  if (tag !== "input" && tag !== "textarea") return null
-
-  const hasValue = attrs.hasOwnProperty("value")
-  const hasChecked = attrs.hasOwnProperty("checked")
-
-  if (!hasValue && !hasChecked) return null
-  return hasChecked ? "checked" : "value"
+function childPack(children=null) {
+  return {
+    [CHILD_PACK]: CHILD_PACK,
+    nodes: children,
+  }
 }
 
-const childPack = (children=null) => ({
-  [CHILD_PACK]: CHILD_PACK,
-  nodes: children,
-})
+function isChildPack(object) {
+  return object[CHILD_PACK] === CHILD_PACK
+}
 
-const vNode = (tag, attrs, ...children) => {
+function vNode(tag, attrs, ...children) {
   attrs = attrs || {}
-  const controllingProp = controlInputWithProp(tag, attrs)
 
   if (typeof tag === "function") {
     assertPureFragment(tag)
@@ -186,10 +184,6 @@ const vNode = (tag, attrs, ...children) => {
       out.attrs.id = out.attrs.id || attrs.id
     }
 
-    if (controllingProp) {
-      out.controller = controllingProp
-    }
-
     return out
   }
 
@@ -199,17 +193,14 @@ const vNode = (tag, attrs, ...children) => {
     listed: false,
     html: null,
     parent: null,
+    children: [],
   }
 
-  if (controllingProp) {
-    node.controller = controllingProp
-  }
-
-  node.children = []
   const childIterator = child => {
-    if (child === null || child === undefined || child === false) return
 
-    if (child[CHILD_PACK] === CHILD_PACK) return !child.nodes ? null : child.nodes.forEach(c => childIterator(c))
+    if (child && isChildPack(child)) {
+      return !child.nodes ? null : child.nodes.forEach(c => childIterator(c))
+    }
 
     let childNode
 
@@ -225,6 +216,9 @@ const vNode = (tag, attrs, ...children) => {
         n.parent = node
         childNode.keyCache[n.attrs.key] = { node: n, pos: i }
       })
+
+    } else if (child === null || child === undefined || child === false) {
+      childNode = vNode(EMPTY)
 
     } else if (typeof child === "object") {
       childNode = child
@@ -242,14 +236,16 @@ const vNode = (tag, attrs, ...children) => {
   return node
 }
 
-const changeObject = (type, prev, next, options) => ({
-  type,
-  prev,
-  next,
-  options,
-})
+function changeObject(type, prev, next, options) {
+  return {
+    type,
+    prev,
+    next,
+    options,
+  }
+}
 
-const attachAttr = (target, isSVG, attrName, attrVal) => {
+function attachAttr(target, isSVG, attrName, attrVal) {
   attrName = attrMap[attrName] || attrName
   if (attrName === "children") return
 
@@ -266,7 +262,7 @@ const attachAttr = (target, isSVG, attrName, attrVal) => {
   }
 }
 
-const detachAttr = (target, isSVG, attrName) => {
+function detachAttr(target, isSVG, attrName) {
   attrName = attrMap[attrName] || attrName
   if (attrName === "children") return
 
@@ -286,26 +282,29 @@ const detachAttr = (target, isSVG, attrName) => {
   }
 }
 
-const buildHTML = (vTree, mounters, parentDismounters) => {
+function buildHTML(vTree, mounters, parentUnmounters) {
   mounters = mounters || []
-  const dismounters = []
+  const unmounters = []
 
   vTree.onmount && mounters.push(vTree.onmount)
-  if (vTree.ondismount) {
-    dismounters.push(vTree.ondismount)
-    parentDismounters && parentDismounters.push(vTree.ondismount)
+  if (vTree.onunmount) {
+    unmounters.push(vTree.onunmount)
+    parentUnmounters && parentUnmounters.push(vTree.onunmount)
   }
 
-  if (vTree.tag === TEXT) {
+  if (vTree.tag === EMPTY) {
+    vTree.html = document.createComment("")
+
+  } else if (vTree.tag === TEXT) {
     vTree.html = document.createTextNode(vTree.text)
 
   } else if (vTree.tag === LIST) {
     vTree.html = document.createDocumentFragment()
     vTree.children.forEach(child => {
-      buildHTML(child, mounters, dismounters)
+      buildHTML(child, mounters, unmounters)
       vTree.html.appendChild(child.html)
     })
-    parentDismounters.push.apply(parentDismounters, dismounters)
+    parentUnmounters.push.apply(parentUnmounters, unmounters)
 
   } else {
     const isSVG = vTree.tag === "svg"
@@ -320,7 +319,7 @@ const buildHTML = (vTree, mounters, parentDismounters) => {
       const frag = document.createDocumentFragment()
 
       vTree.children.forEach(child => {
-        buildHTML(child, mounters, dismounters)
+        buildHTML(child, mounters, unmounters)
         vTree.html.appendChild(child.html)
       })
 
@@ -330,11 +329,11 @@ const buildHTML = (vTree, mounters, parentDismounters) => {
   }
 
   vTree.mounters = mounters
-  vTree.dismounters = dismounters
+  vTree.unmounters = unmounters
   return vTree
 }
 
-const addHTML = (change) => {
+function addHTML(change) {
   const { next, options } = change
   const optionsArray = Array.isArray(options) ? options : [options]
   const target = next.html
@@ -350,23 +349,23 @@ const addHTML = (change) => {
   })
 }
 
-const removeHTML = (change) => {
+function removeHTML(change) {
   const { prev } = change
   prev.parent.html.removeChild(prev.html)
-  prev.dismounters && prev.dismounters.forEach(handler => handler())
+  prev.unmounters && prev.unmounters.forEach(handler => handler())
   prev.html = null
 }
 
-const replaceHTML = (change) => {
+function replaceHTML(change) {
   const { prev, next } = change
   buildHTML(next)
   next.parent.html.replaceChild(next.html, prev.html)
-  prev.dismounters && prev.dismounters.forEach(handler => handler())
+  prev.unmounters && prev.unmounters.forEach(handler => handler())
   next.mounters && next.mounters.forEach(handler => handler())
   prev.html = null
 }
 
-const updateHTML = (change) => {
+function updateHTML(change) {
   const { prev, next, options } = change
   const isSVG = next.tag === "svg"
 
@@ -382,7 +381,7 @@ const updateHTML = (change) => {
   })
 }
 
-const reorderHTML = (change) => {
+function reorderHTML(change) {
   const { prev, next, options } = change
 
   // To reorder the list we will...
@@ -437,7 +436,7 @@ const reorderHTML = (change) => {
   })
 }
 
-const diff = (prev, next, queue=[]) => {
+function diff(prev, next, queue=[]) {
   if (prev === next) return queue
 
   if (prev.tag !== next.tag) {
@@ -463,13 +462,11 @@ const diff = (prev, next, queue=[]) => {
     return queue
   }
 
-  const attrDiff = getAttrDiff(prev.attrs, next.attrs, next.controller)
+  const attrDiff = getAttrDiff(prev.attrs, next.attrs)
   attrDiff.length && queue.push(changeObject(UPDATE, prev, next, attrDiff))
 
   const prevChildren = prev.children
   const nextChildren = next.children
-  let shorterChildList
-  let longerChildList
 
   if (prevChildren.length > nextChildren.length) {
     const prevChildrenToMatch = prevChildren.slice(0, nextChildren.length)
@@ -489,39 +486,43 @@ const diff = (prev, next, queue=[]) => {
   return queue
 }
 
-const fragment = (fn) => {
+function getVNodeFromUserFn(userFn, props, children) {
+  const result = userFn(props, children)
+  return result || vNode(EMPTY)
+}
+
+function fragment(userFn) {
   let prevData = {}
 
-  const output = (props, children) => {
+  function output(props, children) {
     const cacheId = props.id
 
     if (!cacheId) {
-      return fn(props, children)
+      return getVNodeFromUserFn(userFn, props, children)
     }
 
     const prevCache = prevData[cacheId] = prevData[cacheId] || {}
     const prevProps = prevCache.props
     const prevNode = prevCache.node
-    const nextChildLength = children && children.nodes ? children.nodes.length : 0
 
+    const nextChildLength = children && children.nodes ? children.nodes.length : 0
     const noChildrenOverChange = prevCache.childLength === 0 && nextChildLength === 0
-    const prevChildLen = prevCache.childLength
 
     if (prevNode && noChildrenOverChange && deepEqual(prevProps, props)) {
       prevCache.props = props
       return prevNode
     }
 
-    const nextNode = fn(props, children)
+    const nextNode = getVNodeFromUserFn(userFn, props, children)
     const shouldTransferHtml = prevNode && !prevNode.listed && !nextNode.html
-    const shouldTransferDismounters = prevNode && prevNode.dismounters && !nextNode.dismounters
+    const shouldTransferUnmounters = prevNode && prevNode.unmounters && !nextNode.unmounters
 
     if (shouldTransferHtml) {
       nextNode.html = prevNode.html
     }
 
-    if (shouldTransferDismounters) {
-      nextNode.dismounters = prevNode.dismounters
+    if (shouldTransferUnmounters) {
+      nextNode.unmounters = prevNode.unmounters
     }
 
     prevCache.props = props
@@ -534,7 +535,7 @@ const fragment = (fn) => {
   return output
 }
 
-const createApp = (rootFragmentFn, rootTarget) => {
+function createApp(rootFragmentFn, rootTarget) {
   assertPureFragment(rootFragmentFn)
   let prevTree = null
   return () => {
@@ -547,7 +548,7 @@ const createApp = (rootFragmentFn, rootTarget) => {
   }
 }
 
-const render = (appFn, props={}) => {
+function render(appFn, props={}) {
   const { rootTarget, rootFragmentFn, prevTree, setPrevTree } = appFn()
 
   const nextTree = rootFragmentFn(props)
@@ -577,7 +578,7 @@ const render = (appFn, props={}) => {
   }
 }
 
-const createObserver = (isAsync, fn, outputElem) => {
+function createObserver(isAsync, fn, outputElem) {
   const observerCalc = outputElem ? null : fn
   const observer = isAsync ? observableAsync(observerCalc) : observable(observerCalc)
 
@@ -589,14 +590,20 @@ const createObserver = (isAsync, fn, outputElem) => {
   return observer
 }
 
-const app = (fn, outputElem) => createObserver(true, fn, outputElem)
-const appSync = (fn, outputElem) => createObserver(false, fn, outputElem)
+function app(fn, outputElem) {
+  return createObserver(true, fn, outputElem)
+}
+
+function appSync(fn, outputElem) {
+  return createObserver(false, fn, outputElem)
+}
 
 fragment.hart = vNode
+const FRAGMENT_PROOF = PROOF
 
 export {
   fragment,
   app,
   appSync,
-  FRAGMENT_PROOF: PROOF,
+  FRAGMENT_PROOF,
 }
