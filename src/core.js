@@ -11,6 +11,7 @@ import {
   ADD,
   CHILD_PACK,
   DELETE,
+  DOC_FRAG,
   EMPTY,
   LIST,
   PROOF,
@@ -48,7 +49,7 @@ function assertPureFragment(fn) {
     if (fn.name) {
       err = `${fn.name} should be wrapped in a \`fragment\` call.`
     } else {
-      err = `All fragments must be defined using the \`fragment\` function.`
+      err = "All fragments must be defined using the `fragment` function."
     }
     throw new Error(err)
   }
@@ -170,6 +171,14 @@ function isChildPack(object) {
 function vNode(tag, attrs, ...children) {
   attrs = attrs || {}
 
+  if (tag === DOC_FRAG) {
+    if (!children.length) {
+      throw new Error("Document-fragment nodes must contain at least one child.")
+    } else if (Object.keys(attrs).length) {
+      throw new Error("Document-fragment nodes may not be given attributes.")
+    }
+  }
+
   if (typeof tag === "function") {
     assertPureFragment(tag)
 
@@ -209,7 +218,7 @@ function vNode(tag, attrs, ...children) {
       childNode.keyCache = {}
       child.map((n, i) => {
         if (!n.attrs.hasOwnProperty("key") || childNode.keyCache.hasOwnProperty(n.attrs.key)) {
-          throw new Error(`Every member of a node array must have a unique \`key\` prop.`)
+          throw new Error("Every member of a node array must have a unique `key` prop.")
         }
 
         n.listed = true
@@ -298,13 +307,14 @@ function buildHTML(vTree, mounters, parentUnmounters) {
   } else if (vTree.tag === TEXT) {
     vTree.html = document.createTextNode(vTree.text)
 
-  } else if (vTree.tag === LIST) {
+  } else if (vTree.tag === LIST || vTree.tag === DOC_FRAG) {
     vTree.html = document.createDocumentFragment()
     vTree.children.forEach(child => {
       buildHTML(child, mounters, unmounters)
       vTree.html.appendChild(child.html)
     })
-    parentUnmounters.push.apply(parentUnmounters, unmounters)
+
+    vTree.tag === LIST && parentUnmounters.push.apply(parentUnmounters, unmounters)
 
   } else {
     const isSVG = vTree.tag === "svg"
@@ -351,15 +361,32 @@ function addHTML(change) {
 
 function removeHTML(change) {
   const { prev } = change
-  prev.parent.html.removeChild(prev.html)
+  if (prev.type === DOC_FRAG) {
+    prev.children.forEach(child => removeHTML({ prev: child }))
+  } else {
+    prev.html.parentNode.removeChild(prev.html)
+  }
   prev.unmounters && prev.unmounters.forEach(handler => handler())
   prev.html = null
 }
 
 function replaceHTML(change) {
   const { prev, next } = change
+  const nextParentIsDocFrag = next.parent.html.nodeType === 11
+  const replacerParent = nextParentIsDocFrag ? prev.html.parentNode : next.parent.html
+  const prevIsDocFrag = prev.tag === DOC_FRAG
+
   buildHTML(next)
-  next.parent.html.replaceChild(next.html, prev.html)
+
+  if (prevIsDocFrag) {
+    const [first, ...rest] = prev.children
+    rest.forEach(child => removeHTML({ prev: child }))
+    replacerParent.replaceChild(next.html, first.html)
+
+  } else {
+    replacerParent.replaceChild(next.html, prev.html)
+  }
+
   prev.unmounters && prev.unmounters.forEach(handler => handler())
   next.mounters && next.mounters.forEach(handler => handler())
   prev.html = null
@@ -599,6 +626,7 @@ function appSync(fn, outputElem) {
 }
 
 fragment.hart = vNode
+fragment.hartFrag = DOC_FRAG
 const FRAGMENT_PROOF = PROOF
 
 export {

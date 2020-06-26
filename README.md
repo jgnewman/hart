@@ -10,7 +10,6 @@ Hart is a lithe, nimble core for scalable web apps.
 
 - Update any packages needing updating.
 - Benchmark against latest libs.
-- Is there a better name than fragment?
 - Maybe output stuff to shadow root?
 - Do we _really_ have to force the user to cache with id or can we cache automatically by just using classes or something?
 - Can we replace mounters/dismounters/etc with a hooks system like react?

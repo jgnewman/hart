@@ -1,6 +1,7 @@
 export const ADD = "ADD"
 export const CHILD_PACK = Symbol()
 export const DELETE = "DELETE"
+export const DOC_FRAG = Symbol.for("DOC_FRAG")
 export const EMPTY = Symbol.for("EMPTY")
 export const LIST = Symbol.for("LIST")
 export const PROOF = Symbol()
