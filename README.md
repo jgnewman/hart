@@ -57,7 +57,7 @@ export default fragment(props => {
 })
 ```
 
-To configure JSX, just pick a transpiler (such as [@babel/plugin-transform-react-jsx](https://babeljs.io/docs/en/babel-plugin-transform-react-jsx)) and set the "pragma" option to `fragment.hart`. Here's a webpack example:
+To configure JSX, just pick a transpiler (such as [@babel/plugin-transform-react-jsx](https://babeljs.io/docs/en/babel-plugin-transform-react-jsx)) and set the "pragma" options as follows in this webpack example:
 
 ```javascript
 {
@@ -67,7 +67,8 @@ To configure JSX, just pick a transpiler (such as [@babel/plugin-transform-react
       loader: "babel-loader",
       options: {
         plugins: [["@babel/plugin-transform-react-jsx", {
-          pragma: "fragment.hart"
+          pragma: "fragment.hart",
+          pragmaFrag: "fragment.hartFrag"
         }]]
       }
     },
