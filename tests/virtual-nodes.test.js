@@ -62,38 +62,6 @@ describe("Virtual Nodes", function () {
       assert.equal(result, "span")
     })
 
-    context("when the node is an input type", function () {
-      context("when the node has a value attr", function () {
-        it("marks the node's controlling prop as 'value'", async function () {
-          const result = await this.page.evaluate(() => {
-            const tree = hart.fragment.hart("input", {id: "foo", value: "bar"})
-            return tree
-          })
-          assert.equal(result.controller, "value")
-        })
-      })
-
-      context("when the node has a checked attr", function () {
-        it("marks the node's controlling prop as 'checked'", async function () {
-          const result = await this.page.evaluate(() => {
-            const tree = hart.fragment.hart("input", {id: "foo", checked: false})
-            return tree
-          })
-          assert.equal(result.controller, "checked")
-        })
-      })
-    })
-
-    context("when the node is not an input type", function () {
-      it("does not mark a controlling prop", async function () {
-        const result = await this.page.evaluate(() => {
-          const tree = hart.fragment.hart("div", {value: "foo", checked: false})
-          return tree
-        })
-        assert.ok(!result.hasOwnProperty("controller"))
-      })
-    })
-
     context("when a child is intended to be text", function () {
       it("creates a string node", async function () {
         const result = await this.page.evaluate(() => {
@@ -113,32 +81,32 @@ describe("Virtual Nodes", function () {
     })
 
     context("when a child is `false`", function () {
-      it("omits the child", async function () {
+      it("creates an empty node", async function () {
         const result = await this.page.evaluate(() => {
-          const tree = hart.fragment.hart("div", null, "foo", false, "bar")
-          return tree.children.length
+          const tree = hart.fragment.hart("div", null, false)
+          return tree.children[0].tag.toString()
         })
-        assert.equal(result, 2)
+        assert.equal(result, "Symbol(EMPTY)")
       })
     })
 
     context("when a child is `null`", function () {
-      it("omits the child", async function () {
+      it("creates an empty node", async function () {
         const result = await this.page.evaluate(() => {
-          const tree = hart.fragment.hart("div", null, "foo", null, "bar")
-          return tree.children.length
+          const tree = hart.fragment.hart("div", null, null)
+          return tree.children[0].tag.toString()
         })
-        assert.equal(result, 2)
+        assert.equal(result, "Symbol(EMPTY)")
       })
     })
 
     context("when a child is `undefined`", function () {
-      it("omits the child", async function () {
+      it("creates an empty node", async function () {
         const result = await this.page.evaluate(() => {
-          const tree = hart.fragment.hart("div", null, "foo", undefined, "bar")
-          return tree.children.length
+          const tree = hart.fragment.hart("div", null, undefined)
+          return tree.children[0].tag.toString()
         })
-        assert.equal(result, 2)
+        assert.equal(result, "Symbol(EMPTY)")
       })
     })
 

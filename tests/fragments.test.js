@@ -48,6 +48,18 @@ describe("Fragments", function () {
       assert.equal(result, "function")
     })
 
+    context("when the fragment returns a falsy value", function () {
+      it("automatically creates an empty vNode", async function () {
+        const result = await this.page.evaluate(() => {
+          const fragment = hart.fragment
+          const frag = fragment(() => null)
+          const emptyNode = frag({})
+          return emptyNode.tag.toString()
+        })
+        assert.equal(result, "Symbol(EMPTY)")
+      })
+    })
+
     context("when there is no id prop", function () {
       it("does not cache its result", async function () {
         const result = await this.page.evaluate(() => {
