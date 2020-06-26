@@ -8,7 +8,9 @@ Hart is a lithe, nimble core for scalable web apps.
 
 ## TODO
 
-- Move to NPM
+- Update any packages needing updating.
+- Benchmark against latest libs.
+- Is there a better name than fragment?
 - Maybe output stuff to shadow root?
 - Do we _really_ have to force the user to cache with id or can we cache automatically by just using classes or something?
 - Can we replace mounters/dismounters/etc with a hooks system like react?
@@ -34,7 +36,7 @@ Though tiny (**<9.5kB minified** and **~3.2kB gzipped**), Hart is geared toward 
 
 ## Getting set up
 
-The first thing you'll want to do is install Hart, which can be done via `npm install hart` or `yarn add hart`.
+The first thing you'll want to do is install Hart, which can be done via `npm install hart` or anything else compatible.
 
 Secondly, you'll probably want to configure it to work with JSX. You don't have to, but it sure is nice to work with. Here is what a fragment will look like with and without JSX:
 
