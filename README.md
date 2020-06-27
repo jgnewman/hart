@@ -6,16 +6,9 @@
 
 Hart is a lithe, nimble core for scalable web apps.
 
-## TODO
-
-- Update any packages needing updating.
-- Benchmark against latest libs.
-- Do we _really_ have to force the user to cache with id or can we cache automatically by just using classes or something?
-- Can we replace mounters/dismounters/etc with a hooks system like react?
-
 The main advantage to using Hart over some other component-based framework is that Hart is designed to help you write purely functional apps. _**But don't be scared!**_ The patterns are all very familiar. And since you'll be avoiding mutable state, Hart can provide some optimizations that lead to [fantastic performance](https://github.com/jgnewman/hart/blob/master/BENCHMARKS.md) and a very small footprint in terms of file size, memory consumption, and processing power.
 
-Though tiny (**~10kB minified** and **~3.3kB gzipped**), Hart is geared toward scalability. You can spin up a small app with almost no boilerplate, and you can scale it up modularly as needed. The biggest thing to keep in mind is that Hart _really does not want_ you to try to hack some kind of local state into your components (called **"fragments"** in Hart). If you can follow this rule, the two of you should easily fall in love. With that in mind, let me introduce you to Hart...
+Though tiny (**~9.6kB minified** and **~3.3kB gzipped**), Hart is geared toward scalability. You can spin up a small app with almost no boilerplate, and you can scale it up modularly as needed. The biggest thing to keep in mind is that Hart _really does not want_ you to try to hack some kind of local state into your components (called **"fragments"** in Hart). If you can follow this rule, the two of you should easily fall in love. With that in mind, let me introduce you to Hart...
 
 #### In this doc
 
@@ -52,7 +45,7 @@ export default fragment(props => (
 import { fragment } from "hart"
 
 export default fragment(props => {
-  return fragment.hart("div", { id: "foo" }, "Hello, world!")
+  return fragment.jsx("div", { id: "foo" }, "Hello, world!")
 })
 ```
 
@@ -66,8 +59,8 @@ To configure JSX, just pick a transpiler (such as [@babel/plugin-transform-react
       loader: "babel-loader",
       options: {
         plugins: [["@babel/plugin-transform-react-jsx", {
-          pragma: "fragment.hart",
-          pragmaFrag: "fragment.hartFrag"
+          pragma: "fragment.jsx",
+          pragmaFrag: "fragment.jsxFrag"
         }]]
       }
     },
@@ -86,60 +79,60 @@ A Hart app in its simplest form is a glorified recursive function. You start wit
 ```javascript
 import { fragment, app } from "hart"
 
-const Root = fragment((props) => {
+const RootFragment = fragment((props) => {
   return (
     <input
       type="text"
       value={data.value}
-      onkeyup={(evt) => renderer.update({ ...props, value: evt.target.value })}
+      onkeyup={(evt) => App.update({ ...props, value: evt.target.value })}
     />
   )
 })
 
-const renderer = app(Root, document.getElementById("app"))
+const App = app(RootFragment, document.getElementById("app"))
 
-renderer.update({ value: "foo" })
+App.update({ value: "foo" })
 ```
 
 This pattern is called the **Hart loop** and it requires two functions – `fragment` and `app`. We use `fragment` to create fragments, allowing Hart to build in some optimizations. Next, we use `app` to create a Hart app, which in this case is a combination of a top-level fragment and an HTML container where the app should be rendered. Whenever we want the DOM to update, we call our app's `update` method and pass it some data that gets passed to our fragment as the `props` argument. **Note that `props` should always take the form of a plain object.**
 
-Interestingly, a Hart app doesn't strictly have to render HTML into the DOM. In fact the HTML container argument is optional so, if we wanted to, we could create an app that simply implements a counter. Take a look:
+Interestingly, a Hart app doesn't strictly have to render HTML into the DOM. In fact the HTML container argument is optional. So if we wanted to, we could create an app that simply implements a counter. For example:
 
 ```javascript
 import { app } from "hart"
 
-const counter = app((data) => {
+const Counter = app((data) => {
   console.log(data.value)
-  setTimeout(() => counter.update({ ...data, counter: data.value + 1 }), 1000)
+  setTimeout(() => Counter.update({ ...data, counter: data.value + 1 }), 1000)
 })
 
-counter.update({ value: 0 })
+Counter.update({ value: 0 })
 ```
 
-> **NOTE:** If you do provide an output element to the `app` function, you can pass in a selector string instead of an actual DOM node and Hart will select that node for you. You can also pass in an options object as a third argument that allows a single property called `useShadowRoot`. If you set to this to true, Hart will render your app into your output element's shadow root.
+> **NOTE:** If you do provide an output element to the `app` function, you can pass in a selector string instead of an actual DOM node and Hart will select that node for you. You can also pass in an options object as a third argument, which we will get to in a bit.
 
-The counter we've written may not seem very useful on its own. But, what makes it powerful is the fact that you can register a function to run whenever one of your apps is updated, allowing you to link 2 Hart apps together and have them to work together toward a common goal:
+The counter we've written may not seem very useful on its own. But, what makes it powerful is the fact that you can set up a watcher function that runs whenever one of your apps is updated, thus allowing you to link 2 Hart apps together and have them to work together toward a common goal:
 
 ```javascript
 import { fragment, app } from "hart"
 
-const renderer = app(
+const Renderer = app(
   fragment((data) => <div>{data.value}</div>),
   document.getElementById("app")
 )
 
-const counter = app((data) => {
-  setTimeout(() => counter.update({
+const Counter = app((data) => {
+  setTimeout(() => Counter.update({
     ...data,
     counter: data.value + 1,
   }), 1000)
 })
 
-counter.watch(newData => renderer.update(newData))
-counter.update({ value: 0 })
+Counter.watch(newData => Renderer.update(newData))
+Counter.update({ value: 0 })
 ```
 
-In this example, `renderer` is updated every time `counter` is updated. The result is that a user viewing the page will now be able to watch as the number slowly counts upward.
+In this example, `Renderer` is updated every time `Counter` is updated. The result is that a user viewing the page will now be able to watch as the number slowly counts upward.
 
 We'll come back to this pattern shortly. For now, let's dig into more of the basics.
 
@@ -161,8 +154,8 @@ const RootFragment = fragment((props) => (
   </div>
 ))
 
-const renderer = app(RootFragment, document.getElementById("root"))
-renderer.update({ name: "new Hart user" })
+const Renderer = app(RootFragment, document.getElementById("root"))
+Renderer.update({ name: "new Hart user" })
 ```
 
 ### Children
@@ -199,38 +192,35 @@ This structure will produce the following output:
 
 ### Architecture
 
-The problem with relying on the Hart loop's recursive style is that an app requires fragments and fragments also require the app in order to update it. If we want to spread these pieces over multiple files, we'll run into circular import problems. Fortunately the fact that apps are observable and can be cooperative comes to our rescue here.
+We've seen that apps require fragments in order to render DOM. We've also seen that fragments require apps in order to trigger updates. So we need a way to avoid circular dependency problems if we define apps and fragments in different files. This is where watchability really comes to our rescue.
 
-The following example shows how we can separate concerns between two apps working together to provide a beautifully scalable architecture.
+The following example shows how we can separate concerns between two apps working together to provide a beautifully scalable architecture without circular dependencies.
 
 ```javascript
-import { fragment, app } from "hart"
+// Reducer.js
+import { app } from "hart"
 
-const reducer = app((change, previousData) => {
+export const Reducer = app((change, previousData) => {
   switch (change.type) {
-
-    case "INIT":
-      return {
-        ...previousData,
-        ...change.payload,
-      }
-
-    case "UPDATE_COUNTER":
-      return {
-        ...previousData,
-        counter: previousData.counter + 1,
-      }
-
-    default:
-      return previousData
+    case "INIT": return { ...previousData, ...change.payload }
+    case "UPDATE_COUNTER": return { ...previousData, counter: previousData.counter + 1 }
+    default: return previousData
   }
 })
 
-const handleButtonClick = () => {
-  reducer.update({ type: "UPDATE_COUNTER" })
+// Handlers.js
+import { Reducer } from "./Reducer"
+
+export const handleButtonClick = () => {
+  Reducer.update({ type: "UPDATE_COUNTER" })
 }
 
-const renderer = app(
+// index.js
+import { app, fragment } from "hart"
+import { Reducer } from "./Reducer"
+import { handleButtonClick } from "./Handlers
+
+const Renderer = app(
   fragment((props) => {
     return (
       <div>
@@ -242,14 +232,14 @@ const renderer = app(
   document.getElementById("root")
 )
 
-reducer.watch(newData => renderer.update(newData))
-reducer.update({
+Reducer.watch(newData => Renderer.update(newData))
+Reducer.update({
   type: "INIT",
   payload: { counter: 0 }
 })
 ```
 
-This ought to feel very familiar to anyone who's ever used [Redux](https://redux.js.org/). One app (the `reducer`) does nothing but manage data transformations in a predictable way. The other app (the `renderer`) manages building the DOM. The renderer also observes the reducer for changes. When event handlers within the renderer trigger updates to the reducer, the updated data is passed back into the renderer which updates the DOM.
+This ought to feel very familiar to anyone who's ever used [Redux](https://redux.js.org/). One app (the `Reducer`) does nothing but manage data transformations in a predictable way. The other app (the `Renderer`) manages building the DOM. The Renderer also observes the Reducer for changes and makes use of event handlers that trigger those changes.
 
 This pattern makes it extremely easy to build Hart applications, no fancy middleware or 3rd party tools required.
 
@@ -260,7 +250,8 @@ Applications created with the `app` function are asynchronous by default. In oth
 ```javascript
 import { fragment, app } from "hart"
 
-const reducer = app((change, prev) => {
+// Create a Reducer
+const Reducer = app((change, prev) => {
   switch (change.type) {
     case "INIT": return { ...prev, ...change.payload }
     case "UPDATE_COUNTER": return { ...prev, counter: prev.counter + 1 }
@@ -268,189 +259,174 @@ const reducer = app((change, prev) => {
   }
 })
 
-const renderer = app(
+// Create a Renderer
+const Renderer = app(
   fragment((props) => <div>{props.counter}</div>),
   document.getElementById("root")
 )
 
-reducer.watch(newData => renderer.update(newData))
+// Startup the application
+Reducer.watch(newData => Renderer.update(newData))
+Reducer.update({ type: "INIT", payload: { counter: 0 } })
 
-reducer.update({
-  type: "INIT",
-  payload: { counter: 0 }
-})
-
+// Update the Reducer multiple times in quick succession
 setTimeout(() => {
   let i = 0
   while (i < 10) {
     i++
-    reducer.update({ type: "UPDATE_COUNTER" })
+    Reducer.update({ type: "UPDATE_COUNTER" })
   }
 }, 0)
 ```
 
-In this example, although `reducer.update` is called 11 times, our renderer only updates the DOM twice (once for the "INIT" update, and once for all 10 "UPDATE_COUNTER" updates).
+In this example, although `Reducer.update` is called 11 times, our renderer only updates the DOM twice (once for the "INIT" update, and once for all 10 "UPDATE_COUNTER" updates).
 
 Because Hart apps are functional, this nuance should be entirely invisible to you, provided you aren't trying to hack in some kind of local state (which you shouldn't be!). But it's important because it allows Hart to maximize speed and efficiency. If, for some reason, you find yourself needing synchronous updates, you can use the `appSync` function instead of the `app` function, although you'll incur a performance penalty for doing so, putting your app more in line with apps built on frameworks that update synchronously.
 
 ## Optimizing
 
-Hart makes use of the virtual DOM model, meaning that whenever your app updates, it calculates a slimmed down version of what the new DOM should look like, diffs it against the previous version, and then makes changes.
+Hart makes use of the virtual DOM model, meaning that whenever your app updates, it calculates a slimmed down version of what the new DOM should look like, diffs it against the previous version, and then makes surgical changes as needed.
 
-But with Hart, you'll be writing functional apps. So, assuming you aren't trying to hack in some kind of local state, we can assume that a fragment will always return the same output when given unchanged input and zero children. You can capitalize on this and tell Hart to skip re-computing and re-rendering any given fragment under these conditions by simply giving that fragment an `id` prop.
+But with Hart, you'll be writing functional apps. So, assuming you aren't trying to hack in some kind of local state, we can assume that a fragment will always return the same output when given unchanged input and zero children. You can capitalize on this and tell Hart to skip re-computing and re-rendering any given fragment under these conditions by building your component with `fragment.optim`.
 
-> Note that all `id`s should be unique (as was always the rule in HTML) otherwise you'll get crazy behavior.
+> Note that all fragments built with `fragment.optim` require you to pass in an `id` prop, otherwise you will get an error. As you might expect, `id`s should always be unique (as was always the rule in HTML) otherwise you'll get crazy behavior.
 
-In the following case, without using `id`s, the `NestedFrag` function will run once every second.
+In the following case, without using `fragment.optim`, the `NestedFrag` function will run once every second.
 
 ```javascript
-const RootFrag = fragment((props) => {
-  return <NestedFrag value={props.value}/>
-})
+const NestedFrag = fragment(props => (
+  <span>{props.value}</span>
+))
 
-const renderer = app(RootFrag, rootNode)
+const RootFrag = fragment(props => (
+  <NestedFrag value={props.value}/>
+))
+
+const Renderer = app(RootFrag, rootNode)
 
 setInterval(() => {
-  renderer.update({ value: "Hello, world!" })
+  Renderer.update({ value: "Hello, world!" })
 }, 1000)
 ```
 
-However, by introducing the `id` prop, `NestedFrag` will only run when its props change. Since they never do, it will only run once.
+However, by using `fragment.optim`, `NestedFrag` will only run when its props change (by a shallow comparison). Since they never do, it will only run once.
 
 ```javascript
-const RootFrag = fragment((props) => {
-  return <NestedFrag id="foo" value={props.value}/>
-})
+const NestedFrag = fragment.optim(props => (
+  <span>{props.value}</span>
+))
 
-const renderer = app(RootFrag, rootNOde)
+const RootFrag = fragment(props => (
+  <NestedFrag id="foo" value={props.value}/>
+))
+
+const Renderer = app(RootFrag, rootNOde)
 
 setInterval(() => {
-  renderer.update({ value: "Hello, world!" })
+  Renderer.update({ value: "Hello, world!" })
 }, 1000)
 ```
 
-Using `id`s is almost always the recommended course of action. In fact this behavior would be enabled by default but Hart needs you to provide unique names so that it can cache collections of props over time.
+Using `fragment.optim` is almost always the recommended course of action. In fact this behavior would be enabled by default but Hart needs you to provide unique names so that it can cache collections of props over time.
+
+If you need the root fragment of your app to be an optimized fragment, you can pass the `id` into the options object accepted by the `app` function. For example:
+
+```javascript
+const Renderer = app(RootFragment, "#app", { id: "my-app" })
+```
 
 ## Effects
 
-As much as Hart would like you to build purely functional apps, there are actually a few instances in which it allows you to bend the paradigm just a little bit, specifically if you need access to a real DOM node in the page, if you want to do something only when a node is rendered into the DOM, or if you want to do something when it is removed. In Hart, these cases are handled with "effect" functions.
+As much as Hart would like you to build purely functional apps, there are actually a few instances in which it allows you to bend the paradigm just a little bit in order to memoize things, get access to real DOM nodes, and trigger side effects under certain conditions. You can do these things with effect functions that are implicitly available within the props argument of all fragments built with `fragment.optim`.
 
-### Mounting and unmounting
+Effect functions are called within the body of your fragments, and some of them require you to pass in dependency arrays, not unlike React's hooks. Dependency arrays determine when an effect should make use of a cached value, or migrate to a new one. If all dependencies remain the same since the last render, cached values and effects will be used.
 
-Mounting describes the moment when a real DOM node is rendered onto the page. Similarly, unmounting describes the moment when a real DOM node is removed from the page.
+Here are your available effects:
 
-To run a function when a fragment is mounted, you will want to generate a collection of effect functions within your fragment, one of which is `onmount`. You can use this to create a mount handler which you can then use to wrap your fragment's output. For example:
+### `afterEffect`
+
+This allows you to run a function on the next event loop after a fragment has rendered. It takes in a function and a dependency array for determining whether or not the function should run. If your function returns another function, the returned function will serve as a cleanup procedure that runs before running the effect again, or whenever your fragment unmounts from the DOM.
+
+In the following example we define two after-effects. The first one has no dependency array so there is nothing to compare and it runs on every render. The second one uses an empty dependency array, meaning that dependencies will be considered the same from render to render. It will therefore only run on the first render, and it's cleanup function will only run when it unmounts from the DOM.
 
 ```javascript
-const Frag = fragment(props => {
-  const { onmount } = effects()
+fragment.optim(({ effects }) => {
+  const { afterEffect } = effects
 
-  const handleMount = onmount(() => {
-    console.log("I mounted!")
+  afterEffect(() => {
+    console.log("I run after every render!")
   })
 
-  return handleMount(
-    <div>Hello, world!</div>
+  afterEffect(() => {
+    return () => {
+      console.log("I run only when the fragment unmounts!")
+    }
+  }, [])
+
+  return <div></div>
+})
+```
+
+### `memo`
+
+This function allows you to memoize a value across renders. It takes in a function that calculates the value and a dependency array so that the value can be recalculated if any dependencies change.
+
+In the following example, the `fullName` will only be recalculated if the `firstName` or the `lastName` has changed since the previous render. Otherwise, it will not recalculate.
+
+```javascript
+fragment.optim(({ effects, firstName, lastName }) => {
+  const { memo } = effects
+  const fullName = memo(() => `${firstName} ${lastName}`, [firstName, lastName])
+
+  return <span>{fullName}</span>
+})
+```
+
+### `memoFn`
+
+This function behaves like `memo`, but it returns a cached function rather than a cached value. This is good for creating event handler functions so that you don't trigger unnecessary re-renders by passing in new handler functions to your fragments on every render.
+
+The following example shows a fragment built in two different ways — one with `memoFn` and one without. When `memoFn` is not used, the sub-fragment always re-renders because it is called with a new handler function. When `memoFn` is used, the sub-fragment does not needlessly re-render.
+
+```javascript
+// Without memoFn, AnotherFragment always re-renders.
+fragment.optim(() => {
+ const handler = () => console.log("I ran!")
+
+  return <AnotherFragment id="foo" handler={handler}/>
+})
+
+// With memoFn, AnotherFragment is able to use cached output.
+// Since the dependency array is empty, we always use a cached function.
+fragment.optim(({ effects }) => {
+  const { memoFn } = effects
+
+  const handler = memoFn(() => console.log("I ran!"), [])
+
+  return <AnotherFragment id="foo" handler={handler}/>
+})
+```
+
+### `ref`
+
+This function takes in an initial value, and returns a cached object with a property called `current`, containing the object's _current_ value. This is useful for wrapping frequently-changing values in an object that never changes. It can also be used to get a reference to a real DOM node as shown in the following example:
+
+```javascript
+fragment.optim(({ effects }) => {
+  const { ref, memoFn } = effects
+
+  const buttonRef = ref(null)
+  const logButtonNode = memoFn(() => console.log(buttonRef.current), [buttonRef])
+
+  return (
+    <button ref={buttonRef} onclick={logButtonNode}>
+      Click me
+    </button>
   )
 })
 ```
 
-The above example will log "I mounted!" only its output div is rendered into the DOM, but not on subsequent invocations of the fragment function.
-
-Similarly, we can create unmount handlers, which will run only when a fragment's output is removed from the DOM. In fact, we can combine mount and unmount handlers:
-
-```javascript
-const Frag = fragment(props => {
-  const { onmount, onunmount } = effects()
-
-  const handleMount = onmount(() => {
-    console.log("I mounted!")
-  })
-
-  const handleUnmount = onunmount(() => {
-    console.log("I unmounted!")
-  })
-
-  return handleUnmount(handleMount(
-    <div>Hello, world!</div>
-  ))
-})
-```
-
-The order in which we call our mount and unmount handlers does not matter. However, each handler can only be called once per fragment. In other words, the following won't execute two mount handlers; instead the outer call will simply override the inner call:
-
-```javascript
-// Overrides a mount handler
-handleMount(handleMount(<div></div>))
-```
-
-### Referencing DOM nodes
-
-Getting a reference to a live DOM node is an effect that combines two functions: `refs` and `captureRefs`. You'll use `captureRefs` to wrap a fragment's output and you'll use `refs` to access the live DOM nodes that were captured on the most recent invocation of the fragment function. In order for a node to be captured you must give it a `ref` attribute with a value unique to all refs in that fragment.
-
-```javascript
-const Frag = fragment(props => {
-  const { refs, captureRefs } = effects()
-
-  const input1focushandler = () => {
-    refs().input2.blur()
-  }
-
-  const input2focushandler = () => {
-    refs().input.blur()
-  }
-
-  return captureRefs(
-    <div>
-      <input class="input1" ref="input1" onfocus={input1focushandler} />
-      <input class="input2" ref="input2" onfocus={input2focushandler} />
-    </div>
-  )
-})
-```
-
-In this example, because we have wrapped the output with the `captureRefs` function, each of our live input elements has become available by calling `refs`. Note that `captureRefs` can be combined with mount and unmount handlers.
-
-## Chains
-
-Because Hart encourages functional style when writing your apps, you might sometimes end up with a lot of nested function calls, for example:
-
-```javascript
-handleMount(handleUnmount(captureRefs(<div></div>)))
-```
-
-If you are uncomfortable with this, Hart provides a utility function called `pass` that allows you to simplify your syntax. Using `pass`, the above example becomes the following:
-
-```javascript
-import { pass } from "hart"
-
-// ...
-
-pass(<div></div>).to(captureRefs).to(handleUnmount).to(handleMount)()
-```
-
-Each invocation of `to` in this example takes as many arguments as you would like to provide. The first argument should be a function and the rest should be arguments that will be passed to that function. Additionally, `to` will take the value of whatever came before it and pass that along as the final argument to the function as well. This is a little tricky to describe, so let's look at another example.
-
-```javascript
-const add = (x, y) => {
-  return x + y
-}
-
-pass(2).to(add, 3)()
-//=> returns 5
-
-const combineStr = (toAdd, prevStr) => {
-  return prevStr + toAdd
-}
-
-pass("Hello")
-  .to(combineStr, " ")
-  .to(combineStr, "world")
-  .to(combineStr, "!")()
-//=> returns "Hello world!"
-```
-
-In these examples, you should be able to see how arguments are passed down the chain.
+In this example, we pass the `buttonRef` into our jsx as an attribute called `ref`. By doing this, Hart will automatically keep the ref up to date with the actual DOM node associated with the button. When we click the button, we will get a console log showing us that node.
 
 ## Prefab fragments
 

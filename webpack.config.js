@@ -30,8 +30,8 @@ const config = {
             loader: "babel-loader",
             options: {
               plugins: [["@babel/plugin-transform-react-jsx", {
-                pragma: "fragment.hart",
-                pragmaFrag: "fragment.hartFrag"
+                pragma: "fragment.jsx",
+                pragmaFrag: "fragment.jsxFrag"
               }]],
             },
           },

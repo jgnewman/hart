@@ -1,67 +1,109 @@
-/*
-const Frag = fragment(props => {
-  const { refs, captureRefs, onmount } = effects()
+function depsDidChange(prevDeps, newDeps) {
+  let changed = false
 
-  const input1focushandler = () => {
-    refs().input2.blur()
+  if (!prevDeps || !newDeps || newDeps.length !== prevDeps.length) {
+    changed = true
   }
 
-  const input2focushandler = () => {
-    refs().input1.blur()
-  }
-
-  const mount = onmount((props) => {
-    console.log("mounted")
+  !changed && newDeps.length && newDeps.every((newDep, index) => {
+    const prevDep = prevDeps[index]
+    if (prevDep !== newDep) {
+      changed = true
+      return false
+    }
+    return true
   })
 
-  return mount(captureRefs(
-    <div>
-      <input class="input1" ref="input1" onfocus={input1focushandler} />
-      <input class="input2" ref="input2" onfocus={input2focushandler} />
-    </div>
-  ))
-})
-*/
+  return changed
+}
 
-import { objectMap } from "./helpers"
+function getEffectUsage(cacheObject) {
+  return [cacheObject.effectMem, (cacheObject.effectCount += 1)]
+}
 
-export function effects() {
-  let references = {}
+function createMemoTracker(cacheObject) {
+  return function (calculator, newDeps=[]) {
+    const [effectMem, position] = getEffectUsage(cacheObject)
+    const [prevVal, prevDeps] = effectMem[position] || []
+    const newVal = depsDidChange(prevDeps, newDeps) ? calculator() : prevVal
 
-  function captureRefs(vnode) {
-    const { attrs } = vnode
+    effectMem[position] = [newVal, newDeps]
+    return newVal
+  }
+}
 
-    const localRef = attrs.ref
-    if (localRef) {
-      references[localRef] = vnode
+function createMemoFnTracker(cacheObject) {
+  return function (newCb, newDeps=[]) {
+    const [effectMem, position] = getEffectUsage(cacheObject)
+    const [prevCb, prevDeps] = effectMem[position] = effectMem[position] || []
+    const callback = depsDidChange(prevDeps, newDeps) ? newCb : prevCb
+
+    effectMem[position] = [callback, newDeps]
+    return callback
+  }
+}
+
+function createAfterEffectTracker(cacheObject) {
+  return function (newEffect, newDeps) {
+    const [effectMem, position] = getEffectUsage(cacheObject)
+    const [prevCleanup, prevDeps] = effectMem[position] || []
+    const prevCleanupIsFn = typeof prevCleanup === "function"
+
+    if (depsDidChange(prevDeps, newDeps)) {
+      prevCleanupIsFn && cacheObject.unregisterCleanup(prevCleanup)
+
+      setTimeout(() => {
+        prevCleanupIsFn && prevCleanup()
+        const newCleanup = newEffect()
+        effectMem[position] = [newCleanup, newDeps]
+        typeof newCleanup === "function" && cacheObject.registerCleanup(newCleanup)
+      }, 0)
+    }
+  }
+}
+
+function createRefTracker(cacheObject) {
+  return function (initVal) {
+    const [effectMem, position] = getEffectUsage(cacheObject)
+    const ref = effectMem[position] = effectMem[position] || { current: initVal }
+    return ref
+  }
+}
+
+export class CacheObject {
+  constructor(id, parentMap) {
+    this.childLength = 0
+    this.cleanups = []
+    this.effectCount = -1
+    this.effectMem = []
+    this.id = id
+    this.node = null
+    this.parentMap = parentMap
+    this.props = null
+
+    this.effects = {
+      afterEffect: createAfterEffectTracker(this),
+      memo: createMemoTracker(this),
+      memoFn: createMemoFnTracker(this),
+      ref: createRefTracker(this),
     }
 
-    vnode.children.forEach(child => !child.fragment && captureRefs(child))
-    return vnode
-  }
-
-  function refs() {
-    return objectMap(references, (val) => val.html)
-  }
-
-  function onmount(handler) {
-    return (vnode) => {
-      vnode.onmount = handler
-      return vnode
+    this.onunmount = () => {
+      this.cleanups.forEach(callback => callback())
+      this.cleanups = []
+      this.parentMap.delete(this.id)
     }
   }
 
-  function onunmount(handler) {
-    return (vnode) => {
-      vnode.onunmount = handler
-      return vnode
-    }
+  unregisterCleanup(callback) {
+    this.cleanups.splice(this.cleanups.indexOf(callback), 1)
   }
 
-  return {
-    captureRefs,
-    refs,
-    onmount,
-    onunmount,
+  registerCleanup(callback) {
+    this.cleanups.push(callback)
+  }
+
+  resetCounts() {
+    this.effectCount = -1
   }
 }

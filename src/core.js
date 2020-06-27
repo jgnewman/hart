@@ -1,6 +1,6 @@
 import {
-  deepEqual,
-} from "./helpers"
+  CacheObject,
+} from "./effects"
 
 import {
   observable,
@@ -260,7 +260,10 @@ function attachAttr(target, isSVG, attrName, attrVal) {
 
   const isInputValue = isSpecialInputAttr(attrName) && isInputTag(target)
 
-  if (isInputValue || /^on/.test(attrName)) {
+  if (attrName === "ref") {
+    attrVal && (attrVal.current = target)
+
+  } else if (isInputValue || /^on/.test(attrName)) {
     target[attrName] = attrVal
 
   } else if (isSVG) {
@@ -291,11 +294,9 @@ function detachAttr(target, isSVG, attrName) {
   }
 }
 
-function buildHTML(vTree, mounters, parentUnmounters) {
-  mounters = mounters || []
+function buildHTML(vTree, parentUnmounters) {
   const unmounters = []
 
-  vTree.onmount && mounters.push(vTree.onmount)
   if (vTree.onunmount) {
     unmounters.push(vTree.onunmount)
     parentUnmounters && parentUnmounters.push(vTree.onunmount)
@@ -310,7 +311,7 @@ function buildHTML(vTree, mounters, parentUnmounters) {
   } else if (vTree.tag === LIST || vTree.tag === DOC_FRAG) {
     vTree.html = document.createDocumentFragment()
     vTree.children.forEach(child => {
-      buildHTML(child, mounters, unmounters)
+      buildHTML(child, unmounters)
       vTree.html.appendChild(child.html)
     })
 
@@ -329,7 +330,7 @@ function buildHTML(vTree, mounters, parentUnmounters) {
       const frag = document.createDocumentFragment()
 
       vTree.children.forEach(child => {
-        buildHTML(child, mounters, unmounters)
+        buildHTML(child, unmounters)
         vTree.html.appendChild(child.html)
       })
 
@@ -338,7 +339,6 @@ function buildHTML(vTree, mounters, parentUnmounters) {
 
   }
 
-  vTree.mounters = mounters
   vTree.unmounters = unmounters
   return vTree
 }
@@ -354,9 +354,6 @@ function addHTML(change) {
   })
 
   append(target, nodesToAdd)
-  optionsArray.forEach(node => {
-    node.mounters && node.mounters.forEach(handler => handler())
-  })
 }
 
 function removeHTML(change) {
@@ -388,7 +385,6 @@ function replaceHTML(change) {
   }
 
   prev.unmounters && prev.unmounters.forEach(handler => handler())
-  next.mounters && next.mounters.forEach(handler => handler())
   prev.html = null
 }
 
@@ -513,35 +509,72 @@ function diff(prev, next, queue=[]) {
   return queue
 }
 
-function getVNodeFromUserFn(userFn, props, children) {
-  const result = userFn(props, children)
-  return result || vNode(EMPTY)
+function propsEqual(a, b) {
+  if (a === b) return true
+  if (!a || !b) return false
+
+  const aKeys = Object.keys(a)
+  const bKeys = Object.keys(b)
+
+  const len = aKeys.length
+  if (bKeys.length !== len) return false
+
+  for (let i = 0; i < len; i++) {
+    const key = aKeys[i]
+    if (a[key] !== b[key] || !Object.prototype.hasOwnProperty.call(b, key)) return false
+  }
+
+  return true
+}
+
+function getVNodeFromUserFn(userFn, props, children, prevCache) {
+  const result = userFn(props, children) || vNode(EMPTY)
+
+  if (prevCache) {
+    prevCache.resetCounts()
+    result.onunmount = prevCache.onunmount
+  }
+
+  return result
 }
 
 function fragment(userFn) {
-  let prevData = {}
+  function output(props, children) {
+    return userFn(props, children) || vNode(EMPTY)
+  }
+  output[PROOF] = PROOF
+  return output
+}
+
+function optimizedFragment(userFn) {
+  let fragmentCaches = new Map()
 
   function output(props, children) {
-    const cacheId = props.id
+    const id = props.id
 
-    if (!cacheId) {
-      return getVNodeFromUserFn(userFn, props, children)
+    if (!id) {
+      throw new Error("Optimized fragment is missing an `id` attribute.")
     }
 
-    const prevCache = prevData[cacheId] = prevData[cacheId] || {}
+    const prevCache = fragmentCaches.get(id) ||
+                      fragmentCaches.set(id, new CacheObject(id, fragmentCaches)).get(id)
+
     const prevProps = prevCache.props
     const prevNode = prevCache.node
 
+    const nextProps = { ...props, effects: prevCache.effects }
     const nextChildLength = children && children.nodes ? children.nodes.length : 0
     const noChildrenOverChange = prevCache.childLength === 0 && nextChildLength === 0
 
-    // TODO: Can this be shallow equal?
-    if (prevNode && noChildrenOverChange && deepEqual(prevProps, props)) {
-      prevCache.props = props
+    if (prevNode && noChildrenOverChange && propsEqual(prevProps, nextProps)) {
+      prevCache.props = nextProps
       return prevNode
     }
 
-    const nextNode = getVNodeFromUserFn(userFn, props, children)
+    const nextNode = userFn(nextProps, children) || vNode(EMPTY)
+    prevCache.resetCounts()
+    nextNode.onunmount = prevCache.onunmount
+
     const shouldTransferHtml = prevNode && !prevNode.listed && !nextNode.html
     const shouldTransferUnmounters = prevNode && prevNode.unmounters && !nextNode.unmounters
 
@@ -553,7 +586,7 @@ function fragment(userFn) {
       nextNode.unmounters = prevNode.unmounters
     }
 
-    prevCache.props = props
+    prevCache.props = nextProps
     prevCache.node = nextNode
     prevCache.childLength = nextChildLength
     return nextNode
@@ -583,10 +616,11 @@ function createApp(rootFragmentFn, target, options) {
   }
 }
 
-function render(appFn, props={}) {
+function render(appFn, props={}, appOptions) {
   const { rootTarget, rootFragmentFn, prevTree, setPrevTree } = appFn()
+  const fragProps = !appOptions.id ? props : { ...props, id: appOptions.id }
 
-  const nextTree = rootFragmentFn(props)
+  const nextTree = rootFragmentFn(fragProps)
   nextTree.parent = { html: rootTarget }
   setPrevTree(nextTree)
 
@@ -620,7 +654,7 @@ function createObserver(fn, outputElem, options={}, isAsync) {
   if (outputElem) {
     const realNode = typeof outputElem === "string" ? document.querySelector(outputElem) : outputElem
     const app = createApp(fn, realNode, options)
-    observer.watch(newVal => render(app, newVal))
+    observer.watch(newVal => render(app, newVal, options))
   }
 
   return observer
@@ -634,8 +668,9 @@ function appSync(fn, outputElem, options) {
   return createObserver(fn, outputElem, options, false)
 }
 
-fragment.hart = vNode
-fragment.hartFrag = DOC_FRAG
+fragment.jsx = vNode
+fragment.jsxFrag = DOC_FRAG
+fragment.optim = optimizedFragment
 const FRAGMENT_PROOF = PROOF
 
 export {

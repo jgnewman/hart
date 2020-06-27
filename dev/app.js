@@ -2,8 +2,6 @@ import {
   fragment,
   app,
   appSync,
-  pass,
-  effects,
 } from "../index"
 
 const randomItem = items => {
@@ -154,48 +152,51 @@ const handleCheckbox = (evt) => {
   })
 }
 
-const ChildRenderer = fragment((props, children) => {
+const ChildRenderer = fragment.optim(({ name, effects }, children) => {
+  const memoizedName = effects.memo(() => name, [name])
+  const memoizedSuffix = effects.memo(() => name === "bill" ? "x" : "y", [name])
+
   return (
     <div class="dib" style="background: black; color: white; margin-bottom: 5px;">
-      <div>{props.name}</div>
+      <div>{memoizedName}{memoizedSuffix}</div>
       {children}
     </div>
   )
 })
 
-const Span = fragment(({ value }) => (
-  <span ref="myspancomponent">{value}</span>
-))
-
-const ListItem = fragment(({ value }) => {
-  const { refs, captureRefs, onmount, onunmount } = effects()
-
-  const handleClick = (evt) => {
-    console.log("ref, evt:", refs(), evt)
-  }
-
-  const handlemount = onmount(() => {
-    console.log("mounted!")
-  })
-
-  const handleunmount = onunmount(() => {
-    console.log("unmounted!")
-  })
-
-  return handleunmount(handlemount(captureRefs(
-    <li ref="myli" onclick={handleClick}>
-      <span ref="myspan"></span>
-      <Span value={value} />
-    </li>
-  )))
+const Span = fragment.optim(({ effects, value }) => {
+  const { ref } = effects
+  const spanRef = ref(null)
+  return (
+    <span ref={spanRef}>{value}</span>
+  )
 })
 
-const RootFragment = fragment((props) => {
-  const { onmount } = effects()
+const ListItem = fragment.optim(({ effects, id, value }) => {
+  const { ref, afterEffect, memoFn } = effects
 
-  const mounthandler = onmount(() => console.log("mounted root"))
+  const liRef = ref(null)
+  const spanRef = ref(null)
+  const clickHandler = memoFn(evt => {
+    console.log("ref, evt:", liRef.current, evt)
+  }, [liRef])
+
+  afterEffect(() => console.log(`mounted ${id}!`), [])
+  afterEffect(() => () => console.log(`unmounted ${id}!`), [])
+
+  return (
+    <li ref={liRef} onclick={clickHandler}>
+      <span ref={spanRef}></span>
+      <Span id="span-zoop" value={value} />
+    </li>
+  )
+})
+
+const RootFragment = fragment.optim((props) => {
+  props.effects.afterEffect(() => console.log("mounted root!"), [])
+
   console.log("new props", props)
-  return mounthandler(
+  return (
     <div>
       {props.counter}
       <input id="one" oop="foo" type="checkbox" onchange={handleCheckbox} checked={props.checkbox}/>
@@ -209,7 +210,7 @@ const RootFragment = fragment((props) => {
       <button onclick={handleClickRemoveChildName}>Click me to remove a child name</button>
       <ul>
         {props.listData.map(datum => (
-          <ListItem key={datum.id} value={datum.val}/>
+          <ListItem key={datum.id} id={datum.val} value={datum.val}/>
         ))}
       </ul>
       {props.showWelcome && (
@@ -231,7 +232,11 @@ const RootFragment = fragment((props) => {
   )
 })
 
-const renderer = app(RootFragment, "#app", { useShadowRoot: false })
+const renderer = app(RootFragment, "#app", {
+  id: "root",
+  useShadowRoot: false,
+})
+
 reducer.watch(newProps => renderer.update(newProps))
 
 reducer.update({
@@ -262,13 +267,6 @@ app2.update({ showDiv: true })
 app2.update({ showDiv: false })
 
 /*******************/
-
-const mod = (toAdd, prevVal) => {
-  return prevVal + toAdd
-}
-
-const chain = pass("Hello").to(mod, " ").to(mod, "world").to(mod, "!")()
-console.log("chain:", chain)
 
 /*
 
