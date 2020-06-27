@@ -412,7 +412,7 @@ function reorderHTML(change) {
   const { prev, next, options } = change
 
   // To reorder the list we will...
-  //   Created a sortedList of keyCache items, sorted by intended position.
+  //   Create a sortedList of keyCache items, sorted by intended position.
   //   Find the first node currently rendered in the DOM.
   //   Use the first rendered node as a position marker.
   //   Iterate over the sorted list. For each...
@@ -535,6 +535,7 @@ function fragment(userFn) {
     const nextChildLength = children && children.nodes ? children.nodes.length : 0
     const noChildrenOverChange = prevCache.childLength === 0 && nextChildLength === 0
 
+    // TODO: Can this be shallow equal?
     if (prevNode && noChildrenOverChange && deepEqual(prevProps, props)) {
       prevCache.props = props
       return prevNode

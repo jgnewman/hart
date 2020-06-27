@@ -265,9 +265,9 @@ function goReact() {
 
   populateOutput(output)
 
-  const Li = props => {
+  const Li = React.memo(props => {
     return rCreate("li", {}, props.val)
-  }
+  })
 
   class MyApp extends React.Component {
     constructor() {

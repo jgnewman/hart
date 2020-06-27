@@ -1,6 +1,6 @@
 const HAS_BIG_INT_64_ARRAY = typeof BigInt64Array !== 'undefined';
 
-export const deepEqual = (a, b) => {
+export function deepEqual(a, b) {
   if (a === b) return true
 
   if (a && b && typeof a == 'object' && typeof b == 'object') {
@@ -91,13 +91,13 @@ export const deepEqual = (a, b) => {
   return a !== a && b !== b
 }
 
-export const objectLoop = (obj, callback) => {
+export function objectLoop(obj, callback) {
   for (let i in obj) {
     obj.hasOwnProperty(i) && callback(obj[i], i)
   }
 }
 
-export const objectMap = (obj, callback) => {
+export function objectMap(obj, callback) {
   const out = {}
   objectLoop(obj, (val, key) => out[key] = callback(val, key))
   return out

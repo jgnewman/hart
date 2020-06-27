@@ -25,10 +25,10 @@ const Frag = fragment(props => {
 
 import { objectMap } from "./helpers"
 
-export const effects = () => {
+export function effects() {
   let references = {}
 
-  const captureRefs = (vnode) => {
+  function captureRefs(vnode) {
     const { attrs } = vnode
 
     const localRef = attrs.ref
@@ -40,18 +40,18 @@ export const effects = () => {
     return vnode
   }
 
-  const refs = () => {
+  function refs() {
     return objectMap(references, (val) => val.html)
   }
 
-  const onmount = (handler) => {
+  function onmount(handler) {
     return (vnode) => {
       vnode.onmount = handler
       return vnode
     }
   }
 
-  const onunmount = (handler) => {
+  function onunmount(handler) {
     return (vnode) => {
       vnode.onunmount = handler
       return vnode

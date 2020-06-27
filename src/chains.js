@@ -1,8 +1,8 @@
-export const pass = (arg) => {
+export function pass(arg) {
   const chain = []
   const origVal = arg
 
-  const runChain = () => {
+  function runChain() {
 
     const recurser = (value, links) => {
       if (!links.length) return value
@@ -15,7 +15,7 @@ export const pass = (arg) => {
     return recurser(origVal, chain)
   }
 
-  runChain.to = (...rest) => {
+  runChain.to = function (...rest) {
     chain.push(rest)
     return runChain
   }

@@ -1,4 +1,4 @@
-const observable = (calculator) => {
+function observable(calculator) {
   const calc = calculator || function (x) { return x }
   const watchers = []
   let val = {}
@@ -20,7 +20,7 @@ const observable = (calculator) => {
   }
 }
 
-const observableAsync = (calculator) => {
+function observableAsync(calculator) {
   const watchers = []
   const observed = observable(calculator)
 
@@ -29,11 +29,11 @@ const observableAsync = (calculator) => {
 
   let loopRunning = false
 
-  const assertRunLoop = () => {
+  function assertRunLoop() {
     if (!loopRunning) {
       loopRunning = true
 
-      const end = () => {
+      function end() {
         loopRunning = false
         const nextVal = observed.get()
         watchers.forEach(watcher => watcher(nextVal, prevVal))
