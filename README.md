@@ -15,7 +15,7 @@ Hart is a lithe, nimble core for scalable web apps.
 
 The main advantage to using Hart over some other component-based framework is that Hart is designed to help you write purely functional apps. _**But don't be scared!**_ The patterns are all very familiar. And since you'll be avoiding mutable state, Hart can provide some optimizations that lead to [fantastic performance](https://github.com/jgnewman/hart/blob/master/BENCHMARKS.md) and a very small footprint in terms of file size, memory consumption, and processing power.
 
-Though tiny (**<9.5kB minified** and **~3.2kB gzipped**), Hart is geared toward scalability. You can spin up a small app with almost no boilerplate, and you can scale it up modularly as needed. The biggest thing to keep in mind is that Hart _really does not want_ you to try to hack some kind of local state into your components (called **"fragments"** in Hart). If you can follow this rule, the two of you should easily fall in love. With that in mind, let me introduce you to Hart...
+Though tiny (**~10kB minified** and **~3.3kB gzipped**), Hart is geared toward scalability. You can spin up a small app with almost no boilerplate, and you can scale it up modularly as needed. The biggest thing to keep in mind is that Hart _really does not want_ you to try to hack some kind of local state into your components (called **"fragments"** in Hart). If you can follow this rule, the two of you should easily fall in love. With that in mind, let me introduce you to Hart...
 
 #### In this doc
 
