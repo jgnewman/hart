@@ -231,7 +231,7 @@ const RootFragment = fragment((props) => {
   )
 })
 
-const renderer = app(RootFragment, document.getElementById("app"))
+const renderer = app(RootFragment, "#app", { useShadowRoot: false })
 reducer.watch(newProps => renderer.update(newProps))
 
 reducer.update({

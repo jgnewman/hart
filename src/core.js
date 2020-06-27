@@ -562,9 +562,16 @@ function fragment(userFn) {
   return output
 }
 
-function createApp(rootFragmentFn, rootTarget) {
+function createApp(rootFragmentFn, target, options) {
   assertPureFragment(rootFragmentFn)
   let prevTree = null
+
+  let rootTarget = target
+  if (options.useShadowRoot) {
+    target.attachShadow({ mode: "open" })
+    rootTarget = target.shadowRoot
+  }
+
   return () => {
     return {
       rootTarget,
@@ -605,24 +612,25 @@ function render(appFn, props={}) {
   }
 }
 
-function createObserver(isAsync, fn, outputElem) {
+function createObserver(fn, outputElem, options={}, isAsync) {
   const observerCalc = outputElem ? null : fn
   const observer = isAsync ? observableAsync(observerCalc) : observable(observerCalc)
 
   if (outputElem) {
-    const app = createApp(fn, outputElem)
+    const realNode = typeof outputElem === "string" ? document.querySelector(outputElem) : outputElem
+    const app = createApp(fn, realNode, options)
     observer.watch(newVal => render(app, newVal))
   }
 
   return observer
 }
 
-function app(fn, outputElem) {
-  return createObserver(true, fn, outputElem)
+function app(fn, outputElem, options) {
+  return createObserver(fn, outputElem, options, true)
 }
 
-function appSync(fn, outputElem) {
-  return createObserver(false, fn, outputElem)
+function appSync(fn, outputElem, options) {
+  return createObserver(fn, outputElem, options, false)
 }
 
 fragment.hart = vNode

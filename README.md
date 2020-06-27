@@ -10,7 +10,6 @@ Hart is a lithe, nimble core for scalable web apps.
 
 - Update any packages needing updating.
 - Benchmark against latest libs.
-- Maybe output stuff to shadow root?
 - Do we _really_ have to force the user to cache with id or can we cache automatically by just using classes or something?
 - Can we replace mounters/dismounters/etc with a hooks system like react?
 
@@ -117,7 +116,9 @@ const counter = app((data) => {
 counter.update({ value: 0 })
 ```
 
-The counter may not seem very useful on its own. But, what makes it powerful is the fact that you can register a function to run whenever one of your apps is updated, allowing you to link 2 Hart apps together and have them to work together toward a common goal:
+> **NOTE:** If you do provide an output element to the `app` function, you can pass in a selector string instead of an actual DOM node and Hart will select that node for you. You can also pass in an options object as a third argument that allows a single property called `useShadowRoot`. If you set to this to true, Hart will render your app into your output element's shadow root.
+
+The counter we've written may not seem very useful on its own. But, what makes it powerful is the fact that you can register a function to run whenever one of your apps is updated, allowing you to link 2 Hart apps together and have them to work together toward a common goal:
 
 ```javascript
 import { fragment, app } from "hart"
