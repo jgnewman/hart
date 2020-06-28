@@ -208,7 +208,7 @@ const SubSub = fragment.optim(({ effects, counter, nestedChildren, extra }) => {
   return (
     <span>
       This is the content of a localized subapp {counter} {extra}
-      {nestedChildren()}
+      {nestedChildren}
       <PassedChild id="sammy" name="sammy" />
     </span>
   )
@@ -217,7 +217,7 @@ const SubSub = fragment.optim(({ effects, counter, nestedChildren, extra }) => {
 const AppGen = fragment.optim(({ effects, id,...rest }, children) => {
   const subrootRef = effects.ref()
   const propsRef = effects.ref({ ...rest })
-  const childRef = effects.ref(children.nodes[0])
+  const childRef = effects.ref(children)
 
   effects.afterEffect(() => () => {
     console.log("unmounted subapp wrapper")
@@ -278,13 +278,11 @@ const RootFragment = fragment.optim((props) => {
       )}
       {props.showWelcome && (
         <AppGen id="subapp" extra="extrito">
-          {() => (
-            <PassedChild id="mike" name="mike" />
-          )}
+          <PassedChild id="mike" name="mike" />
         </AppGen>
       )}
       <ChildRenderer id="cr1" name="bill">
-        {!!props.childNames[0] && <div><PassedChild id="whammy" name="whammy" /></div>}
+        {!!props.childNames[0] && <div>{props.childNames[0]}</div>}
         {!!props.childNames[1] && <div>{props.childNames[1]}</div>}
         {!!props.childNames[2] && <div>{props.childNames[2]}</div>}
       </ChildRenderer>

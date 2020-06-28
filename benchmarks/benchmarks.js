@@ -13,7 +13,7 @@ import {
   init
 } from "./setup"
 
-const hCreate = fragment.hart
+const hCreate = fragment.jsx
 const rCreate = React.createElement
 const pCreate = preact.createElement
 
