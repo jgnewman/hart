@@ -17,8 +17,8 @@ TODO:
   - [x] Do we like the API where effects are injected into props?
   - [x] How do we want to enforce adding IDs so we don't forget to add them?
   - [x] Need a useCallback equivalent
-  - [ ] Need to allow providing a prop comparison func, and document it.
-  - [ ] This would be safer if we did it in typescript.
+  - [x] Need to allow providing a prop comparison func, and document it.
+  - [ ] Need to generate TS types for user API
   - Need to document...
     - [x] New effect API
   - Need to test...

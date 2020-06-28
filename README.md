@@ -19,10 +19,12 @@ Though tiny (**~9.6kB minified** and **~3.3kB gzipped**), Hart is geared toward 
   - [Architecture](#architecture)
 - [Batched updates](#batched-updates)
 - [Optimizing](#optimizing)
+  - [Shadow DOM](#shadow-dom)
 - [Effects](#effects)
-  - [Mounting and unmounting](#mounting-and-unmounting)
-  - [Referencing DOM nodes](#referencing-dom-nodes)
-- [Chains](#chains)
+  - [After Effects](#aftereffect)
+  - [Memoized Values](#memo)
+  - [Memoized Functions](#memofn)
+  - [Accessing Real DOM Nodes](#ref)
 - [Prefab fragments](#prefab-fragments)
 
 ## Getting set up
@@ -287,11 +289,11 @@ Because Hart apps are functional, this nuance should be entirely invisible to yo
 
 Hart makes use of the virtual DOM model, meaning that whenever your app updates, it calculates a slimmed down version of what the new DOM should look like, diffs it against the previous version, and then makes surgical changes as needed.
 
-But with Hart, you'll be writing functional apps. So, assuming you aren't trying to hack in some kind of local state, we can assume that a fragment will always return the same output when given unchanged input and zero children. You can capitalize on this and tell Hart to skip re-computing and re-rendering any given fragment under these conditions by building your component with `fragment.optim`.
+But with Hart, you'll be writing functional apps. So, assuming you aren't trying to hack in some kind of local state, we can assume that a fragment will always return the same output when given unchanged input and zero children. You can capitalize on this and tell Hart to skip re-computing any given fragment under these conditions by building your component with `fragment.optim`.
 
-> Note that all fragments built with `fragment.optim` require you to pass in an `id` prop, otherwise you will get an error. As you might expect, `id`s should always be unique (as was always the rule in HTML) otherwise you'll get crazy behavior.
+> Note that all fragments built with `fragment.optim` require you to pass in an `id` prop, otherwise you will get errors. As you might expect, `id`s should always be unique (as was always the rule in HTML) if you don't want crazy behavior.
 
-In the following case, without using `fragment.optim`, the `NestedFrag` function will run once every second.
+In the following case, without using `fragment.optim`, the `NestedFrag` function will re-compute once every second.
 
 ```javascript
 const NestedFrag = fragment(props => (
@@ -309,7 +311,7 @@ setInterval(() => {
 }, 1000)
 ```
 
-However, by using `fragment.optim`, `NestedFrag` will only run when its props change (by a shallow comparison). Since they never do, it will only run once.
+However, by using `fragment.optim`, `NestedFrag` will only run when its props change (by automatic shallow comparison). Since they never do, it will only run once.
 
 ```javascript
 const NestedFrag = fragment.optim(props => (
@@ -327,12 +329,34 @@ setInterval(() => {
 }, 1000)
 ```
 
-Using `fragment.optim` is almost always the recommended course of action. In fact this behavior would be enabled by default but Hart needs you to provide unique names so that it can cache collections of props over time.
+If you don't want to use an automatic shallow comparison and would rather roll your own prop comparison function, you can pass one in as a second argument to `fragment.optim`. That function should take two arguments (previous props and next props), and return a boolean indicating whether or not the props are equal.
+
+```javascript
+fragment.optim(props => <div></div>, (prevProps, nextProps) => {
+  if (prevProps.foo === nextProps.foo) {
+    return true
+  } else {
+    return false
+  }
+})
+```
+
+Using `fragment.optim` is almost always the recommended course of action. In fact optimization behavior would be enabled by default but Hart needs you to provide unique `id`s so that it can cache collections of props over time.
 
 If you need the root fragment of your app to be an optimized fragment, you can pass the `id` into the options object accepted by the `app` function. For example:
 
 ```javascript
 const Renderer = app(RootFragment, "#app", { id: "my-app" })
+```
+
+### Shadow DOM
+
+Apart from allowing you to specify an optimization ID for your root app fragment, the third argument passed to `app` also allows you to render your app within a shadow DOM in order to shield it from things like external CSS.
+
+To enable this, simply set `useShadowRoot` to `true` in your options object.
+
+```javascript
+const Renderer = app(RootFragment, "#app", { useShadowRoot: true })
 ```
 
 ## Effects

@@ -358,7 +358,7 @@ function addHTML(change) {
 
 function removeHTML(change) {
   const { prev } = change
-  if (prev.type === DOC_FRAG) {
+  if (prev.tag === DOC_FRAG) {
     prev.children.forEach(child => removeHTML({ prev: child }))
   } else {
     prev.html.parentNode.removeChild(prev.html)
@@ -546,8 +546,9 @@ function fragment(userFn) {
   return output
 }
 
-function optimizedFragment(userFn) {
+function optimizedFragment(userFn, customCompare) {
   let fragmentCaches = new Map()
+  const assertEqualProps = customCompare || propsEqual
 
   function output(props, children) {
     const id = props.id
@@ -566,7 +567,7 @@ function optimizedFragment(userFn) {
     const nextChildLength = children && children.nodes ? children.nodes.length : 0
     const noChildrenOverChange = prevCache.childLength === 0 && nextChildLength === 0
 
-    if (prevNode && noChildrenOverChange && propsEqual(prevProps, nextProps)) {
+    if (prevNode && noChildrenOverChange && assertEqualProps(prevProps, nextProps)) {
       prevCache.props = nextProps
       return prevNode
     }
