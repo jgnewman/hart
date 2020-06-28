@@ -18,6 +18,15 @@ TODO:
   - [x] How do we want to enforce adding IDs so we don't forget to add them?
   - [x] Need a useCallback equivalent
   - [x] Need to allow providing a prop comparison func, and document it.
+  - [ ] Experiment: Can we localize state via refs and apps within apps?
+        - So it looks like we CAN mount an app inside another app and we CAN pass props down to it.
+        - Is there a way to pass children to a subapp fragment?
+          - You can do it, but its unmounters won't work correctly because they're attached to the parent app before the subsequent runloop where the subapp mounts. What if we pass it as an app option?
+          - Doesn't work because the children could be updated across renders. What if didn't actually pass them in as children but instead manually passed them in as a prop???
+          - Doesn't work for the same reason. But what _should_ work would be passing them in as a function.
+          - For some reason, the passed in child isn't passing itself up the chain. Is this the case for a non-passed in child? Is this the case for anything deeply nested?
+          - Ok, looks like unmounters are generally being a-hole-ish. I think we need to revert to a less efficient but super reasonable technique for now and then try to optimize after.
+
   - [ ] Need to generate TS types for user API
   - Need to document...
     - [x] New effect API

@@ -192,6 +192,64 @@ const ListItem = fragment.optim(({ effects, id, value }) => {
   )
 })
 
+const PassedChild = fragment.optim(({ effects, name }) => {
+  const nameRef = effects.ref(name)
+  effects.afterEffect(() => () => console.log(`unmounted passed child ${nameRef.current}`), [nameRef])
+  const out = <div>Heyo, I'm {name}, a child passed from one app to another app!</div>
+  return out
+})
+
+const SubSub = fragment.optim(({ effects, counter, nestedChildren, extra }) => {
+  effects.afterEffect(() => {
+    console.log("mounted subapp")
+    return () => console.log("unmounted subapp")
+  }, [])
+
+  return (
+    <span>
+      This is the content of a localized subapp {counter} {extra}
+      {nestedChildren()}
+      <PassedChild id="sammy" name="sammy" />
+    </span>
+  )
+})
+
+const AppGen = fragment.optim(({ effects, id,...rest }, children) => {
+  const subrootRef = effects.ref()
+  const propsRef = effects.ref({ ...rest })
+  const childRef = effects.ref(children.nodes[0])
+
+  effects.afterEffect(() => () => {
+    console.log("unmounted subapp wrapper")
+  }, [])
+
+  effects.afterEffect(() => {
+    const { current: subrootElem } = subrootRef
+    const { current: parentProps } = propsRef
+    const { current: nestedChildren } = childRef
+
+    let counter = 0
+    let interval
+
+    const SubApp = app(SubSub, subrootElem, { id })
+    SubApp.update({ counter, nestedChildren, ...parentProps })
+
+    interval = setInterval(() => {
+      counter += 1
+      SubApp.update({ counter, nestedChildren, ...parentProps })
+      counter > 99 && clearInterval(interval)
+    }, 1000)
+
+    return () => {
+      clearInterval(interval)
+    }
+  }, [propsRef, childRef, subrootRef])
+
+  return (
+    <div id={id} ref={subrootRef}></div>
+  )
+})
+
 const RootFragment = fragment.optim((props) => {
   props.effects.afterEffect(() => console.log("mounted root!"), [])
 
@@ -218,8 +276,15 @@ const RootFragment = fragment.optim((props) => {
           This is the welcome message!
         </div>
       )}
+      {props.showWelcome && (
+        <AppGen id="subapp" extra="extrito">
+          {() => (
+            <PassedChild id="mike" name="mike" />
+          )}
+        </AppGen>
+      )}
       <ChildRenderer id="cr1" name="bill">
-        {!!props.childNames[0] && <div>{props.childNames[0]}</div>}
+        {!!props.childNames[0] && <div><PassedChild id="whammy" name="whammy" /></div>}
         {!!props.childNames[1] && <div>{props.childNames[1]}</div>}
         {!!props.childNames[2] && <div>{props.childNames[2]}</div>}
       </ChildRenderer>
@@ -257,14 +322,14 @@ reducer.update({
 
 /*******************/
 
-const App2Root = fragment(props => {
-  if (props.showDiv) return <div>Showing Div</div>
-  return <span>Showing Span</span>
-})
+// const App2Root = fragment(props => {
+//   if (props.showDiv) return <div>Showing Div</div>
+//   return <span>Showing Span</span>
+// })
 
-const app2 = appSync(App2Root, document.getElementById("app2"))
-app2.update({ showDiv: true })
-app2.update({ showDiv: false })
+// const app2 = appSync(App2Root, document.getElementById("app2"))
+// app2.update({ showDiv: true })
+// app2.update({ showDiv: false })
 
 /*******************/
 

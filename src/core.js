@@ -297,6 +297,18 @@ function detachAttr(target, isSVG, attrName) {
 function buildHTML(vTree, parentUnmounters) {
   const unmounters = []
 
+  // If there are no parentUnmounters it means the parent is the app wrapper.
+  // We allow subapps to mount within larger apps and, in this case, the parent
+  // app is not aware of the sub app so when the subapp gets removed from the dom,
+  // it's unmounters don't run. We can fix this problem simply by assigning
+  // parent.html.hartUnmounters as parentUnmounters so they get passed up the chain.
+  if (!parentUnmounters) {
+    const wrapperHTMLUnmounters = vTree.parent.html.hartUnmounters
+    if (wrapperHTMLUnmounters) {
+      parentUnmounters = wrapperHTMLUnmounters
+    }
+  }
+
   if (vTree.onunmount) {
     unmounters.push(vTree.onunmount)
     parentUnmounters && parentUnmounters.push(vTree.onunmount)
@@ -340,6 +352,7 @@ function buildHTML(vTree, parentUnmounters) {
   }
 
   vTree.unmounters = unmounters
+  vTree.html.hartUnmounters = unmounters
   return vTree
 }
 
@@ -358,6 +371,7 @@ function addHTML(change) {
 
 function removeHTML(change) {
   const { prev } = change
+
   if (prev.tag === DOC_FRAG) {
     prev.children.forEach(child => removeHTML({ prev: child }))
   } else {
@@ -525,17 +539,6 @@ function propsEqual(a, b) {
   }
 
   return true
-}
-
-function getVNodeFromUserFn(userFn, props, children, prevCache) {
-  const result = userFn(props, children) || vNode(EMPTY)
-
-  if (prevCache) {
-    prevCache.resetCounts()
-    result.onunmount = prevCache.onunmount
-  }
-
-  return result
 }
 
 function fragment(userFn) {
