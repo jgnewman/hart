@@ -10,6 +10,7 @@ import {
 import {
   ADD,
   CHILD_PACK,
+  CHILD_PACK_REF,
   DELETE,
   DOC_FRAG,
   EMPTY,
@@ -540,7 +541,11 @@ function fragment(userFn) {
   return output
 }
 
-function optimizedFragment(userFn, customCompare) {
+function createOptimizedVNodeFactory({
+  userFn,
+  customCompare,
+  updater,
+}) {
   let fragmentCaches = new Map()
   const assertEqualProps = customCompare || propsEqual
 
@@ -552,7 +557,7 @@ function optimizedFragment(userFn, customCompare) {
     }
 
     const prevCache = fragmentCaches.get(id) ||
-                      fragmentCaches.set(id, new CacheObject(id, fragmentCaches)).get(id)
+                      fragmentCaches.set(id, new CacheObject(id, fragmentCaches, updater)).get(id)
 
     const prevProps = prevCache.props
     const prevNode = prevCache.node
@@ -586,6 +591,53 @@ function optimizedFragment(userFn, customCompare) {
   return output
 }
 
+function optimizedFragment(userFn, customCompare) {
+  return createOptimizedVNodeFactory({ userFn, customCompare })
+}
+
+function subappFragment(userFn, settings = {}) {
+  const appOptions = settings.options || {}
+  const appFn = settings.sync ? appSync : app
+  let updateReducer
+
+  const RootFragment = createOptimizedVNodeFactory({
+    userFn,
+    customCompare: settings.compareProps,
+    updater: change => updateReducer && updateReducer(change)
+  })
+
+  const AppGenerator = optimizedFragment(({ effects, id,...rest }, childPack) => {
+    const subrootRef = effects.ref()
+    const propsRef = effects.ref({ ...rest })
+    const childRef = effects.ref(childPack)
+
+    effects.afterEffect(() => {
+      const { current: elem } = subrootRef
+      const { current: props } = propsRef
+
+      const Reducer = appFn(settings.reducer || (change => ({ current: change })))
+      updateReducer = Reducer.update
+
+      const Renderer = appFn(RootFragment, elem, {
+        ...appOptions,
+        id: appOptions.id || id + "-subapp",
+        [CHILD_PACK_REF]: childRef,
+      })
+
+      Reducer.watch((newData) => Renderer.update({ ...props, localData: newData }))
+      Reducer.update(settings.hasOwnProperty("init") ? settings.init : null)
+
+    }, [propsRef, childRef, subrootRef])
+
+    const wrapper = settings.wrapper || vNode("div")
+    wrapper.attrs.ref = subrootRef
+
+    return wrapper
+  })
+
+  return AppGenerator
+}
+
 function createApp(rootFragmentFn, target, options) {
   assertPureFragment(rootFragmentFn)
   let prevTree = null
@@ -610,7 +662,8 @@ function render(appFn, props={}, appOptions) {
   const { rootTarget, rootFragmentFn, prevTree, setPrevTree } = appFn()
   const fragProps = !appOptions.id ? props : { ...props, id: appOptions.id }
 
-  const nextTree = rootFragmentFn(fragProps)
+  const nextChildren = appOptions[CHILD_PACK_REF] ? appOptions[CHILD_PACK_REF].current : childPack()
+  const nextTree = rootFragmentFn(fragProps, nextChildren)
   nextTree.parent = { html: rootTarget }
   setPrevTree(nextTree)
 
@@ -658,9 +711,11 @@ function appSync(fn, outputElem, options) {
   return createObserver(fn, outputElem, options, false)
 }
 
-fragment.jsx = vNode
-fragment.jsxFrag = DOC_FRAG
+fragment.elem = vNode
+fragment.docFrag = DOC_FRAG
 fragment.optim = optimizedFragment
+fragment.subapp = subappFragment
+
 const FRAGMENT_PROOF = PROOF
 
 export {

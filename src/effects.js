@@ -71,7 +71,7 @@ function createRefTracker(cacheObject) {
 }
 
 export class CacheObject {
-  constructor(id, parentMap) {
+  constructor(id, parentMap, updater) {
     this.childLength = 0
     this.cleanups = []
     this.effectCount = -1
@@ -86,6 +86,10 @@ export class CacheObject {
       memo: createMemoTracker(this),
       memoFn: createMemoFnTracker(this),
       ref: createRefTracker(this),
+    }
+
+    if (updater) {
+      this.effects.update = updater
     }
 
     this.onunmount = () => {

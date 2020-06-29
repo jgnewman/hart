@@ -8,7 +8,7 @@ Hart is a lithe, nimble core for scalable web apps.
 
 The main advantage to using Hart over some other component-based framework is that Hart is designed to help you write purely functional apps. _**But don't be scared!**_ The patterns are all very familiar. And since you'll be avoiding mutable state, Hart can provide some optimizations that lead to [fantastic performance](https://github.com/jgnewman/hart/blob/master/BENCHMARKS.md) and a very small footprint in terms of file size, memory consumption, and processing power.
 
-Though tiny (**~9.6kB minified** and **~3.3kB gzipped**), Hart is geared toward scalability. You can spin up a small app with almost no boilerplate, and you can scale it up modularly as needed. The biggest thing to keep in mind is that Hart _really does not want_ you to try to hack some kind of local state into your components (called **"fragments"** in Hart). If you can follow this rule, the two of you should easily fall in love. With that in mind, let me introduce you to Hart...
+Though tiny (**~10.2kB minified** and **~3.6kB gzipped**), Hart is geared toward scalability. You can spin up a small app with almost no boilerplate, and you can scale it up modularly as needed. The biggest thing to keep in mind is that Hart _really does not want_ you to try to hack some kind of quick and dirty local state into your components (called **"fragments"** in Hart). If you can follow this rule, the two of you should easily fall in love. With that in mind, let me introduce you to Hart...
 
 #### In this doc
 
@@ -25,7 +25,7 @@ Though tiny (**~9.6kB minified** and **~3.3kB gzipped**), Hart is geared toward 
   - [Memoized Values](#memo)
   - [Memoized Functions](#memofn)
   - [Accessing Real DOM Nodes](#ref)
-- [Prefab fragments](#prefab-fragments)
+- [There must be some way to use local state](#there-must-be-some-way-to-use-local-state)
 
 ## Getting set up
 
@@ -47,7 +47,7 @@ export default fragment(props => (
 import { fragment } from "hart"
 
 export default fragment(props => {
-  return fragment.jsx("div", { id: "foo" }, "Hello, world!")
+  return fragment.elem("div", { id: "foo" }, "Hello, world!")
 })
 ```
 
@@ -61,8 +61,8 @@ To configure JSX, just pick a transpiler (such as [@babel/plugin-transform-react
       loader: "babel-loader",
       options: {
         plugins: [["@babel/plugin-transform-react-jsx", {
-          pragma: "fragment.jsx",
-          pragmaFrag: "fragment.jsxFrag"
+          pragma: "fragment.elem",
+          pragmaFrag: "fragment.docFrag"
         }]]
       }
     },
@@ -452,6 +452,122 @@ fragment.optim(({ effects }) => {
 
 In this example, we pass the `buttonRef` into our jsx as an attribute called `ref`. By doing this, Hart will automatically keep the ref up to date with the actual DOM node associated with the button. When we click the button, we will get a console log showing us that node.
 
-## Prefab fragments
+## There must be some way to use local state
 
-Part of Hart's philosophy is that its core should be as tiny as possible to facilitate web apps everywhere. However, there are solutions to a few common use cases that lie outside the responsibilities of the core framework that you can include in your build as desired. Those solutions are _coming soon..._
+Ok, fine. You got me. There technically _is_ a way to do this. After all, how else are you going to build cool, prefab components with sweet, built-in behaviors without any local state?
+
+If you're clever, you may have begun to wonder whether or not you could use effects to mount an app inside another app. If such a thing were possible, your subapp could respond to its own reducer, which would behave very much like local state. And you are absolutely correct. This is the one and only way to get local state within Hart. But it's a ridiculously tedious process, which is why Hart provides a convenient way to do it quickly.
+
+To help you make sense of it, here's the basic gist of how you would mount an app inside another app if you were to do it manually:
+
+```javascript
+// This fragment will get mounted into our subapp.
+// We want it to use a number called `count` as local
+// state, and we want to be able to trigger re-renders
+// with a `setCount` function that updates that state.
+const SubappRoot = fragment.optim(({ effects, id, count, setCount }) => {
+
+  effects.afterEffect(() => {
+    setTimeout(() => setCount(count + 1), 1000)
+  }, [count])
+
+  return (
+    <div id={id}>I've been updated {count} times!</div>
+  )
+})
+
+// To make it work, this fragment will need to create a
+// subapp and attach that app to a DOM node in the parent app.
+const SubappWrapper = fragment.optim(({ effects, id,...rest }, children) => {
+
+  // We'll need a reference to the actual DOM node
+  const rootNodeRef = effects.ref()
+
+  // We'll also need a couple refs for the props and children
+  // we want to pass down to the subapp. Otherwise afterEffect
+  // would run more than once.
+  const propsRef = effects.ref({ ...rest })
+  const childRef = effects.ref(children)
+
+  // Next we set up an afterEffect with dependencies that never
+  // change. This way, it will only run once on mount.
+  effects.afterEffect(() => {
+    const { current: rootNode } = rootNodeRef
+    const { current: props } = propsRef
+    const { current: nestedChildren } = childRef
+
+    // We create a Renderer app for DOM stuff and a Counter app
+    // to serve as local state. It will contain a single property
+    // called `count` that we can increment.
+    const Renderer = app(SubappRoot, rootNode, { id: id + "-subapp" })
+    const Counter = app((inc, prev) => ({ counter: (prev.count || 0) + inc }))
+
+    // We start watching the Counter for updates. When we get them,
+    // we'll update the renderer with the new count, a function for
+    // updating the counter, the current props, and the children.
+    Counter.watch(({ count }) => {
+      Renderer.update({
+        count,
+        setCount: Counter.update,
+        nestedChildren,
+        ...props,
+      })
+    })
+
+    // We'll initialize the app with some data.
+    Counter.update(1)
+
+  }, [propsRef, childRef, rootNodeRef])
+
+  // Lastly, we return the node that will serve as the mounting
+  // wrapper for our subapp.
+  return (
+    <div id={id} ref={subrootRef}></div>
+  )
+})
+
+// Having done all this, we can finally use our subapp:
+<SubappWrapper id="subapp" />
+```
+
+_Whew!_
+
+As I said before, this is ridiculously tedious. It also has the rather glaring problem that if you want to pass children down to a subapp, you have to pass them as a prop, which creates inconsistency in terms of how you would have to write fragments that served as subapp roots.
+
+It does work though! And because it works, Hart provides an easier way to accomplish the exact same thing, with the added benefit that children can be bassed down and accessed as a second argument to your fragment. So before we get into it, the important takeaways are:
+
+1. To use local state, you have to create a subapp within your app.
+2. Subapps mount during afterEffects, so they always render asynchronously.
+3. A subapp is, itself, a side effect, meaning that although it mounts and unmounts correctly, and can take in values from the parent app, the parent app will have _no knowledge of its existence._
+
+Here's how you do it:
+
+```javascript
+const SubApp = fragment.subapp(({ effects, localData, ...rest }, children) => {
+  const { count } = localData
+  const { afterEffect, update } = effects
+
+  effects.afterEffect(() => {
+    setTimeout(() => update(count + 1), 1000)
+  }, [count])
+
+  return (
+    <div id={id}>I've been updated {count} times!</div>
+  )
+}, {
+  reducer: (count) => ({ count }),
+  init: 1,
+})
+```
+
+The first thing to notice here is that we are calling `fragment.subapp` which is derived from `fragment.optim` so you get all the benefits of an optimized fragment and then some. Specifically, you get a new prop called `localData` containing your local state, and you get access to a new effect function called `update` that can be used to update that data and trigger a re-render. Any props passed in are available as well, as are the children, as a second argument to the fragment function.
+
+Subapps are also highly customizable via a `settings` object passed in as a second argument to `fragment.subapp`. Here are your available options:
+
+- `compareProps`: A custom function for determining whether or not props have changed. Defaults to basic shallow comparison.
+- `init`: An initial value to be passed to your reducer. Defaults to `null`.
+- `options`: An app options object as described above. Defaults to `{ id: id + "-subapp" }`.
+- `reducer`: A function for generating new state from an update value. Defaults to `change => ({ current: change })`.
+- `sync`: Defaults to `false`. If `true`, will build your subapp with `appSync` instead of `app`.
+- `wrapper`: JSX specifying the node that the subapp will mount itself to. Defaults to `<div></div>`.
+

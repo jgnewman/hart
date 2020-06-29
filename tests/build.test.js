@@ -52,8 +52,6 @@ describe("Build", function () {
     assert.ok(result.fragment, "Exports the `fragment` function")
     assert.ok(result.app, "Exports the `app` function")
     assert.ok(result.appSync, "Exports the `app` function")
-    assert.ok(result.pass, "Exports the `pass` function")
-    assert.ok(result.effects, "Exports the `effects` function")
   })
 
 })

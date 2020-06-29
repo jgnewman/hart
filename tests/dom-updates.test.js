@@ -41,7 +41,7 @@ describe("DOM Updates", function () {
   it("appends items", async function () {
     const result = await this.page.evaluate(async () => {
       const fragment = hart.fragment
-      const node = hart.fragment.hart
+      const node = hart.fragment.elem
       const divId = "a" + Math.random().toString().slice(2)
       const spanId = "a" + Math.random().toString().slice(2)
 
@@ -74,7 +74,7 @@ describe("DOM Updates", function () {
   it("removes items", async function () {
     const result = await this.page.evaluate(async () => {
       const fragment = hart.fragment
-      const node = hart.fragment.hart
+      const node = hart.fragment.elem
       const divId = "a" + Math.random().toString().slice(2)
       const spanId = "a" + Math.random().toString().slice(2)
 
@@ -107,7 +107,7 @@ describe("DOM Updates", function () {
   it("replaces items", async function () {
     const result = await this.page.evaluate(async () => {
       const fragment = hart.fragment
-      const node = hart.fragment.hart
+      const node = hart.fragment.elem
       const divId = "a" + Math.random().toString().slice(2)
       const spanId = "a" + Math.random().toString().slice(2)
 
@@ -134,7 +134,7 @@ describe("DOM Updates", function () {
   it("updates item attributes", async function () {
     const result = await this.page.evaluate(async () => {
       const fragment = hart.fragment
-      const node = hart.fragment.hart
+      const node = hart.fragment.elem
       const divId = "a" + Math.random().toString().slice(2)
 
       const Frag = fragment((props) => {
@@ -154,7 +154,7 @@ describe("DOM Updates", function () {
   it("translates certain camel-cased attributes", async function () {
     const result = await this.page.evaluate(async () => {
       const fragment = hart.fragment
-      const node = hart.fragment.hart
+      const node = hart.fragment.elem
       const divId = "a" + Math.random().toString().slice(2)
 
       const Frag = fragment((props) => {
@@ -176,7 +176,7 @@ describe("DOM Updates", function () {
   it("reorders items", async function () {
     const result = await this.page.evaluate(async () => {
       const fragment = hart.fragment
-      const node = hart.fragment.hart
+      const node = hart.fragment.elem
       const divId = "a" + Math.random().toString().slice(2)
 
       const Frag = fragment((props) => {

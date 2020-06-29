@@ -7,13 +7,14 @@ TODO:
         - So it looks like we CAN mount an app inside another app and we CAN pass props down to it.
         - Is there a way to pass children to a subapp fragment?
           - Do the unmounters work? Yes.
-  - [ ] Based on this experiment ^^ can we provide a prefab convenience fragment for this?
+  - [x] Based on this experiment ^^ can we provide a prefab convenience fragment for this?
   - [ ] Need to generate TS types for user API
   - Need to document...
     - [x] New effect API
   - Need to test...
     - [ ] New effect API
-    - [ ] fragment vs fragment.optim
+    - [ ] Document fragments
+    - [ ] fragment vs fragment.optim vs fragment.subapp
   - [ ] Update any packages needing updating.
   - [ ] Benchmark against latest libs.
   - [ ] Create a production build
@@ -65,14 +66,16 @@ Desired API Option 1
 ```javascript
 
 const settings = {
-  wrapper: <div></div>, // defaults to div
+  compareProps: (a, b) => a === b, // defaults to basic shallowcompare
+  init: 0, // defaults to null
   options: { enableShadowRoot: false}, // defaults to { id: id + "-subapp" }
   reducer: count => ({ count }), // defaults to change => ({ current: change })
-  init: 0, // defaults to null
+  sync: false // defaults to false
+  wrapper: <div></div>, // defaults to div
 }
 
-const MyFrag = fragment.subapp(({ id, effects, state }, children) => {
-  setTimeout(() => effects.update(state.count + 1), 1000)
+const MyFrag = fragment.subapp(({ id, effects, localData }, children) => {
+  setTimeout(() => effects.update(localData.count + 1), 1000)
   return <div id={id}>Something</div>
 }, settings)
 

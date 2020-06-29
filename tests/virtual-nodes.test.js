@@ -37,10 +37,10 @@ describe("Virtual Nodes", function () {
     await this.browser.closeBrowser()
   })
 
-  describe("fragment.hart", function () {
+  describe("fragment.elem", function () {
     it("generates a basic virtual node", async function () {
       const result = await this.page.evaluate(() => {
-        return hart.fragment.hart("span")
+        return hart.fragment.elem("span")
       })
       assert.equal(result.tag, "span", "Result has a tag field")
       assert.deepEqual(result.attrs, {}, "Result has an attrs object")
@@ -49,14 +49,14 @@ describe("Virtual Nodes", function () {
 
     it("gathers attributes", async function () {
       const result = await this.page.evaluate(() => {
-        return hart.fragment.hart("span", {id: "foo"})
+        return hart.fragment.elem("span", {id: "foo"})
       })
       assert.deepEqual(result.attrs, {id: "foo"})
     })
 
     it("gathers children", async function () {
       const result = await this.page.evaluate(() => {
-        const tree = hart.fragment.hart("div", null, hart.fragment.hart("span"))
+        const tree = hart.fragment.elem("div", null, hart.fragment.elem("span"))
         return tree.children[0].tag
       })
       assert.equal(result, "span")
@@ -65,7 +65,7 @@ describe("Virtual Nodes", function () {
     context("when a child is intended to be text", function () {
       it("creates a string node", async function () {
         const result = await this.page.evaluate(() => {
-          const tree = hart.fragment.hart("div", null, "hello")
+          const tree = hart.fragment.elem("div", null, "hello")
           return tree.children[0].text
         })
         assert.equal(result, "hello")
@@ -73,7 +73,7 @@ describe("Virtual Nodes", function () {
 
       it("stringifies non-string values", async function () {
         const result = await this.page.evaluate(() => {
-          const tree = hart.fragment.hart("div", null, 123)
+          const tree = hart.fragment.elem("div", null, 123)
           return tree.children[0].text
         })
         assert.equal(result, "123")
@@ -83,7 +83,7 @@ describe("Virtual Nodes", function () {
     context("when a child is `false`", function () {
       it("creates an empty node", async function () {
         const result = await this.page.evaluate(() => {
-          const tree = hart.fragment.hart("div", null, false)
+          const tree = hart.fragment.elem("div", null, false)
           return tree.children[0].tag.toString()
         })
         assert.equal(result, "Symbol(EMPTY)")
@@ -93,7 +93,7 @@ describe("Virtual Nodes", function () {
     context("when a child is `null`", function () {
       it("creates an empty node", async function () {
         const result = await this.page.evaluate(() => {
-          const tree = hart.fragment.hart("div", null, null)
+          const tree = hart.fragment.elem("div", null, null)
           return tree.children[0].tag.toString()
         })
         assert.equal(result, "Symbol(EMPTY)")
@@ -103,7 +103,7 @@ describe("Virtual Nodes", function () {
     context("when a child is `undefined`", function () {
       it("creates an empty node", async function () {
         const result = await this.page.evaluate(() => {
-          const tree = hart.fragment.hart("div", null, undefined)
+          const tree = hart.fragment.elem("div", null, undefined)
           return tree.children[0].tag.toString()
         })
         assert.equal(result, "Symbol(EMPTY)")
@@ -113,7 +113,7 @@ describe("Virtual Nodes", function () {
     context("when a child is a list", function () {
       it("fails if one of the items doesn't have a key prop", async function () {
         const result = await this.page.evaluate(() => {
-          const node = hart.fragment.hart
+          const node = hart.fragment.elem
           let error = null
           try {
             const tree = node("div", null, [node("span", {})])
@@ -127,7 +127,7 @@ describe("Virtual Nodes", function () {
 
       it("marks the correct parent of each list item", async function () {
         const result = await this.page.evaluate(() => {
-          const node = hart.fragment.hart
+          const node = hart.fragment.elem
           const tree = node("div", null, [node("span", { key: "foo" })])
           return tree.children[0].children[0].parent.tag
         })
@@ -138,7 +138,7 @@ describe("Virtual Nodes", function () {
     context("when a node is a function", function () {
       it("fails if the function hasn't been wrapped in `fragment`", async function () {
         const result = await this.page.evaluate(() => {
-          const node = hart.fragment.hart
+          const node = hart.fragment.elem
           const FnNode = () => node("span")
           let error = null
           try {
@@ -153,7 +153,7 @@ describe("Virtual Nodes", function () {
 
       it("succeeds if the function has been wrapped in `fragment`", async function () {
         const result = await this.page.evaluate(() => {
-          const node = hart.fragment.hart
+          const node = hart.fragment.elem
           const FnNode = hart.fragment(() => node("span"))
           let error = null
           try {
@@ -168,7 +168,7 @@ describe("Virtual Nodes", function () {
 
       it("executes the function with correct props", async function () {
         const result = await this.page.evaluate(() => {
-          const node = hart.fragment.hart
+          const node = hart.fragment.elem
           let receivedProps = null
           const FnNode = hart.fragment((props) => {
             receivedProps = { ...props }
@@ -182,7 +182,7 @@ describe("Virtual Nodes", function () {
 
       it("executes the function with a children object", async function () {
         const result = await this.page.evaluate(() => {
-          const node = hart.fragment.hart
+          const node = hart.fragment.elem
           let receivedChildren = null
           const FnNode = hart.fragment((_, children) => {
             receivedChildren = { ...children }
@@ -197,7 +197,7 @@ describe("Virtual Nodes", function () {
       context("when there is a key prop", function () {
         it("transfers the key to its output node", async function () {
           const result = await this.page.evaluate(() => {
-            const node = hart.fragment.hart
+            const node = hart.fragment.elem
             const FnNode = hart.fragment(() => node("span"))
             const tree = node(FnNode, { key: "foo" }, node("span"))
             return tree.attrs

@@ -199,55 +199,29 @@ const PassedChild = fragment.optim(({ effects, name }) => {
   return out
 })
 
-const SubSub = fragment.optim(({ effects, counter, nestedChildren, extra }) => {
+const AppGen = fragment.subapp(({ effects, localData, extra }, children) => {
+  const { count } = localData
+
   effects.afterEffect(() => {
     console.log("mounted subapp")
     return () => console.log("unmounted subapp")
   }, [])
 
+  effects.afterEffect(() => {
+    const timeout = setTimeout(() => count < 100 && effects.update(count + 1), 1000)
+    return () => clearTimeout(timeout)
+  }, [count])
+
   return (
     <span>
-      This is the content of a localized subapp {counter} {extra}
-      {nestedChildren}
+      This is the content of a localized subapp {count} {extra}
+      {children}
       <PassedChild id="sammy" name="sammy" />
     </span>
   )
-})
-
-const AppGen = fragment.optim(({ effects, id, ...rest }, children) => {
-  const subrootRef = effects.ref()
-  const propsRef = effects.ref({ ...rest })
-  const childRef = effects.ref(children)
-
-  effects.afterEffect(() => () => {
-    console.log("unmounted subapp wrapper")
-  }, [])
-
-  effects.afterEffect(() => {
-    const { current: subrootElem } = subrootRef
-    const { current: parentProps } = propsRef
-    const { current: nestedChildren } = childRef
-
-    const SubApp = app(SubSub, subrootElem, { id: id + "-subapp" })
-    const Counter = app((inc, prev) => ({ counter: (prev.counter || 0) + inc }))
-    let timeout
-
-    Counter.watch(({ counter }) => {
-      SubApp.update({ counter, nestedChildren, ...parentProps })
-    })
-
-    Counter.watch(({ counter }) => {
-      counter <= 100 && (timeout = setTimeout(() => Counter.update(1), 1000))
-    })
-
-    Counter.update(1)
-
-    return () => clearTimeout(timeout)
-  }, [propsRef, childRef, subrootRef])
-
-  return (
-    <div id={id} ref={subrootRef}></div>
-  )
+}, {
+  reducer: (count) => ({ count }),
+  init: 0,
 })
 
 const RootFragment = fragment.optim((props) => {

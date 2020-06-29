@@ -93,7 +93,7 @@ describe("Apps", function () {
     it("renders html", async function () {
       const result = await this.page.evaluate(async () => {
         const fragment = hart.fragment
-        const node = hart.fragment.hart
+        const node = hart.fragment.elem
         const id = "a" + Math.random().toString().slice(2)
 
         const Frag = fragment(props => node("span", {id: id}, props.name))
@@ -165,7 +165,7 @@ describe("Apps", function () {
     it("renders html", async function () {
       const result = await this.page.evaluate(async () => {
         const fragment = hart.fragment
-        const node = hart.fragment.hart
+        const node = hart.fragment.elem
         const id = "a" + Math.random().toString().slice(2)
 
         const Frag = fragment(props => node("span", {id: id}, props.name))

@@ -1,5 +1,5 @@
 function observable(calculator) {
-  const calc = calculator || function (x) { return x }
+  const calc = calculator ? calculator : x => x
   const watchers = []
   let val = {}
 
