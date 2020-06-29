@@ -17,3 +17,64 @@ TODO:
   - [ ] Update any packages needing updating.
   - [ ] Benchmark against latest libs.
   - [ ] Create a production build
+
+Working API
+
+```javascript
+
+const MyFrag = fragment.optim(({ id }) => {
+  return <div id={id}>Something</div>
+})
+
+const AppGen = fragment.optim(({ effects, id,...rest }, children) => {
+  const subrootRef = effects.ref()
+  const propsRef = effects.ref({ ...rest })
+  const childRef = effects.ref(children)
+
+  effects.afterEffect(() => {
+    const { current: subrootElem } = subrootRef
+    const { current: parentProps } = propsRef
+    const { current: nestedChildren } = childRef
+
+    const SubApp = app(SubSub, subrootElem, { id: id + "-subapp" })
+    const Counter = app((inc, prev) => ({ counter: (prev.counter || 0) + inc }))
+    let timeout
+
+    Counter.watch(({ counter }) => {
+      SubApp.update({ counter, nestedChildren, ...parentProps })
+    })
+
+    Counter.watch(({ counter }) => {
+      counter <= 100 && (timeout = setTimeout(() => Counter.update(1), 1000))
+    })
+
+    Counter.update(1)
+
+    return () => clearTimeout(timeout)
+  }, [propsRef, childRef, subrootRef])
+
+  return (
+    <div id={id} ref={subrootRef}></div>
+  )
+})
+
+```
+
+Desired API Option 1
+
+```javascript
+
+const settings = {
+  wrapper: <div></div>, // defaults to div
+  options: { enableShadowRoot: false}, // defaults to { id: id + "-subapp" }
+  reducer: count => ({ count }), // defaults to change => ({ current: change })
+  init: 0, // defaults to null
+}
+
+const MyFrag = fragment.subapp(({ id, effects, state }, children) => {
+  setTimeout(() => effects.update(state.count + 1), 1000)
+  return <div id={id}>Something</div>
+}, settings)
+
+```
+

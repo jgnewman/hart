@@ -214,7 +214,7 @@ const SubSub = fragment.optim(({ effects, counter, nestedChildren, extra }) => {
   )
 })
 
-const AppGen = fragment.optim(({ effects, id,...rest }, children) => {
+const AppGen = fragment.optim(({ effects, id, ...rest }, children) => {
   const subrootRef = effects.ref()
   const propsRef = effects.ref({ ...rest })
   const childRef = effects.ref(children)
@@ -228,21 +228,21 @@ const AppGen = fragment.optim(({ effects, id,...rest }, children) => {
     const { current: parentProps } = propsRef
     const { current: nestedChildren } = childRef
 
-    let counter = 0
-    let interval
+    const SubApp = app(SubSub, subrootElem, { id: id + "-subapp" })
+    const Counter = app((inc, prev) => ({ counter: (prev.counter || 0) + inc }))
+    let timeout
 
-    const SubApp = app(SubSub, subrootElem, { id })
-    SubApp.update({ counter, nestedChildren, ...parentProps })
-
-    interval = setInterval(() => {
-      counter += 1
+    Counter.watch(({ counter }) => {
       SubApp.update({ counter, nestedChildren, ...parentProps })
-      counter > 99 && clearInterval(interval)
-    }, 1000)
+    })
 
-    return () => {
-      clearInterval(interval)
-    }
+    Counter.watch(({ counter }) => {
+      counter <= 100 && (timeout = setTimeout(() => Counter.update(1), 1000))
+    })
+
+    Counter.update(1)
+
+    return () => clearTimeout(timeout)
   }, [propsRef, childRef, subrootRef])
 
   return (
