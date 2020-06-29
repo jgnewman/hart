@@ -1,6 +1,5 @@
 export const ADD = "ADD"
 export const CHILD_PACK = Symbol()
-export const CHILD_PACK_REF = Symbol()
 export const DELETE = "DELETE"
 export const DOC_FRAG = Symbol.for("DOC_FRAG")
 export const EMPTY = Symbol.for("EMPTY")
@@ -10,6 +9,5 @@ export const REMOVE = "REMOVE"
 export const REORDER = "REORDER"
 export const REPLACE = "REPLACE"
 export const SET = "SET"
-export const SVG_NS = "http://www.w3.org/2000/svg"
 export const TEXT = Symbol.for("TEXT")
 export const UPDATE = "UPDATE"

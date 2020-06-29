@@ -1,0 +1,158 @@
+import {
+  ADD,
+  REMOVE,
+  REORDER,
+  REPLACE,
+  UPDATE,
+} from "./constants"
+
+import {
+  observable,
+  observableAsync,
+} from "./observables"
+
+import {
+  changeObject,
+  diff,
+} from "./diffing"
+
+import {
+  addHTML,
+  replaceHTML,
+  removeHTML,
+  reorderHTML,
+  updateHTML,
+} from "./dom"
+
+import {
+  assertPureFragment,
+  childPack,
+  createOptimizedVNodeFactory,
+  fragment,
+  optimizedFragment,
+  vNode,
+} from "./fragments"
+
+const CHILD_PACK_REF = Symbol()
+
+function createApp(rootFragmentFn, target, options) {
+  assertPureFragment(rootFragmentFn)
+  let prevTree = null
+
+  let rootTarget = target
+  if (options.useShadowRoot) {
+    target.attachShadow({ mode: "open" })
+    rootTarget = target.shadowRoot
+  }
+
+  return () => {
+    return {
+      rootTarget,
+      rootFragmentFn,
+      prevTree,
+      setPrevTree: (vTree) => prevTree = vTree,
+    }
+  }
+}
+
+function render(appFn, props={}, appOptions) {
+  const { rootTarget, rootFragmentFn, prevTree, setPrevTree } = appFn()
+  const fragProps = !appOptions.id ? props : { ...props, id: appOptions.id }
+
+  const nextChildren = appOptions[CHILD_PACK_REF] ? appOptions[CHILD_PACK_REF].current : childPack()
+  const nextTree = rootFragmentFn(fragProps, nextChildren)
+  const nextParent = { html:rootTarget }
+
+  nextTree.parent = nextParent
+  setPrevTree(nextTree)
+
+  if (!prevTree) {
+    addHTML(changeObject(ADD, null, nextParent, nextTree))
+
+  } else {
+    const changeObjects = diff(prevTree, nextTree)
+
+    changeObjects.forEach(change => {
+      const { type } = change
+      switch (type) {
+        case ADD: return addHTML(change)
+        case REMOVE: return removeHTML(change)
+        case REPLACE: return replaceHTML(change)
+        case UPDATE: return updateHTML(change)
+        case REORDER: return reorderHTML(change)
+        default: throw new Error(`Change type ${type} does not exist.`)
+      }
+    })
+  }
+}
+
+function createObserver(fn, outputElem, options={}, isAsync) {
+  const observerCalc = outputElem ? null : fn
+  const observer = isAsync ? observableAsync(observerCalc) : observable(observerCalc)
+
+  if (outputElem) {
+    const realNode = typeof outputElem === "string" ? document.querySelector(outputElem) : outputElem
+    const app = createApp(fn, realNode, options)
+    observer.watch(newVal => render(app, newVal, options))
+  }
+
+  return observer
+}
+
+function app(fn, outputElem, options) {
+  return createObserver(fn, outputElem, options, true)
+}
+
+function appSync(fn, outputElem, options) {
+  return createObserver(fn, outputElem, options, false)
+}
+
+function subappFragment(userFn, settings = {}) {
+  const appOptions = settings.options || {}
+  const appFn = settings.sync ? appSync : app
+  let updateReducer
+
+  const RootFragment = createOptimizedVNodeFactory({
+    userFn,
+    customCompare: settings.compareProps,
+    updater: change => updateReducer && updateReducer(change)
+  })
+
+  const AppGenerator = optimizedFragment(({ effects, id,...rest }, childPack) => {
+    const subrootRef = effects.ref()
+    const propsRef = effects.ref({ ...rest })
+    const childRef = effects.ref(childPack)
+
+    effects.afterEffect(() => {
+      const { current: elem } = subrootRef
+      const { current: props } = propsRef
+
+      const Reducer = appFn(settings.reducer || (change => ({ current: change })))
+      updateReducer = Reducer.update
+
+      const Renderer = appFn(RootFragment, elem, {
+        ...appOptions,
+        id: appOptions.id || id + "-subapp",
+        [CHILD_PACK_REF]: childRef,
+      })
+
+      Reducer.watch((newData) => Renderer.update({ ...props, localData: newData }))
+      Reducer.update(settings.hasOwnProperty("init") ? settings.init : null)
+
+    }, [propsRef, childRef, subrootRef])
+
+    const wrapper = settings.wrapper || vNode("div")
+    wrapper.attrs.ref = subrootRef
+
+    return wrapper
+  })
+
+  return AppGenerator
+}
+
+fragment.subapp = subappFragment
+
+export {
+  app,
+  appSync,
+}

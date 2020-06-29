@@ -1,4 +1,4 @@
-import { fragment, app, appSync } from "../index"
+import { fragment, app } from "../src/index"
 import SvelteApp from "./svelte-benchmark"
 import SvelteAppForce from "./svelte-benchmark-force"
 import {
@@ -13,7 +13,7 @@ import {
   init
 } from "./setup"
 
-const hCreate = fragment.jsx
+const hCreate = fragment.elem
 const rCreate = React.createElement
 const pCreate = preact.createElement
 

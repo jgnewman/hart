@@ -2,7 +2,7 @@ import {
   fragment,
   app,
   appSync,
-} from "../index"
+} from "../src/index"
 
 const randomItem = items => {
   return items[Math.floor(Math.random()*items.length)]

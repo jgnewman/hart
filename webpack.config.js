@@ -1,9 +1,7 @@
 const path = require("path")
-const webpack = require("webpack")
 const CleanWebpackPlugin = require("clean-webpack-plugin")
 const HtmlWebPackPlugin = require("html-webpack-plugin")
 const CompressionPlugin = require('compression-webpack-plugin')
-const { realpathSync } = require("fs")
 
 const config = {
   entry: { /* See prod and dev config */ },
@@ -73,7 +71,7 @@ if (process.env.NODE_ENV === "benchmark") {
 }
 
 if (process.env.NODE_ENV === "production") {
-  config.entry.hart = "./index.js"
+  config.entry.hart = "./src/index.js"
 
   config.plugins.push(new CompressionPlugin({
     algorithm: "brotliCompress",
