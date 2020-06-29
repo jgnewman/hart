@@ -51,6 +51,12 @@ const reducer = app((change, currentValue) => {
         showWelcome: !currentValue.showWelcome,
       }
 
+    case "TOGGLE_SUBAPP":
+      return {
+        ...currentValue,
+        showSubapp: !currentValue.showSubapp,
+      }
+
     case "ADD_ITEM":
       return {
         ...currentValue,
@@ -135,6 +141,12 @@ const handleClickReverseItem = () => {
 const handleClickToggleWelcome = () => {
   reducer.update({
     type: "TOGGLE_WELCOME",
+  })
+}
+
+const handleClickToggleSubapp = () => {
+  reducer.update({
+    type: "TOGGLE_SUBAPP",
   })
 }
 
@@ -239,6 +251,7 @@ const RootFragment = fragment.optim((props) => {
       <button onclick={handleClickReorderItem}>Click me to reorder 2 items</button>
       <button onclick={handleClickReverseItem}>Click me to reverse items</button>
       <button onclick={handleClickToggleWelcome}>Click me to toggle welcome message</button>
+      <button onclick={handleClickToggleSubapp}>Click me to toggle the subapp</button>
       <button onclick={handleClickRemoveChildName}>Click me to remove a child name</button>
       <ul>
         {props.listData.map(datum => (
@@ -250,7 +263,7 @@ const RootFragment = fragment.optim((props) => {
           This is the welcome message!
         </div>
       )}
-      {props.showWelcome && (
+      {props.showSubapp && (
         <AppGen id="subapp" extra="extrito">
           <PassedChild id="mike" name="mike" />
         </AppGen>
@@ -281,6 +294,7 @@ reducer.update({
   payload: {
     counter: 0,
     showWelcome: true,
+    showSubapp: true,
     textField: "",
     checkbox: false,
     childNames: ["one", "two", "three"],
@@ -294,14 +308,14 @@ reducer.update({
 
 /*******************/
 
-// const App2Root = fragment(props => {
-//   if (props.showDiv) return <div>Showing Div</div>
-//   return <span>Showing Span</span>
-// })
+const App2Root = fragment(props => {
+  if (props.showDiv) return <div>Showing Div</div>
+  return <span>Showing Span</span>
+})
 
-// const app2 = appSync(App2Root, document.getElementById("app2"))
-// app2.update({ showDiv: true })
-// app2.update({ showDiv: false })
+const app2 = appSync(App2Root, document.getElementById("app2"))
+app2.update({ showDiv: true })
+app2.update({ showDiv: false })
 
 /*******************/
 
