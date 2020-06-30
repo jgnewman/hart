@@ -33,13 +33,11 @@ function observableAsync(calculator) {
     if (!loopRunning) {
       loopRunning = true
 
-      function end() {
+      Promise.resolve().then(function () {
         loopRunning = false
         const nextVal = observed.get()
         watchers.forEach(watcher => watcher(nextVal, prevVal))
-      }
-
-      typeof Promise !== "undefined" ? Promise.resolve().then(end) : setTimeout(end, 0)
+      })
     }
   }
 
