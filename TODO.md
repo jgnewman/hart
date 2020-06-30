@@ -122,3 +122,21 @@ We can get even safer by autogening app ids:
 In the above example, all IDs are unique. If both nested children were the same and they were wrapped in the same parent, it's the same structure so it's ok. If both nested children were wrapped in the same parent, they would not have the same ID because their parents would put different values in the ID chain. This seems to work logically.
 
 I think this might work. It deserves an experiment. How can we make this work?
+
+Phase 1
+
+- [ ] Create app IDs
+- [ ] Set a global ID tracker
+- [ ] Find the best way to identify nodes and components in ID fashion.
+      - Html: element.nodeName + childPosition
+      - Function: fn[FRAG_ID] + childPosition
+- [ ] As we generate a tree, update the ID tracker
+- [ ] Make sure we don't actually call function components before updating the tracker
+- [ ] Make sure this works
+
+Phase 2
+
+- [ ] Dump injected effects and make them global.
+- [ ] Whenever an effect call is made, check the tracker to determine which cell in memory to use.
+- [ ] As we generate a tree, give every component an unmount function associated with its ID that removes its hooks from the global effects memory.
+- [ ] Continue to call unmounters as we already do.
