@@ -140,3 +140,14 @@ Phase 2
 - [ ] Whenever an effect call is made, check the tracker to determine which cell in memory to use.
 - [ ] As we generate a tree, give every component an unmount function associated with its ID that removes its hooks from the global effects memory.
 - [ ] Continue to call unmounters as we already do.
+
+
+<div>
+  <span>
+    <text/>
+  </span>
+</div>
+
+div(span(text()))
+
+() => div( () => span( () => text() ) )

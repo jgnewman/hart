@@ -258,7 +258,7 @@ const RootFragment = fragment.optim((props) => {
           <ListItem key={datum.id} id={datum.val} value={datum.val}/>
         ))}
       </ul>
-      {props.showWelcome && (
+      {/* {props.showWelcome && (
         <div>
           This is the welcome message!
         </div>
@@ -277,7 +277,7 @@ const RootFragment = fragment.optim((props) => {
         {!!props.childNames[0] && <div>{props.childNames[0]}</div>}
         {!!props.childNames[1] && <div>{props.childNames[1]}</div>}
         {!!props.childNames[2] && <div>{props.childNames[2]}</div>}
-      </ChildRenderer>
+      </ChildRenderer> */}
     </div>
   )
 })
@@ -308,14 +308,14 @@ reducer.update({
 
 /*******************/
 
-const App2Root = fragment(props => {
-  if (props.showDiv) return <div>Showing Div</div>
-  return <span>Showing Span</span>
-})
+// const App2Root = fragment(props => {
+//   if (props.showDiv) return <div>Showing Div</div>
+//   return <span>Showing Span</span>
+// })
 
-const app2 = appSync(App2Root, document.getElementById("app2"))
-app2.update({ showDiv: true })
-app2.update({ showDiv: false })
+// const app2 = appSync(App2Root, document.getElementById("app2"))
+// app2.update({ showDiv: true })
+// app2.update({ showDiv: false })
 
 /*******************/
 

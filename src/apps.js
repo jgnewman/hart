@@ -1,10 +1,16 @@
 import {
   ADD,
+  FRAG,
   REMOVE,
   REORDER,
   REPLACE,
+  TEXT,
   UPDATE,
 } from "./constants"
+
+import {
+  nodeTracker,
+} from "./tracking"
 
 import {
   observable,
@@ -27,6 +33,7 @@ import {
 import {
   assertPureFragment,
   childPack,
+  isChildPack,
   createOptimizedVNodeFactory,
   fragment,
   optimizedFragment,
@@ -34,6 +41,14 @@ import {
 } from "./fragments"
 
 const CHILD_PACK_REF = Symbol()
+
+let appIdCounter = 0
+function genAppId() {
+  if (appIdCounter > 10000) {
+    appIdCounter = 0
+  }
+  return String(Date.now()).slice(0, 6) + (appIdCounter += 1)
+}
 
 function createApp(rootFragmentFn, target, options) {
   assertPureFragment(rootFragmentFn)
@@ -47,6 +62,7 @@ function createApp(rootFragmentFn, target, options) {
 
   return () => {
     return {
+      appId: genAppId(),
       rootTarget,
       rootFragmentFn,
       prevTree,
@@ -55,13 +71,60 @@ function createApp(rootFragmentFn, target, options) {
   }
 }
 
-function render(appFn, props={}, appOptions) {
-  const { rootTarget, rootFragmentFn, prevTree, setPrevTree } = appFn()
-  const fragProps = !appOptions.id ? props : { ...props, id: appOptions.id }
+function isFragList(value) {
+  return Array.isArray(value) && value[0] === FRAG
+}
 
-  const nextChildren = appOptions[CHILD_PACK_REF] ? appOptions[CHILD_PACK_REF].current : childPack()
-  const nextTree = rootFragmentFn(fragProps, nextChildren)
+function buildTree(value) {
+  let out
+
+  if (isFragList(value)) {
+    const [_, tag, closure] = value
+    nodeTracker.trackTag(tag)
+
+    out = closure()
+    out.children = out.children.map(child => buildTree(child))
+
+    nodeTracker.untrackTag()
+
+  } else if (isChildPack(value)) {
+    console.log("got a child pack!", value)
+    throw new Error()
+
+  } else if (Array.isArray(value)) {
+    console.log("got an array!", value)
+    throw new Error()
+
+  } else if (value === null || value === undefined || value === false) {
+    console.log("got an falsy!", value)
+    throw new Error()
+
+  } else if (typeof value === "object") {
+    console.log("got an object!", value)
+    throw new Error()
+
+  } else {
+    out = buildTree(vNode(TEXT))
+    out.text = String(value)
+  }
+
+  return out
+}
+
+function render(appFn, props={}, appOptions) {
+  const { appId, rootTarget, rootFragmentFn, prevTree, setPrevTree } = appFn()
+  const fragProps = !appOptions.id ? props : { ...props, id: appOptions.id }
+  const parentAppChildPack = appOptions[CHILD_PACK_REF] ? appOptions[CHILD_PACK_REF].current : childPack()
+
+  nodeTracker.nest()
+  nodeTracker.trackTag(appId)
+
+  const nextTreeFragList = rootFragmentFn(fragProps, parentAppChildPack)
+  const nextTree = buildTree(nextTreeFragList)
   const nextParent = { html:rootTarget }
+
+  nodeTracker.untrackTag()
+  nodeTracker.unnest()
 
   nextTree.parent = nextParent
   setPrevTree(nextTree)
