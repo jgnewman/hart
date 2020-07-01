@@ -70,54 +70,83 @@ function createApp(rootFragmentFn, target, options) {
   }
 }
 
-function isFragObject(value) {
+function isVNodeWrapper(value) {
   return typeof value === "object" && value[FRAG] === FRAG
 }
 
 function addParent(child, parent) {
   child.parent = parent
+  child.onaddparent && child.onaddparent(parent)
   return child
 }
 
-function buildTree(value, trackKey) {
+function buildListVNode(children, parent) {
+
+  const listNode = addParent(buildTree(vNode(LIST, null, ...children)), parent)
+  const keyCache = listNode.keyCache = {}
+
+  listNode.children.forEach((childNode, index) => {
+    if (!childNode.attrs.hasOwnProperty("key") || keyCache.hasOwnProperty(childNode.attrs.key)) {
+      throw new Error("Every member of a node array must have a unique `key` prop.")
+    }
+    childNode.listed = true
+    childNode.parent = parent
+    keyCache[childNode.attrs.key] = { node: childNode, pos: index }
+  })
+
+  return listNode
+}
+
+function buildVNodeFromWrapper(wrapper, trackingKey) {
+  nodeTracker.trackTag(wrapper.tag, trackingKey)
+
+  const out = wrapper.factory()
+  out.onunmount = wrapper.onunmount
+
+  nodeTracker.nest()
+  const mappedChildren = []
+
+  out.children.forEach(child => {
+    console.log(nodeTracker.getCurrent())
+    if (isChildPack(child)) {
+      child.nodes && child.nodes.forEach(cpChild => mappedChildren.push(addParent(buildTree(cpChild), out)))
+    } else if (Array.isArray(child)) {
+      mappedChildren.push(buildListVNode(child, out))
+    } else {
+      mappedChildren.push(addParent(buildTree(child), out))
+    }
+  })
+
+  out.children = mappedChildren
+  nodeTracker.unnest()
+
+  nodeTracker.untrackTag()
+  return out
+}
+
+function buildVNodeFromFragFn(fragFn, trackingKey) {
+  const originalFragment = fragFn[FRAG].frag
+  nodeTracker.trackTag(originalFragment, trackingKey)
+
+  const out = buildTree(fragFn())
+  nodeTracker.untrackTag()
+
+  return out
+}
+
+function buildTree(value, trackingKey) {
   let out
 
-  if (isFragObject(value)) {
-    const { tag, props, treeFactory } = value
-    nodeTracker.trackTag(tag, trackKey ? props.key : null)
+  // for raw elements like divs
+  if (isVNodeWrapper(value)) {
+    out = buildVNodeFromWrapper(value, trackingKey)
 
-    out = treeFactory()
-
-    nodeTracker.nest()
-    out.children = out.children.map(child => addParent(buildTree(child), out))
-    nodeTracker.unnest()
-
-    nodeTracker.untrackTag()
+  // for fragment calls
+  } else if (typeof value === "function") {
+    out = buildVNodeFromFragFn(value, trackingKey)
 
   } else if (isChildPack(value)) {
-    console.log("got a child pack!", value)
-    throw new Error()
-
-  } else if (Array.isArray(value)) {
-
-    out = buildTree(vNode(LIST))
-    out.keyCache = {}
-
-    nodeTracker.nest()
-
-    value.forEach((arrNode, index) => {
-      const child = addParent(buildTree(arrNode, true), out)
-      if (!child.attrs.hasOwnProperty("key") || out.keyCache.hasOwnProperty(child.attrs.key)) {
-        throw new Error("Every member of a node array must have a unique `key` prop.")
-      }
-      child.listed = true
-      child.parent = out.parent
-      out.keyCache[child.attrs.key] = { node: child, pos: index }
-      // TODO: parents are undefined :(
-      console.log("here", out.parent, child.parent)
-    })
-
-    nodeTracker.unnest()
+    throw new Error("Children must be nested within a parent element.")
 
   } else if (value === null || value === undefined || value === false) {
     console.log("got an falsy!", value)
@@ -143,13 +172,21 @@ function render(appFn, props={}, appOptions) {
 
   nodeTracker.nest()
   nodeTracker.trackTag(appId)
+
+  nodeTracker.nest()
+  nodeTracker.trackTag(rootFragmentFn)
+
   nodeTracker.nest()
 
-  const nextTreeFragList = rootFragmentFn(fragProps, parentAppChildPack)
-  const nextTree = buildTree(nextTreeFragList)
+  const nextTreeFragFn = rootFragmentFn(fragProps, parentAppChildPack)
+  const nextTree = buildTree(nextTreeFragFn)
   const nextParent = { html:rootTarget }
 
   nodeTracker.unnest()
+
+  nodeTracker.untrackTag()
+  nodeTracker.unnest()
+
   nodeTracker.untrackTag()
   nodeTracker.unnest()
 

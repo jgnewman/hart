@@ -236,18 +236,24 @@ const AppGen = fragment.subapp(({ effects, localData, extra }, children) => {
   init: 0,
 })
 
+const Div = fragment((_, children) => {
+  return <div><span>{children}</span></div>
+})
+
 const RootFragment = fragment.optim((props) => {
   props.effects.afterEffect(() => console.log("mounted root!"), [])
 
   console.log("new props", props)
   return (
     <div>
-      {[
+      {/* {[
         <span key="a">a</span>,
         <span key="b">b</span>,
         <span key="c">c</span>,
-      ]}
-      {/* {props.counter}
+        <Div key="d">d</Div>,
+        <span key="e">e</span>
+      ]} */}
+      {props.counter}
       <input id="one" oop="foo" type="checkbox" onchange={handleCheckbox} checked={props.checkbox}/>
       <input type="text" onkeyup={handleKeyupTextField} value={"foo"}/>
       <button onclick={handleClickCounter}>Click me to update counter</button>
@@ -258,7 +264,7 @@ const RootFragment = fragment.optim((props) => {
       <button onclick={handleClickToggleWelcome}>Click me to toggle welcome message</button>
       <button onclick={handleClickToggleSubapp}>Click me to toggle the subapp</button>
       <button onclick={handleClickRemoveChildName}>Click me to remove a child name</button>
-      <ul>
+      {/* <ul>
         {props.listData.map(datum => (
           <ListItem key={datum.id} id={datum.val} value={datum.val}/>
         ))}
@@ -267,12 +273,12 @@ const RootFragment = fragment.optim((props) => {
         <div>
           This is the welcome message!
         </div>
-      )}
-      {props.showSubapp && (
+      )} */}
+      {/* {props.showSubapp && (
         <AppGen id="subapp" extra="extrito">
           <PassedChild id="mike" name="mike" />
         </AppGen>
-      )}
+      )} */}
       <ChildRenderer id="cr1" name="bill">
         {!!props.childNames[0] && <div>{props.childNames[0]}</div>}
         {!!props.childNames[1] && <div>{props.childNames[1]}</div>}
@@ -282,7 +288,7 @@ const RootFragment = fragment.optim((props) => {
         {!!props.childNames[0] && <div>{props.childNames[0]}</div>}
         {!!props.childNames[1] && <div>{props.childNames[1]}</div>}
         {!!props.childNames[2] && <div>{props.childNames[2]}</div>}
-      </ChildRenderer> */}
+      </ChildRenderer>
     </div>
   )
 })

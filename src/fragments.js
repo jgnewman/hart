@@ -33,12 +33,29 @@ function vNode(tag, attrs, ...children) {
     }
   }
 
+  if (typeof tag === "function") {
+    const out = function () {
+        const out = tag(attrs, childPack(children))
+
+        if (attrs.hasOwnProperty("key")) {
+          out.attrs.key = attrs.key
+        }
+
+        if (attrs.hasOwnProperty("id")) {
+          out.attrs.id = out.attrs.id || attrs.id
+        }
+
+        return out
+    }
+    out[FRAG] = { frag: tag, attrs }
+    return out
+  }
+
   return {
     [FRAG]: FRAG,
     tag,
-    props: attrs,
-    children,
-    treeFactory: function () {
+    attrs,
+    factory: function () {
       attrs = attrs || {}
 
       // if (typeof tag === "function") {
