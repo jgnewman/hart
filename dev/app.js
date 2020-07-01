@@ -242,7 +242,12 @@ const RootFragment = fragment.optim((props) => {
   console.log("new props", props)
   return (
     <div>
-      {props.counter}
+      {[
+        <span key="a">a</span>,
+        <span key="b">b</span>,
+        <span key="c">c</span>,
+      ]}
+      {/* {props.counter}
       <input id="one" oop="foo" type="checkbox" onchange={handleCheckbox} checked={props.checkbox}/>
       <input type="text" onkeyup={handleKeyupTextField} value={"foo"}/>
       <button onclick={handleClickCounter}>Click me to update counter</button>
@@ -257,7 +262,7 @@ const RootFragment = fragment.optim((props) => {
         {props.listData.map(datum => (
           <ListItem key={datum.id} id={datum.val} value={datum.val}/>
         ))}
-      </ul>
+      </ul> */}
       {/* {props.showWelcome && (
         <div>
           This is the welcome message!

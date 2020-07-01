@@ -23,6 +23,8 @@ function isChildPack(object) {
 }
 
 function vNode(tag, attrs, ...children) {
+  attrs = attrs || {}
+
   if (tag === DOC_FRAG) {
     if (!children.length) {
       throw new Error("Document-fragment nodes must contain at least one child.")
@@ -31,70 +33,76 @@ function vNode(tag, attrs, ...children) {
     }
   }
 
-  return [FRAG, tag, function () {
-    attrs = attrs || {}
+  return {
+    [FRAG]: FRAG,
+    tag,
+    props: attrs,
+    children,
+    treeFactory: function () {
+      attrs = attrs || {}
 
-    if (typeof tag === "function") {
-      const out = tag(attrs, childPack(children))
+      // if (typeof tag === "function") {
+      //   const out = tag(attrs, childPack(children))
 
-      if (attrs.hasOwnProperty("key")) {
-        out.attrs.key = attrs.key
+      //   if (attrs.hasOwnProperty("key")) {
+      //     out.attrs.key = attrs.key
+      //   }
+
+      //   if (attrs.hasOwnProperty("id")) {
+      //     out.attrs.id = out.attrs.id || attrs.id
+      //   }
+
+      //   return out
+      // }
+
+      const node = {
+        tag,
+        attrs,
+        listed: false,
+        html: null,
+        parent: null,
+        children: children,
       }
 
-      if (attrs.hasOwnProperty("id")) {
-        out.attrs.id = out.attrs.id || attrs.id
-      }
+      // const childIterator = child => {
+      //   if (child && isChildPack(child)) {
+      //     return !child.nodes ? null : child.nodes.forEach(c => childIterator(c))
+      //   }
 
-      return out
-    }
+      //   let childNode
 
-    const node = {
-      tag,
-      attrs,
-      listed: false,
-      html: null,
-      parent: null,
-      children: children,
-    }
+      //   if (Array.isArray(child)) {
+      //     childNode = vNode(LIST, null, ...child)
+      //     childNode.keyCache = {}
+      //     child.map((n, i) => {
+      //       if (!n.attrs.hasOwnProperty("key") || childNode.keyCache.hasOwnProperty(n.attrs.key)) {
+      //         throw new Error("Every member of a node array must have a unique `key` prop.")
+      //       }
 
-    // const childIterator = child => {
-    //   if (child && isChildPack(child)) {
-    //     return !child.nodes ? null : child.nodes.forEach(c => childIterator(c))
-    //   }
+      //       n.listed = true
+      //       n.parent = node
+      //       childNode.keyCache[n.attrs.key] = { node: n, pos: i }
+      //     })
 
-    //   let childNode
+      //   } else if (child === null || child === undefined || child === false) {
+      //     childNode = vNode(EMPTY)
 
-    //   if (Array.isArray(child)) {
-    //     childNode = vNode(LIST, null, ...child)
-    //     childNode.keyCache = {}
-    //     child.map((n, i) => {
-    //       if (!n.attrs.hasOwnProperty("key") || childNode.keyCache.hasOwnProperty(n.attrs.key)) {
-    //         throw new Error("Every member of a node array must have a unique `key` prop.")
-    //       }
+      //   } else if (typeof child === "object") {
+      //     childNode = child
 
-    //       n.listed = true
-    //       n.parent = node
-    //       childNode.keyCache[n.attrs.key] = { node: n, pos: i }
-    //     })
+      //   } else {
+      //     childNode = vNode(TEXT)
+      //     childNode.text = String(child)
+      //   }
 
-    //   } else if (child === null || child === undefined || child === false) {
-    //     childNode = vNode(EMPTY)
+      //   childNode.parent = node
+      //   return node.children.push(childNode)
+      // }
 
-    //   } else if (typeof child === "object") {
-    //     childNode = child
-
-    //   } else {
-    //     childNode = vNode(TEXT)
-    //     childNode.text = String(child)
-    //   }
-
-    //   childNode.parent = node
-    //   return node.children.push(childNode)
-    // }
-
-    // children.length && children.forEach(childIterator)
-    return node
-  }]
+      // children.length && children.forEach(childIterator)
+      return node
+    },
+  }
 }
 
 function propsEqual(a, b) {

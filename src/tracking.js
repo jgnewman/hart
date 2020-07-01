@@ -15,6 +15,10 @@ class NodeTracker {
     return this.position[this.position.length - 1]
   }
 
+  _setCurPos(val) {
+    this.position[this.position.length - 1] = val
+  }
+
   _incCurPos() {
     this.position[this.position.length - 1] = this._getCurPos() + 1
   }
@@ -23,8 +27,8 @@ class NodeTracker {
     return this.ids.join(" ")
   }
 
-  trackTag(tag) {
-    this._incCurPos()
+  trackTag(tag, key) {
+    (key === null || key === undefined) ? this._incCurPos() : this._setCurPos(key)
 
     let tagName
     if (typeof tag === "function") {

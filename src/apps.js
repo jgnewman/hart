@@ -1,6 +1,7 @@
 import {
   ADD,
   FRAG,
+  LIST,
   REMOVE,
   REORDER,
   REPLACE,
@@ -69,19 +70,27 @@ function createApp(rootFragmentFn, target, options) {
   }
 }
 
-function isFragList(value) {
-  return Array.isArray(value) && value[0] === FRAG
+function isFragObject(value) {
+  return typeof value === "object" && value[FRAG] === FRAG
 }
 
-function buildTree(value) {
+function addParent(child, parent) {
+  child.parent = parent
+  return child
+}
+
+function buildTree(value, trackKey) {
   let out
 
-  if (isFragList(value)) {
-    const [_, tag, closure] = value
-    nodeTracker.trackTag(tag)
+  if (isFragObject(value)) {
+    const { tag, props, treeFactory } = value
+    nodeTracker.trackTag(tag, trackKey ? props.key : null)
 
-    out = closure()
-    out.children = out.children.map(child => buildTree(child))
+    out = treeFactory()
+
+    nodeTracker.nest()
+    out.children = out.children.map(child => addParent(buildTree(child), out))
+    nodeTracker.unnest()
 
     nodeTracker.untrackTag()
 
@@ -90,8 +99,25 @@ function buildTree(value) {
     throw new Error()
 
   } else if (Array.isArray(value)) {
-    console.log("got an array!", value)
-    throw new Error()
+
+    out = buildTree(vNode(LIST))
+    out.keyCache = {}
+
+    nodeTracker.nest()
+
+    value.forEach((arrNode, index) => {
+      const child = addParent(buildTree(arrNode, true), out)
+      if (!child.attrs.hasOwnProperty("key") || out.keyCache.hasOwnProperty(child.attrs.key)) {
+        throw new Error("Every member of a node array must have a unique `key` prop.")
+      }
+      child.listed = true
+      child.parent = out.parent
+      out.keyCache[child.attrs.key] = { node: child, pos: index }
+      // TODO: parents are undefined :(
+      console.log("here", out.parent, child.parent)
+    })
+
+    nodeTracker.unnest()
 
   } else if (value === null || value === undefined || value === false) {
     console.log("got an falsy!", value)
@@ -106,6 +132,7 @@ function buildTree(value) {
     out.text = String(value)
   }
 
+  // console.log(out)
   return out
 }
 
@@ -116,11 +143,13 @@ function render(appFn, props={}, appOptions) {
 
   nodeTracker.nest()
   nodeTracker.trackTag(appId)
+  nodeTracker.nest()
 
   const nextTreeFragList = rootFragmentFn(fragProps, parentAppChildPack)
   const nextTree = buildTree(nextTreeFragList)
   const nextParent = { html:rootTarget }
 
+  nodeTracker.unnest()
   nodeTracker.untrackTag()
   nodeTracker.unnest()
 
