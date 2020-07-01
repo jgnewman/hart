@@ -136,8 +136,15 @@ Phase 1
 
 Phase 2
 
-- [x] There is a problem where subapp IDs keep getting regenerated and don't clean up after themselves.
+- [x] BUG: Subapp IDs keep getting regenerated and don't clean up after themselves.
       - Subapps no longer have auto-generated ids. Instead their IDs are assigned by current hash.
+
+- [x] Stop tracking caches and effects per fragment definition and make them global.
+- [ ] Combine fragment and fragment.optim into fragment where we always return an optimized component.
+- [ ] Figure out how to remove the fragment function and just use normal functions.
+- [ ] Make sure this works.
+
+Phase 3
 
 - [ ] Dump injected effects and make them global.
 - [ ] Whenever an effect call is made, check the tracker to determine which cell in memory to use.
