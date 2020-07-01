@@ -2,14 +2,14 @@ import {
   nodeTracker,
 } from "./tracking"
 
-const effectMem = new Map()
+const globalCache = new Map()
 
 function assertCache() {
   const currentHash = nodeTracker.getHash()
-  const cell = effectMem.get(currentHash)
+  let cell = globalCache.get(currentHash)
   if (!cell) {
     cell = new CacheObject()
-    effectMem.set(currentNodeId,cell)
+    globalCache.set(currentHash, cell)
   }
   return cell
 }
