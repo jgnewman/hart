@@ -125,14 +125,14 @@ I think this might work. It deserves an experiment. How can we make this work?
 
 Phase 1
 
-- [ ] Create app IDs
-- [ ] Set a global ID tracker
-- [ ] Find the best way to identify nodes and components in ID fashion.
+- [x] Create app IDs
+- [x] Set a global ID tracker
+- [x] Find the best way to identify nodes and components in ID fashion.
       - Html: element.nodeName + childPosition
       - Function: fn[FRAG_ID] + childPosition
-- [ ] As we generate a tree, update the ID tracker
-- [ ] Make sure we don't actually call function components before updating the tracker
-- [ ] Make sure this works
+- [x] As we generate a tree, update the ID tracker
+- [x] Make sure we don't actually call function components before updating the tracker
+- [x] Make sure this works
 
 Phase 2
 
