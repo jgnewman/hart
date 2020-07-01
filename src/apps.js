@@ -31,7 +31,6 @@ import {
 } from "./dom"
 
 import {
-  assertPureFragment,
   childPack,
   isChildPack,
   createOptimizedVNodeFactory,
@@ -51,7 +50,6 @@ function genAppId() {
 }
 
 function createApp(rootFragmentFn, target, options) {
-  assertPureFragment(rootFragmentFn)
   let prevTree = null
 
   let rootTarget = target

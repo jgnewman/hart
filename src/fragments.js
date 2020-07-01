@@ -4,7 +4,6 @@ import {
   EMPTY,
   FRAG,
   LIST,
-  PROOF,
   TEXT,
 } from "./constants"
 
@@ -23,18 +22,6 @@ function isChildPack(object) {
   return object[CHILD_PACK] === CHILD_PACK
 }
 
-function assertPureFragment(fn) {
-  if (fn[PROOF] !== PROOF) {
-    let err
-    if (fn.name) {
-      err = `${fn.name} should be wrapped in a \`fragment\` call.`
-    } else {
-      err = "All fragments must be defined using the `fragment` function."
-    }
-    throw new Error(err)
-  }
-}
-
 function vNode(tag, attrs, ...children) {
   if (tag === DOC_FRAG) {
     if (!children.length) {
@@ -48,8 +35,6 @@ function vNode(tag, attrs, ...children) {
     attrs = attrs || {}
 
     if (typeof tag === "function") {
-      assertPureFragment(tag)
-
       const out = tag(attrs, childPack(children))
 
       if (attrs.hasOwnProperty("key")) {
@@ -134,7 +119,6 @@ function fragment(userFn) {
   function output(props, children) {
     return userFn(props, children) || vNode(EMPTY)
   }
-  output[PROOF] = PROOF
   return output
 }
 
@@ -184,7 +168,6 @@ function createOptimizedVNodeFactory({
     return nextNode
   }
 
-  output[PROOF] = PROOF
   return output
 }
 
@@ -197,7 +180,6 @@ fragment.docFrag = DOC_FRAG
 fragment.optim = optimizedFragment
 
 export {
-  assertPureFragment,
   createOptimizedVNodeFactory,
   childPack,
   fragment,

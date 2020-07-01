@@ -5,7 +5,6 @@ export const DOC_FRAG = Symbol.for("DOC_FRAG")
 export const EMPTY = Symbol.for("EMPTY")
 export const FRAG = Symbol()
 export const LIST = Symbol.for("LIST")
-export const PROOF = Symbol()
 export const REMOVE = "REMOVE"
 export const REORDER = "REORDER"
 export const REPLACE = "REPLACE"
