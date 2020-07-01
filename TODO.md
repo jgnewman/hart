@@ -136,6 +136,9 @@ Phase 1
 
 Phase 2
 
+- [x] There is a problem where subapp IDs keep getting regenerated and don't clean up after themselves.
+      - Subapps no longer have auto-generated ids. Instead their IDs are assigned by current hash.
+
 - [ ] Dump injected effects and make them global.
 - [ ] Whenever an effect call is made, check the tracker to determine which cell in memory to use.
 - [ ] As we generate a tree, give every component an unmount function associated with its ID that removes its hooks from the global effects memory.

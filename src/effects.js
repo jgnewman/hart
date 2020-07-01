@@ -4,11 +4,11 @@ import {
 
 const globalCache = new Map()
 
-function assertCache() {
+export function assertCache(id, fragmentCaches, updater) {
   const currentHash = nodeTracker.getHash()
   let cell = globalCache.get(currentHash)
   if (!cell) {
-    cell = new CacheObject()
+    cell = new CacheObject(id, fragmentCaches, updater)
     globalCache.set(currentHash, cell)
   }
   return cell

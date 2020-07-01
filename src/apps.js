@@ -16,6 +16,10 @@ import {
 } from "./observables"
 
 import {
+  nodeTracker,
+} from "./tracking"
+
+import {
   changeObject,
   diff,
 } from "./diffing"
@@ -38,6 +42,8 @@ import {
 
 const CHILD_PACK_REF = Symbol()
 
+const appIdCache = new Map()
+
 let appIdCounter = 0
 function genAppId() {
   if (appIdCounter > 10000) {
@@ -49,6 +55,8 @@ function genAppId() {
 function createApp(rootFragmentFn, target, options) {
   let prevTree = null
 
+  console.log("creating app", nodeTracker._getCurId())
+
   let rootTarget = target
   if (options.useShadowRoot) {
     target.attachShadow({ mode: "open" })
@@ -57,7 +65,7 @@ function createApp(rootFragmentFn, target, options) {
 
   return () => {
     return {
-      appId: genAppId(),
+      appId: options.id || genAppId(),
       rootTarget,
       rootFragmentFn,
       prevTree,
@@ -137,6 +145,7 @@ function subappFragment(userFn, settings = {}) {
     const subrootRef = effects.ref()
     const propsRef = effects.ref({ ...rest })
     const childRef = effects.ref(childPack)
+    const currentHash = nodeTracker.getHash()
 
     effects.afterEffect(() => {
       const { current: elem } = subrootRef
@@ -147,14 +156,14 @@ function subappFragment(userFn, settings = {}) {
 
       const Renderer = appFn(RootFragment, elem, {
         ...appOptions,
-        id: appOptions.id || id + "-subapp",
+        id: currentHash + "-subapp",
         [CHILD_PACK_REF]: childRef,
       })
 
       Reducer.watch((newData) => Renderer.update({ ...props, localData: newData }))
       Reducer.update(settings.hasOwnProperty("init") ? settings.init : null)
 
-    }, [propsRef, childRef, subrootRef])
+    }, [propsRef, childRef, subrootRef, currentHash])
 
     const wrapper = settings.wrapper || vNode("div")
     wrapper.attrs.ref = subrootRef
