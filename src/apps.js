@@ -80,9 +80,8 @@ function addParent(child, parent) {
   return child
 }
 
-function buildListVNode(children, parent) {
-
-  const listNode = addParent(buildTree(vNode(LIST, null, ...children)), parent)
+function buildListVNode(children, parent, shouldTrackChildKeys) {
+  const listNode = addParent(buildTree(vNode(LIST, null, ...children), shouldTrackChildKeys), parent)
   const keyCache = listNode.keyCache = {}
 
   listNode.children.forEach((childNode, index) => {
@@ -97,7 +96,9 @@ function buildListVNode(children, parent) {
   return listNode
 }
 
-function buildVNodeFromWrapper(wrapper, trackingKey) {
+function buildVNodeFromWrapper(wrapper, trackKeys) {
+  const trackingKey = trackKeys ? wrapper.attrs.key : null
+  const shouldTrackChildKeys = wrapper.tag === LIST
   nodeTracker.trackTag(wrapper.tag, trackingKey)
 
   const out = wrapper.factory()
@@ -109,11 +110,13 @@ function buildVNodeFromWrapper(wrapper, trackingKey) {
   out.children.forEach(child => {
     console.log(nodeTracker.getCurrent())
     if (isChildPack(child)) {
-      child.nodes && child.nodes.forEach(cpChild => mappedChildren.push(addParent(buildTree(cpChild), out)))
+      child.nodes && child.nodes.forEach(cpChild => {
+        mappedChildren.push(addParent(buildTree(cpChild, shouldTrackChildKeys), out))
+      })
     } else if (Array.isArray(child)) {
-      mappedChildren.push(buildListVNode(child, out))
+      mappedChildren.push(buildListVNode(child, out, shouldTrackChildKeys))
     } else {
-      mappedChildren.push(addParent(buildTree(child), out))
+      mappedChildren.push(addParent(buildTree(child, shouldTrackChildKeys), out))
     }
   })
 
@@ -124,10 +127,11 @@ function buildVNodeFromWrapper(wrapper, trackingKey) {
   return out
 }
 
-function buildVNodeFromFragFn(fragFn, trackingKey) {
+function buildVNodeFromFragFn(fragFn, trackKeys) {
+  const trackingKey = trackKeys ? fragFn[FRAG].attrs.key : null
   const originalFragment = fragFn[FRAG].frag
-  nodeTracker.trackTag(originalFragment, trackingKey)
 
+  nodeTracker.trackTag(originalFragment, trackingKey)
   const out = buildTree(fragFn())
   nodeTracker.untrackTag()
 
@@ -135,19 +139,22 @@ function buildVNodeFromFragFn(fragFn, trackingKey) {
 }
 
 
-function buildTree(value, trackingKey) {
+function buildTree(value, trackKeys) {
   let out
 
   // for raw elements like divs
   if (isVNodeWrapper(value)) {
-    out = buildVNodeFromWrapper(value, trackingKey)
+    out = buildVNodeFromWrapper(value, trackKeys)
 
   // for fragment calls
   } else if (typeof value === "function") {
-    out = buildVNodeFromFragFn(value, trackingKey)
+    out = buildVNodeFromFragFn(value, trackKeys)
 
   } else if (isChildPack(value)) {
     throw new Error("Children must be nested within a parent element.")
+
+  } else if (Array.isArray(value)) {
+    throw new Error("Arrays must be nested within a parent element.")
 
   } else if (value === null || value === undefined || value === false) {
     console.log("got an falsy!", value)
