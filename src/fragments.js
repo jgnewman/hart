@@ -50,6 +50,7 @@ function vNode(tag, attrs, ...children) {
         out.attrs.key = attrs.key
       }
 
+      // TODO: Delete this
       if (attrs.hasOwnProperty("id")) {
         out.attrs.id = out.attrs.id || attrs.id
       }
@@ -95,7 +96,7 @@ function fragment(userFn) {
 
 function createOptimizedVNodeFactory({ userFn, customCompare, updater }) {
   let fragmentCaches = new Map()
-  const assertEqualProps = customCompare || propsEqual
+  const assertEqualProps = customCompare ? customCompare : propsEqual
 
   function output(props, children) {
     const id = props.id

@@ -1,3 +1,19 @@
+import {
+  nodeTracker,
+} from "./tracking"
+
+const effectMem = new Map()
+
+function assertCache() {
+  const currentHash = nodeTracker.getHash()
+  const cell = effectMem.get(currentHash)
+  if (!cell) {
+    cell = new CacheObject()
+    effectMem.set(currentNodeId,cell)
+  }
+  return cell
+}
+
 function depsDidChange(prevDeps, newDeps) {
   let changed = false
 
@@ -16,6 +32,10 @@ function depsDidChange(prevDeps, newDeps) {
 
   return changed
 }
+
+
+
+/********************************************************************/
 
 function getEffectUsage(cacheObject) {
   return [cacheObject.effectMem, (cacheObject.effectCount += 1)]

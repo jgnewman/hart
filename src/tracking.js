@@ -23,8 +23,20 @@ class NodeTracker {
     this.position[this.position.length - 1] = this._getCurPos() + 1
   }
 
-  getCurrent() {
+  _getCurId() {
     return this.ids.join(" ")
+  }
+
+  getHash() {
+    const source = this._getCurId()
+    let hash = 0
+    if (!source.length) return hash
+    for (let i = 0; i < source.length; i++) {
+      const char = source.charCodeAt(i)
+      hash = hash * 31 + char
+      hash = hash & hash // Convert to 32bit integer
+    }
+    return hash
   }
 
   trackApp(appId, rootFragFn) {
