@@ -134,6 +134,7 @@ function buildVNodeFromFragFn(fragFn, trackingKey) {
   return out
 }
 
+
 function buildTree(value, trackingKey) {
   let out
 
