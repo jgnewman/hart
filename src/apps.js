@@ -1,5 +1,6 @@
 import {
   ADD,
+  EMPTY,
   FRAG,
   LIST,
   REMOVE,
@@ -111,12 +112,13 @@ function buildVNodeFromWrapper(wrapper, trackKeys) {
     console.log(nodeTracker.getCurrent())
     if (isChildPack(child)) {
       child.nodes && child.nodes.forEach(cpChild => {
-        mappedChildren.push(addParent(buildTree(cpChild, shouldTrackChildKeys), out))
+        mappedChildren.push(addParent(buildTree(cpChild, out, shouldTrackChildKeys), out))
       })
     } else if (Array.isArray(child)) {
       mappedChildren.push(buildListVNode(child, out, shouldTrackChildKeys))
+
     } else {
-      mappedChildren.push(addParent(buildTree(child, shouldTrackChildKeys), out))
+      mappedChildren.push(addParent(buildTree(child, out, shouldTrackChildKeys), out))
     }
   })
 
@@ -139,7 +141,7 @@ function buildVNodeFromFragFn(fragFn, trackKeys) {
 }
 
 
-function buildTree(value, trackKeys) {
+function buildTree(value, parent, trackKeys) {
   let out
 
   // for raw elements like divs
@@ -150,15 +152,8 @@ function buildTree(value, trackKeys) {
   } else if (typeof value === "function") {
     out = buildVNodeFromFragFn(value, trackKeys)
 
-  } else if (isChildPack(value)) {
-    throw new Error("Children must be nested within a parent element.")
-
-  } else if (Array.isArray(value)) {
-    throw new Error("Arrays must be nested within a parent element.")
-
   } else if (value === null || value === undefined || value === false) {
-    console.log("got an falsy!", value)
-    throw new Error()
+    out = { tag: EMPTY, attrs: {}, listed: false, html: null, parent: parent, children: null }
 
   } else if (typeof value === "object") {
     console.log("got an object!", value)
@@ -189,6 +184,7 @@ function render(appFn, props={}, appOptions) {
   const nextTreeFragFn = rootFragmentFn(fragProps, parentAppChildPack)
   const nextTree = buildTree(nextTreeFragFn)
   const nextParent = { html:rootTarget }
+  console.log(nextTree)
 
   nodeTracker.unnest()
 
