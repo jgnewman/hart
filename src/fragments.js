@@ -3,8 +3,6 @@ import {
   DOC_FRAG,
   EMPTY,
   FRAG,
-  LIST,
-  TEXT,
 } from "./constants"
 
 import {
@@ -22,6 +20,17 @@ function isChildPack(object) {
   return object[CHILD_PACK] === CHILD_PACK
 }
 
+function vNodeObject(tag, attrs, children) {
+  return {
+    tag,
+    attrs,
+    children,
+    listed: false,
+    html: null,
+    parent: null,
+  }
+}
+
 function vNode(tag, attrs, ...children) {
   attrs = attrs || {}
 
@@ -35,17 +44,17 @@ function vNode(tag, attrs, ...children) {
 
   if (typeof tag === "function") {
     const out = function () {
-        const out = tag(attrs, childPack(children))
+      const out = tag(attrs, childPack(children))
 
-        if (attrs.hasOwnProperty("key")) {
-          out.attrs.key = attrs.key
-        }
+      if (attrs.hasOwnProperty("key")) {
+        out.attrs.key = attrs.key
+      }
 
-        if (attrs.hasOwnProperty("id")) {
-          out.attrs.id = out.attrs.id || attrs.id
-        }
+      if (attrs.hasOwnProperty("id")) {
+        out.attrs.id = out.attrs.id || attrs.id
+      }
 
-        return out
+      return out
     }
     out[FRAG] = { frag: tag, attrs }
     return out
@@ -55,70 +64,7 @@ function vNode(tag, attrs, ...children) {
     [FRAG]: FRAG,
     tag,
     attrs,
-    factory: function () {
-      attrs = attrs || {}
-
-      // if (typeof tag === "function") {
-      //   const out = tag(attrs, childPack(children))
-
-      //   if (attrs.hasOwnProperty("key")) {
-      //     out.attrs.key = attrs.key
-      //   }
-
-      //   if (attrs.hasOwnProperty("id")) {
-      //     out.attrs.id = out.attrs.id || attrs.id
-      //   }
-
-      //   return out
-      // }
-
-      const node = {
-        tag,
-        attrs,
-        listed: false,
-        html: null,
-        parent: null,
-        children: children,
-      }
-
-      // const childIterator = child => {
-      //   if (child && isChildPack(child)) {
-      //     return !child.nodes ? null : child.nodes.forEach(c => childIterator(c))
-      //   }
-
-      //   let childNode
-
-      //   if (Array.isArray(child)) {
-      //     childNode = vNode(LIST, null, ...child)
-      //     childNode.keyCache = {}
-      //     child.map((n, i) => {
-      //       if (!n.attrs.hasOwnProperty("key") || childNode.keyCache.hasOwnProperty(n.attrs.key)) {
-      //         throw new Error("Every member of a node array must have a unique `key` prop.")
-      //       }
-
-      //       n.listed = true
-      //       n.parent = node
-      //       childNode.keyCache[n.attrs.key] = { node: n, pos: i }
-      //     })
-
-      //   } else if (child === null || child === undefined || child === false) {
-      //     childNode = vNode(EMPTY)
-
-      //   } else if (typeof child === "object") {
-      //     childNode = child
-
-      //   } else {
-      //     childNode = vNode(TEXT)
-      //     childNode.text = String(child)
-      //   }
-
-      //   childNode.parent = node
-      //   return node.children.push(childNode)
-      // }
-
-      // children.length && children.forEach(childIterator)
-      return node
-    },
+    factory: () => vNodeObject(tag, attrs, children),
   }
 }
 
@@ -147,11 +93,7 @@ function fragment(userFn) {
   return output
 }
 
-function createOptimizedVNodeFactory({
-  userFn,
-  customCompare,
-  updater,
-}) {
+function createOptimizedVNodeFactory({ userFn, customCompare, updater }) {
   let fragmentCaches = new Map()
   const assertEqualProps = customCompare || propsEqual
 
@@ -211,4 +153,5 @@ export {
   isChildPack,
   optimizedFragment,
   vNode,
+  vNodeObject,
 }

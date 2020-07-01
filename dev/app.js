@@ -246,13 +246,6 @@ const RootFragment = fragment.optim((props) => {
   console.log("new props", props)
   return (
     <div>
-      {/* {[
-        <span key="a">a</span>,
-        <span key="b">b</span>,
-        <span key="c">c</span>,
-        <Div key="d">d</Div>,
-        <span key="e">e</span>
-      ]} */}
       {props.counter}
       <input id="one" oop="foo" type="checkbox" onchange={handleCheckbox} checked={props.checkbox}/>
       <input type="text" onkeyup={handleKeyupTextField} value={"foo"}/>
@@ -264,21 +257,21 @@ const RootFragment = fragment.optim((props) => {
       <button onclick={handleClickToggleWelcome}>Click me to toggle welcome message</button>
       <button onclick={handleClickToggleSubapp}>Click me to toggle the subapp</button>
       <button onclick={handleClickRemoveChildName}>Click me to remove a child name</button>
-      {/* <ul>
+      <ul>
         {props.listData.map(datum => (
           <ListItem key={datum.id} id={datum.val} value={datum.val}/>
         ))}
-      </ul> */}
-      {/* {props.showWelcome && (
+      </ul>
+      {props.showWelcome && (
         <div>
           This is the welcome message!
         </div>
-      )} */}
-      {/* {props.showSubapp && (
+      )}
+      {props.showSubapp && (
         <AppGen id="subapp" extra="extrito">
           <PassedChild id="mike" name="mike" />
         </AppGen>
-      )} */}
+      )}
       <ChildRenderer id="cr1" name="bill">
         {!!props.childNames[0] && <div>{props.childNames[0]}</div>}
         {!!props.childNames[1] && <div>{props.childNames[1]}</div>}

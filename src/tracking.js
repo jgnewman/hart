@@ -27,6 +27,22 @@ class NodeTracker {
     return this.ids.join(" ")
   }
 
+  trackApp(appId, rootFragFn) {
+    this.nest()
+    this.trackTag(appId)
+    this.nest()
+    this.trackTag(rootFragFn)
+    this.nest()
+  }
+
+  untrackApp() {
+    this.unnest()
+    this.untrackTag()
+    this.unnest()
+    this.untrackTag()
+    this.unnest()
+  }
+
   trackTag(tag, key) {
     (key === null || key === undefined) ? this._incCurPos() : this._setCurPos(key)
 
