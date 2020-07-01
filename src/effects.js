@@ -2,14 +2,14 @@ import {
   nodeTracker,
 } from "./tracking"
 
-const globalCache = new Map()
+export const globalEffectCache = new Map()
 
-export function assertCache(id, fragmentCaches, updater) {
+export function assertCache(id, updater) {
   const currentHash = nodeTracker.getHash()
-  let cell = globalCache.get(currentHash)
+  let cell = globalEffectCache.get(currentHash)
   if (!cell) {
-    cell = new CacheObject(id, fragmentCaches, updater)
-    globalCache.set(currentHash, cell)
+    cell = new CacheObject(id, currentHash, updater)
+    globalEffectCache.set(currentHash, cell)
   }
   return cell
 }
@@ -91,14 +91,13 @@ function createRefTracker(cacheObject) {
 }
 
 export class CacheObject {
-  constructor(id, parentMap, updater) {
+  constructor(id, currentHash, updater) {
     this.childLength = 0
     this.cleanups = []
     this.effectCount = -1
     this.effectMem = []
     this.id = id
     this.node = null
-    this.parentMap = parentMap
     this.props = null
 
     this.effects = {
@@ -115,7 +114,7 @@ export class CacheObject {
     this.onunmount = () => {
       this.cleanups.forEach(callback => callback())
       this.cleanups = []
-      this.parentMap.delete(this.id)
+      globalEffectCache.delete(currentHash)
     }
   }
 

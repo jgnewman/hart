@@ -96,15 +96,20 @@ function buildTree(value, parent, trackKeys) {
     out = buildVNodeFromFragFn(value, trackKeys)
 
   } else if (value === null || value === undefined || value === false) {
+    nodeTracker.trackTag(EMPTY)
     out = vNodeObject(EMPTY, null, [])
     out.parent = parent
+    nodeTracker.untrackTag()
 
   } else if (typeof value === "object") {
     throw new Error(`Value ${value} is not valid for building DOM.`)
 
   } else {
-    out = buildTree(vNode(TEXT))
+    nodeTracker.trackTag(TEXT)
+    out = vNodeObject(TEXT, null, [])
+    out.parent = parent
     out.text = String(value)
+    nodeTracker.untrackTag()
   }
 
   return out

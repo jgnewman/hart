@@ -20,6 +20,10 @@ import {
 } from "./tracking"
 
 import {
+  globalEffectCache,
+} from "./effects"
+
+import {
   changeObject,
   diff,
 } from "./diffing"
@@ -42,8 +46,6 @@ import {
 
 const CHILD_PACK_REF = Symbol()
 
-const appIdCache = new Map()
-
 let appIdCounter = 0
 function genAppId() {
   if (appIdCounter > 10000) {
@@ -55,7 +57,7 @@ function genAppId() {
 function createApp(rootFragmentFn, target, options) {
   let prevTree = null
 
-  console.log("creating app", nodeTracker._getCurId())
+  console.log("CREATING APP", nodeTracker._getCurId())
 
   let rootTarget = target
   if (options.useShadowRoot) {
@@ -162,7 +164,6 @@ function subappFragment(userFn, settings = {}) {
 
       Reducer.watch((newData) => Renderer.update({ ...props, localData: newData }))
       Reducer.update(settings.hasOwnProperty("init") ? settings.init : null)
-
     }, [propsRef, childRef, subrootRef, currentHash])
 
     const wrapper = settings.wrapper || vNode("div")

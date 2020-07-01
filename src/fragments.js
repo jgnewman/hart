@@ -100,7 +100,6 @@ function fragment(userFn) {
 }
 
 function createOptimizedVNodeFactory({ userFn, customCompare, updater }) {
-  let fragmentCaches = new Map()
   const assertEqualProps = customCompare ? customCompare : propsEqual
 
   function output(props, children) {
@@ -110,8 +109,7 @@ function createOptimizedVNodeFactory({ userFn, customCompare, updater }) {
       throw new Error("Optimized fragment is missing an `id` attribute.")
     }
 
-    const prevCache = fragmentCaches.get(id) ||
-                      fragmentCaches.set(id, new CacheObject(id, fragmentCaches, updater)).get(id)
+    const prevCache = assertCache(id, updater)
 
     const prevProps = prevCache.props
     const prevNode = prevCache.node
