@@ -129,13 +129,13 @@ function optimizedFunction(userFn) {
   return output
 }
 
-function addPropCheck(userFn, customCompare) {
+function withPropCheck(userFn, customCompare) {
   userFn[COMPARE] = customCompare
   return userFn
 }
 
 export {
-  addPropCheck,
+  withPropCheck,
   childPack,
   hasBeenOptimized,
   isChildPack,

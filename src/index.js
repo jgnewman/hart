@@ -3,7 +3,7 @@ import {
 } from "./constants"
 
 import {
-  addPropCheck,
+  withPropCheck,
   vNode,
 } from "./nodes"
 
@@ -27,5 +27,5 @@ const hart = {
 
 export {
   hart,
-  addPropCheck,
+  withPropCheck,
 }

@@ -38,7 +38,7 @@ import {
 } from "./dom"
 
 import {
-  addPropCheck,
+  withPropCheck,
   childPack,
   optimizedFunction,
   vNode,
@@ -133,7 +133,7 @@ function subapp(userFn, settings = {}) {
   const appOptions = settings.options || {}
   const appFn = settings.sync ? appSync : app
 
-  const RootOptimizedFn = optimizedFunction(addPropCheck(userFn, settings.compareProps))
+  const RootOptimizedFn = optimizedFunction(withPropCheck(userFn, settings.compareProps))
 
   const AppGenerator = optimizedFunction((userProps, childPack) => {
     const subrootRef = useRef()

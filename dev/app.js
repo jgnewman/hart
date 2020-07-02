@@ -1,13 +1,13 @@
 import {
+  app,
+  appSync,
   hart,
-  addPropCheck,
+  subapp,
   useAfterEffect,
   useMemo,
   useMemoFn,
   useRef,
-  app,
-  appSync,
-  subapp,
+  withPropCheck,
 } from "../src/index"
 
 const randomItem = items => {
