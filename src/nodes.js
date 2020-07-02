@@ -2,7 +2,7 @@ import {
   CHILD_PACK,
   DOC_FRAG,
   EMPTY,
-  FRAG,
+  LAZY,
   OPTIM,
 } from "./constants"
 
@@ -44,7 +44,7 @@ function vNode(tag, attrs, ...children) {
   }
 
   if (typeof tag === "function") {
-    const wrappedTag = fragment(tag)
+    const wrappedTag = optimizedFunction(tag)
 
     const out = function () {
       const out = wrappedTag(attrs, childPack(children))
@@ -56,12 +56,12 @@ function vNode(tag, attrs, ...children) {
       return out
     }
 
-    out[FRAG] = { frag: tag, attrs }
+    out[LAZY] = { userFn: tag, attrs }
     return out
   }
 
   return {
-    [FRAG]: FRAG,
+    [LAZY]: LAZY,
     tag,
     attrs,
     factory: () => vNodeObject(tag, attrs, children),
@@ -90,7 +90,7 @@ function hasBeenOptimized(fn) {
   return typeof fn === "function" && fn[OPTIM] === OPTIM
 }
 
-function optimizedFunction({ userFn, customCompare, updater }) {
+function optimizedFunction(userFn, customCompare, updater) {
   const assertEqualProps = customCompare ? customCompare : propsEqual
 
   function output(props, children) {
@@ -128,13 +128,8 @@ function optimizedFunction({ userFn, customCompare, updater }) {
   return output
 }
 
-function fragment(userFn, customCompare) {
-  return optimizedFunction({ userFn, customCompare })
-}
-
 export {
   childPack,
-  fragment,
   hasBeenOptimized,
   isChildPack,
   optimizedFunction,

@@ -4,14 +4,13 @@ import {
   EMPTY,
   LIST,
   SET,
+  SVG_NS,
   TEXT,
 } from "./constants"
 
 import {
   positionSort,
 } from "./diffing"
-
-const SVG_NS = "http://www.w3.org/2000/svg"
 
 const attrMap = {
   className: "class",
@@ -34,9 +33,9 @@ function isInputTag(tag) {
 
 function append(target, nodes) {
   if (Array.isArray(nodes)) {
-    const frag = document.createDocumentFragment()
-    nodes.forEach(node => frag.appendChild(node))
-    target.appendChild(frag)
+    const docFrag = document.createDocumentFragment()
+    nodes.forEach(node => docFrag.appendChild(node))
+    target.appendChild(docFrag)
   } else {
     target.appendChild(nodes)
   }
@@ -110,14 +109,14 @@ function buildHTML(vTree) {
     attrKeys.forEach(name => attachAttr(tag, isSVG, name, vTree.attrs[name]))
 
     if (vTree.children.length) {
-      const frag = document.createDocumentFragment()
+      const docFrag = document.createDocumentFragment()
 
       vTree.children.forEach(child => {
         buildHTML(child)
         vTree.html.appendChild(child.html)
       })
 
-      vTree.html.appendChild(frag)
+      vTree.html.appendChild(docFrag)
     }
 
   }

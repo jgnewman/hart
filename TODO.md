@@ -148,6 +148,11 @@ Phase 2
 
 Phase 3
 
+- [x] ISSUE: Semantics are so messy in here I can barely understand what's going on anymore.
+      - We are now completely separated from the word "fragment".
+      - We have a concept of a `userFn` which is provided by the user and an `optimizedFn`
+        which is our wrapped version.
+
 - [ ] Make sure users can add their own custom prop compare functions
 - [ ] Dump injected effects and make them global.
 - [ ] Whenever an effect call is made, check the tracker to determine which cell in memory to use.

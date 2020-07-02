@@ -309,14 +309,14 @@ reducer.update({
 
 /*******************/
 
-// const App2Root = props => {
-//   if (props.showDiv) return <div>Showing Div</div>
-//   return <span>Showing Span</span>
-// }
+const App2Root = props => {
+  if (props.showDiv) return <div>Showing Div</div>
+  return <span>Showing Span</span>
+}
 
-// const app2 = appSync(App2Root, document.getElementById("app2"))
-// app2.update({ showDiv: true })
-// app2.update({ showDiv: false })
+const app2 = appSync(App2Root, document.getElementById("app2"))
+app2.update({ showDiv: true })
+app2.update({ showDiv: false })
 
 /*******************/
 

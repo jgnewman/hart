@@ -35,9 +35,8 @@ import {
 import {
   childPack,
   optimizedFunction,
-  fragment,
   vNode,
-} from "./fragments"
+} from "./nodes"
 
 const CHILD_PACK_REF = Symbol()
 
@@ -49,7 +48,7 @@ function genAppId() {
   return String(Date.now()).slice(0, 6) + (appIdCounter += 1)
 }
 
-function createApp(rootFragmentFn, target, options) {
+function createApp(rootUserFn, target, options) {
   let prevTree = null
 
   let rootTarget = target
@@ -62,7 +61,7 @@ function createApp(rootFragmentFn, target, options) {
     return {
       appId: options.id || genAppId(),
       rootTarget,
-      rootFragmentFn,
+      rootUserFn,
       prevTree,
       setPrevTree: (vTree) => prevTree = vTree,
     }
@@ -70,13 +69,13 @@ function createApp(rootFragmentFn, target, options) {
 }
 
 function render(appFn, props={}, appOptions) {
-  const { appId, rootTarget, rootFragmentFn, prevTree, setPrevTree } = appFn()
+  const { appId, rootTarget, rootUserFn, prevTree, setPrevTree } = appFn()
   const parentAppChildPack = appOptions[CHILD_PACK_REF] ? appOptions[CHILD_PACK_REF].current : childPack()
 
   const [nextTree, nextParent] = generateVDom(
     appId,
     rootTarget,
-    rootFragmentFn,
+    rootUserFn,
     props,
     parentAppChildPack,
   )
@@ -103,25 +102,25 @@ function render(appFn, props={}, appOptions) {
   }
 }
 
-function createObserver(fn, outputElem, options={}, isAsync) {
-  const observerCalc = outputElem ? null : fn
+function createObserver(rootUserFn, outputElem, options={}, isAsync) {
+  const observerCalc = outputElem ? null : rootUserFn
   const observer = isAsync ? observableAsync(observerCalc) : observable(observerCalc)
 
   if (outputElem) {
     const realNode = typeof outputElem === "string" ? document.querySelector(outputElem) : outputElem
-    const app = createApp(fn, realNode, options)
+    const app = createApp(rootUserFn, realNode, options)
     observer.watch(newVal => render(app, newVal, options))
   }
 
   return observer
 }
 
-function app(fn, outputElem, options) {
-  return createObserver(fn, outputElem, options, true)
+function app(rootUserFn, outputElem, options) {
+  return createObserver(rootUserFn, outputElem, options, true)
 }
 
-function appSync(fn, outputElem, options) {
-  return createObserver(fn, outputElem, options, false)
+function appSync(rootUserFn, outputElem, options) {
+  return createObserver(rootUserFn, outputElem, options, false)
 }
 
 function subapp(userFn, settings = {}) {
@@ -129,13 +128,13 @@ function subapp(userFn, settings = {}) {
   const appFn = settings.sync ? appSync : app
   let updateReducer
 
-  const RootFragment = optimizedFunction({
+  const RootOptimizedFn = optimizedFunction(
     userFn,
-    customCompare: settings.compareProps,
-    updater: change => updateReducer && updateReducer(change)
-  })
+    settings.compareProps,
+    change => updateReducer && updateReducer(change),
+  )
 
-  const AppGenerator = fragment(({ effects, id,...rest }, childPack) => {
+  const AppGenerator = optimizedFunction(({ effects, id,...rest }, childPack) => {
     const subrootRef = effects.ref()
     const propsRef = effects.ref({ ...rest })
     const childRef = effects.ref(childPack)
@@ -148,7 +147,7 @@ function subapp(userFn, settings = {}) {
       const Reducer = appFn(settings.reducer || (change => ({ current: change })))
       updateReducer = Reducer.update
 
-      const Renderer = appFn(RootFragment, elem, {
+      const Renderer = appFn(RootOptimizedFn, elem, {
         ...appOptions,
         id: currentHash + "-subapp",
         [CHILD_PACK_REF]: childRef,

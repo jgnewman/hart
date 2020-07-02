@@ -1,6 +1,6 @@
 import {
   EMPTY,
-  FRAG,
+  LAZY,
   LIST,
   TEXT,
 } from "./constants"
@@ -10,15 +10,15 @@ import {
 } from "./tracking"
 
 import {
-  fragment,
   hasBeenOptimized,
   isChildPack,
   vNode,
   vNodeObject,
-} from "./fragments"
+  optimizedFunction,
+} from "./nodes"
 
-function isVNodeWrapper(value) {
-  return typeof value === "object" && value[FRAG] === FRAG
+function isLazyVnode(value) {
+  return typeof value === "object" && value[LAZY] === LAZY
 }
 
 function addParent(child, parent) {
@@ -43,7 +43,7 @@ function buildListVNode(children, parent, shouldTrackChildKeys) {
   return listNode
 }
 
-function buildVNodeFromWrapper(wrapper, trackKeys) {
+function delazifyVNode(wrapper, trackKeys) {
   const trackingKey = trackKeys ? wrapper.attrs.key : null
   const shouldTrackChildKeys = wrapper.tag === LIST
   nodeTracker.trackTag(wrapper.tag, trackingKey)
@@ -77,12 +77,12 @@ function buildVNodeFromWrapper(wrapper, trackKeys) {
 }
 
 
-function buildVNodeFromFragFn(fragFn, trackKeys) {
-  const trackingKey = trackKeys ? fragFn[FRAG].attrs.key : null
-  const originalFragment = fragFn[FRAG].frag
+function execOptimizedFn(optimizedFn, trackKeys) {
+  const trackingKey = trackKeys ? optimizedFn[LAZY].attrs.key : null
+  const userFn = optimizedFn[LAZY].userFn
 
-  nodeTracker.trackTag(originalFragment, trackingKey)
-  const out = buildTree(fragFn())
+  nodeTracker.trackTag(userFn, trackingKey)
+  const out = buildTree(optimizedFn())
   nodeTracker.untrackTag()
 
   return out
@@ -92,12 +92,12 @@ function buildTree(value, parent, trackKeys) {
   let out
 
   // for raw elements like divs
-  if (isVNodeWrapper(value)) {
-    out = buildVNodeFromWrapper(value, trackKeys)
+  if (isLazyVnode(value)) {
+    out = delazifyVNode(value, trackKeys)
 
-  // for fragment calls
+  // for optimized function calls
   } else if (typeof value === "function") {
-    out = buildVNodeFromFragFn(value, trackKeys)
+    out = execOptimizedFn(value, trackKeys)
 
   } else if (value === null || value === undefined || value === false) {
     nodeTracker.trackTag(EMPTY)
@@ -119,13 +119,16 @@ function buildTree(value, parent, trackKeys) {
   return out
 }
 
-function generateVDom(appId, rootTarget, rootFragmentFn, fragProps, parentAppChildPack) {
-  nodeTracker.trackApp(appId, rootFragmentFn)
+function generateVDom(appId, rootTarget, rootUserFn, props, parentAppChildPack) {
+  nodeTracker.trackApp(appId, rootUserFn)
 
-  const rootFragment = hasBeenOptimized(rootFragmentFn) ? rootFragmentFn : fragment(rootFragmentFn)
-  const nextTreeFragFn = rootFragment(fragProps, parentAppChildPack)
+  // In the case of subapps, the rootUserFn has already been optimized.
+  const rootOptimizedFn = hasBeenOptimized(rootUserFn)
+                        ? rootUserFn
+                        : optimizedFunction(rootUserFn)
 
-  const nextTree = buildTree(nextTreeFragFn)
+  const lazyTree = rootOptimizedFn(props, parentAppChildPack)
+  const nextTree = buildTree(lazyTree)
   const nextParent = nextTree.parent = { html:rootTarget }
 
   nodeTracker.untrackApp()

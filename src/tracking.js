@@ -1,10 +1,10 @@
 import {
-  FRAG_ID,
+  FN_ID,
 } from "./constants"
 
-let fragCounter = 0
-function createFragId() {
-  return "frag(" + (fragCounter += 1) + ")"
+let fnCounter = 0
+function createFnId() {
+  return "fn(" + (fnCounter += 1) + ")"
 }
 
 class NodeTracker {
@@ -41,11 +41,11 @@ class NodeTracker {
     return hash
   }
 
-  trackApp(appId, rootFragFn) {
+  trackApp(appId, rootUserFn) {
     this.nest()
     this.trackTag(appId)
     this.nest()
-    this.trackTag(rootFragFn)
+    this.trackTag(rootUserFn)
     this.nest()
   }
 
@@ -62,7 +62,7 @@ class NodeTracker {
 
     let tagName
     if (typeof tag === "function") {
-      tagName = tag[FRAG_ID] = tag[FRAG_ID] || createFragId()
+      tagName = tag[FN_ID] = tag[FN_ID] || createFnId()
     } else {
       tagName = String(tag)
     }
