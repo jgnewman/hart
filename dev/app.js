@@ -1,6 +1,10 @@
 import {
   hart,
   addPropCheck,
+  useAfterEffect,
+  useMemo,
+  useMemoFn,
+  useRef,
   app,
   appSync,
   subapp,
@@ -166,9 +170,9 @@ const handleCheckbox = (evt) => {
   })
 }
 
-const ChildRenderer = ({ name, effects }, children) => {
-  const memoizedName = effects.memo(() => name, [name])
-  const memoizedSuffix = effects.memo(() => name === "bill" ? "x" : "y", [name])
+const ChildRenderer = ({ name }, children) => {
+  const memoizedName = useMemo(() => name, [name])
+  const memoizedSuffix = useMemo(() => name === "bill" ? "x" : "y", [name])
 
   return (
     <div class="dib" style="background: black; color: white; margin-bottom: 5px;">
@@ -178,25 +182,22 @@ const ChildRenderer = ({ name, effects }, children) => {
   )
 }
 
-const Span = ({ effects, value }) => {
-  const { ref } = effects
-  const spanRef = ref(null)
+const Span = ({ value }) => {
+  const spanRef = useRef(null)
   return (
     <span ref={spanRef}>{value}</span>
   )
 }
 
-const ListItem = ({ effects, value }) => {
-  const { ref, afterEffect, memoFn } = effects
-
-  const liRef = ref(null)
-  const spanRef = ref(null)
-  const clickHandler = memoFn(evt => {
+const ListItem = ({ value }) => {
+  const liRef = useRef(null)
+  const spanRef = useRef(null)
+  const clickHandler = useMemoFn(evt => {
     console.log("ref, evt:", liRef.current, evt)
   }, [liRef])
 
-  afterEffect(() => console.log(`mounted ${value}!`), [])
-  afterEffect(() => () => console.log(`unmounted ${value}!`), [])
+  useAfterEffect(() => console.log(`mounted ${value}!`), [])
+  useAfterEffect(() => () => console.log(`unmounted ${value}!`), [])
 
   return (
     <li ref={liRef} onclick={clickHandler}>
@@ -206,25 +207,25 @@ const ListItem = ({ effects, value }) => {
   )
 }
 
-const PassedChild = ({ effects, name }) => {
-  const nameRef = effects.ref(name)
-  effects.afterEffect(() => () => console.log(`unmounted passed child ${nameRef.current}`), [nameRef])
+const PassedChild = ({ name }) => {
+  const nameRef = useRef(name)
+  useAfterEffect(() => () => console.log(`unmounted passed child ${nameRef.current}`), [nameRef])
   const out = <div>Heyo, I'm {name}, a child passed from one app to another app!</div>
   return out
 }
 
-const AppGen = subapp(({ effects, localData, extra }, children) => {
+const AppGen = subapp(({ localData, update, extra }, children) => {
   const { count } = localData
 
-  effects.afterEffect(() => {
+  useAfterEffect(() => {
     console.log("mounted subapp")
     return () => console.log("unmounted subapp")
   }, [])
 
-  effects.afterEffect(() => {
-    const timeout = setTimeout(() => count < 100 && effects.update(count + 1), 1000)
+  useAfterEffect(() => {
+    const timeout = setTimeout(() => count < 100 && update(count + 1), 1000)
     return () => clearTimeout(timeout)
-  }, [count])
+  }, [count, update])
 
   return (
     <span>
@@ -239,7 +240,7 @@ const AppGen = subapp(({ effects, localData, extra }, children) => {
 })
 
 const RootFragment = (props) => {
-  props.effects.afterEffect(() => console.log("mounted root!"), [])
+  useAfterEffect(() => console.log("mounted root!"), [])
 
   console.log("new props", props)
   return (

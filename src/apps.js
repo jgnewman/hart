@@ -7,6 +7,11 @@ import {
 } from "./constants"
 
 import {
+  useRef,
+  useAfterEffect,
+} from "./effects"
+
+import {
   generateVDom,
 } from "./vdom"
 
@@ -127,25 +132,20 @@ function appSync(rootUserFn, outputElem, options) {
 function subapp(userFn, settings = {}) {
   const appOptions = settings.options || {}
   const appFn = settings.sync ? appSync : app
-  let updateReducer
 
-  const RootOptimizedFn = optimizedFunction(
-    addPropCheck(userFn, settings.compareProps),
-    change => updateReducer && updateReducer(change),
-  )
+  const RootOptimizedFn = optimizedFunction(addPropCheck(userFn, settings.compareProps))
 
-  const AppGenerator = optimizedFunction(({ effects, id,...rest }, childPack) => {
-    const subrootRef = effects.ref()
-    const propsRef = effects.ref({ ...rest })
-    const childRef = effects.ref(childPack)
+  const AppGenerator = optimizedFunction((userProps, childPack) => {
+    const subrootRef = useRef()
+    const propsRef = useRef({ ...userProps })
+    const childRef = useRef(childPack)
     const currentHash = nodeTracker.getHash()
 
-    effects.afterEffect(() => {
+    useAfterEffect(() => {
       const { current: elem } = subrootRef
       const { current: props } = propsRef
 
       const Reducer = appFn(settings.reducer || (change => ({ current: change })))
-      updateReducer = Reducer.update
 
       const Renderer = appFn(RootOptimizedFn, elem, {
         ...appOptions,
@@ -153,7 +153,12 @@ function subapp(userFn, settings = {}) {
         [CHILD_PACK_REF]: childRef,
       })
 
-      Reducer.watch((newData) => Renderer.update({ ...props, localData: newData }))
+      Reducer.watch((newData) => Renderer.update({
+        ...props,
+        localData: newData,
+        update: Reducer.update,
+      }))
+
       Reducer.update(settings.hasOwnProperty("init") ? settings.init : null)
     }, [propsRef, childRef, subrootRef, currentHash])
 

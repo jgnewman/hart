@@ -7,7 +7,14 @@ import {
   vNode,
 } from "./nodes"
 
-import {
+export {
+  useAfterEffect,
+  useMemo,
+  useMemoFn,
+  useRef,
+} from "./effects"
+
+export {
   app,
   appSync,
   subapp,
@@ -21,7 +28,4 @@ const hart = {
 export {
   hart,
   addPropCheck,
-  app,
-  appSync,
-  subapp,
 }

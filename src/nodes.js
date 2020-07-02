@@ -91,17 +91,16 @@ function hasBeenOptimized(fn) {
   return typeof fn === "function" && fn[OPTIM] === OPTIM
 }
 
-function optimizedFunction(userFn, updater) {
+function optimizedFunction(userFn) {
   const customCompare = userFn[COMPARE]
   const assertEqualProps = customCompare || propsEqual
 
-  function output(props, children) {
-    const prevCache = assertCache(updater)
+  function output(nextProps, children) {
+    const prevCache = assertCache()
 
     const prevProps = prevCache.props
     const prevNode = prevCache.node
 
-    const nextProps = { ...props, effects: prevCache.effects }
     const nextChildLength = children && children.nodes ? children.nodes.length : 0
     const noChildrenOverChange = prevCache.childLength === 0 && nextChildLength === 0
 
