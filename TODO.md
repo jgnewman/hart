@@ -170,7 +170,6 @@ Phase 3
 - [x] Whenever an effect call is made, check the tracker to determine which cell in memory to use.
 - [x] Give users a way to disable caching and effects for a given function.
 - [x] Update the readme
-- [ ] Dump synchronous apps bc they're unnecessary and update the readme accordingly
-      - Dumped the API. Need to simplify observables now.
+- [x] Dump synchronous apps bc they're unnecessary and update the readme accordingly
 - [ ] Update the benchmarks readme
 - [ ] Fix all the tests haha

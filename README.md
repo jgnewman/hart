@@ -8,7 +8,7 @@ Hart is a lithe, nimble core for scalable web apps.
 
 The main advantage to using Hart over some other component-based framework is that Hart is designed to help you write purely functional apps. _**But don't be scared!**_ The patterns are all very familiar. And since you'll be avoiding mutable state, Hart can provide some optimizations that lead to [fantastic performance](https://github.com/jgnewman/hart/blob/master/BENCHMARKS.md) and a very small footprint in terms of file size, memory consumption, and processing power.
 
-Though tiny (**~12kB minified** and **~4kB compressed**), Hart is geared toward scalability. You can spin up a small app with almost no boilerplate, and you can scale it up modularly as needed. The biggest thing to keep in mind is that Hart _really does not want_ you to try to hack some kind of quick and dirty local state into your components. If you can follow this rule, the two of you should easily fall in love. With that in mind, let me introduce you to Hart...
+Though tiny (**~11.5kB minified** and **~4kB gzipped/compressed**), Hart is geared toward scalability. You can spin up a small app with almost no boilerplate, and you can scale it up modularly as needed. The biggest thing to keep in mind is that Hart _really does not want_ you to try to hack some kind of quick and dirty local state into your components. If you can follow this rule, the two of you should easily fall in love. With that in mind, let me introduce you to Hart...
 
 #### In this doc
 
@@ -247,7 +247,7 @@ This pattern makes it extremely easy to build Hart applications, no fancy middle
 
 ## Batched updates
 
-Applications created with the `app` function are asynchronous by default. In other words, whenever you call `update`, your app function doesn't immediately run. Instead, new data is generated from the update and your app function is _queued_ to run. This allows you to trigger multiple updates in a single native event loop resulting in only a single update to the DOM once that data reaches its final form. Consider the following:
+Applications created with the `app` function are asynchronous. In other words, whenever you call `update`, your app function doesn't immediately run. Instead, new data is generated from the update and your app function is _queued_ to run. This allows you to trigger multiple updates in a single native event loop resulting in only a single update to the DOM once that data reaches its final form. Consider the following:
 
 ```javascript
 import { hart, app } from "hart"
@@ -283,7 +283,7 @@ setTimeout(() => {
 
 In this example, although `Reducer.update` is called 11 times, our renderer only updates the DOM twice (once for the "INIT" update, and once for all 10 "UPDATE_COUNTER" updates).
 
-Because Hart apps are functional, this nuance should be entirely invisible to you, provided you aren't trying to hack in some kind of local state (which you shouldn't be!). But it's important because it allows Hart to maximize speed and efficiency. If, for some reason, you find yourself needing synchronous updates, you can use the `appSync` function instead of the `app` function, although you'll incur a performance penalty for doing so, putting your app more in line with apps built on frameworks that update synchronously.
+Because Hart apps are functional, this nuance should be entirely invisible to you, provided you aren't trying to hack in some kind of local state (which you shouldn't be!). But it's important because it allows Hart to maximize speed and efficiency.
 
 ## Optimizing
 
@@ -539,7 +539,7 @@ As I said before, this is ridiculously tedious. It also has the rather glaring p
 This POC _should_ work though! And because of this, Hart provides an easier way to accomplish the exact same thing, with the added benefit that children can be bassed down and accessed as a second argument to your component. So before we get into it, the important takeaways are:
 
 1. To use local state, you have to create a subapp within your app.
-2. Subapps mount during after-effects, so they always render asynchronously.
+2. Subapps mount during after-effects, so they always render after the parent app has finished rendering.
 3. A subapp is, itself, a side-effect, meaning that although it mounts and unmounts correctly, and can take in values from the parent app, the parent app will have _no knowledge of its existence._
 
 Here's how you do it:
@@ -570,6 +570,5 @@ Subapps are also highly customizable via a `settings` object passed in as a seco
 - `init`: An initial value to be passed to your reducer. Defaults to `null`.
 - `options`: An app options object as described above. Defaults to `{ id: id + "-subapp" }`.
 - `reducer`: A function for generating new state from an update value. Defaults to `change => ({ current: change })`.
-- `sync`: Defaults to `false`. If `true`, will build your subapp with `appSync` instead of `app`.
 - `wrapper`: JSX specifying the node that the subapp will mount itself to. Defaults to `<div></div>`.
 

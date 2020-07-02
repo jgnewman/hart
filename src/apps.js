@@ -16,7 +16,7 @@ import {
 } from "./vdom"
 
 import {
-  observableAsync,
+  observable,
 } from "./observables"
 
 import {
@@ -109,7 +109,7 @@ function render(ioFn, props={}, appOptions) {
 
 function createObserver(rootUserFn, outputElem, options={}) {
   const observerCalc = outputElem ? null : rootUserFn
-  const observer = observableAsync(observerCalc)
+  const observer = observable(observerCalc)
 
   if (outputElem) {
     const realNode = typeof outputElem === "string" ? document.querySelector(outputElem) : outputElem

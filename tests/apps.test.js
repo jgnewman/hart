@@ -62,7 +62,6 @@ describe("Apps", function () {
 
     it("allows custom value calculation", async function () {
       const result = await this.page.evaluate(async () => {
-        let currentVal = null
         const app = hart.app((change, prevVal) => {
           switch (change.type) {
             case "INIT": return { ...prevVal, ...change.payload }
@@ -92,89 +91,15 @@ describe("Apps", function () {
 
     it("renders html", async function () {
       const result = await this.page.evaluate(async () => {
-        const fragment = hart.fragment
-        const node = hart.fragment.elem
-        const id = "a" + Math.random().toString().slice(2)
+        const node = hart.elem
 
-        const Frag = fragment(props => node("span", {id: id}, props.name))
-        const app = hart.app(Frag, document.querySelector("#root"))
+        const Root = props => node("span", {id: "foo"}, props.name)
+        const app = hart.app(Root, document.querySelector("#root"))
 
         app.update({ name: "John" })
         await new Promise(resolve => setTimeout(resolve, 10))
 
-        const span = document.querySelector("#" + id)
-        return span.innerHTML.trim()
-      })
-      assert.equal(result, "John")
-    })
-  })
-
-  describe("appSync", function () {
-    it("returns an object with watch and update", async function () {
-      const result = await this.page.evaluate(() => {
-        const app = hart.appSync(() => {})
-        return {
-          watch: typeof app.watch === "function",
-          update: typeof app.update === "function",
-        }
-      })
-      assert.deepEqual(result, { watch: true, update: true })
-    })
-
-    it("passes updates to watchers", async function () {
-      const result = await this.page.evaluate(async () => {
-        let val = { value: 0 }
-        const app = hart.appSync()
-        app.watch(newVal => val = newVal)
-        app.update({ value: 1 })
-        return new Promise(resolve => setTimeout(() => resolve(val), 10))
-      })
-      assert.deepEqual(result, { value: 1 })
-    })
-
-    it("allows custom value calculation", async function () {
-      const result = await this.page.evaluate(async () => {
-        let currentVal = null
-        const app = hart.appSync((change, prevVal) => {
-          switch (change.type) {
-            case "INIT": return { ...prevVal, ...change.payload }
-            case "INC": return { ...prevVal, value: prevVal.value + change.payload }
-          }
-        })
-        app.watch(newVal => val = newVal)
-        app.update({ type: "INIT", payload: { foo: "bar", value: 0 }})
-        app.update({ type: "INC", payload: 5})
-        return new Promise(resolve => setTimeout(() => resolve(val), 10))
-      })
-      assert.deepEqual(result, { value: 5, foo: "bar" })
-    })
-
-    it("executes its calculator once per update", async function () {
-      const result = await this.page.evaluate(async () => {
-        let inc = 0
-        const app = hart.appSync()
-        app.watch(() => { inc += 1 })
-        app.update()
-        app.update()
-        app.update()
-        return new Promise(resolve => setTimeout(() => resolve(inc), 10))
-      })
-      assert.equal(result, 3)
-    })
-
-    it("renders html", async function () {
-      const result = await this.page.evaluate(async () => {
-        const fragment = hart.fragment
-        const node = hart.fragment.elem
-        const id = "a" + Math.random().toString().slice(2)
-
-        const Frag = fragment(props => node("span", {id: id}, props.name))
-        const app = hart.appSync(Frag, document.querySelector("#root"))
-
-        app.update({ name: "John" })
-        await new Promise(resolve => setTimeout(resolve, 10))
-
-        const span = document.querySelector("#" + id)
+        const span = document.querySelector("#foo")
         return span.innerHTML.trim()
       })
       assert.equal(result, "John")
