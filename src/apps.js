@@ -33,6 +33,7 @@ import {
 } from "./dom"
 
 import {
+  addPropCheck,
   childPack,
   optimizedFunction,
   vNode,
@@ -129,8 +130,7 @@ function subapp(userFn, settings = {}) {
   let updateReducer
 
   const RootOptimizedFn = optimizedFunction(
-    userFn,
-    settings.compareProps,
+    addPropCheck(userFn, settings.compareProps),
     change => updateReducer && updateReducer(change),
   )
 

@@ -3,6 +3,7 @@ import {
 } from "./constants"
 
 import {
+  addPropCheck,
   vNode,
 } from "./nodes"
 
@@ -19,6 +20,7 @@ const hart = {
 
 export {
   hart,
+  addPropCheck,
   app,
   appSync,
   subapp,

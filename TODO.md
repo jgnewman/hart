@@ -155,7 +155,7 @@ Phase 3
       - We have a concept of a `userFn` which is provided by the user and an `optimizedFn`
         which is our wrapped version.
 
-- [x] ISSUE: With the new additions, the force benchmarks are now slower than Vue.
+- [x] ISSUE: With the new additions, the force benchmarks are now sometimes slower than Vue.
       - Is it possible we shouldn't try to cache everything? What happens when we disable caching?
       - Yes this did indeed solve the problem. Having tracking in place doesn't seem to do much
         damage but checking all the hashes slows us down a little. Also, Vue appears to not be able
@@ -164,7 +164,7 @@ Phase 3
       - Solution: Add a way for users to decide to **disable** _all side effects_ (including caching)
         for a given fragment. Caching will still be done by default.
 
-- [ ] Make sure users can add their own custom prop compare functions
+- [x] Make sure users can add their own custom prop compare functions
 - [ ] Dump injected effects and make them global.
 - [ ] Whenever an effect call is made, check the tracker to determine which cell in memory to use.
 - [ ] Give users a way to disable caching and effects for a given function.

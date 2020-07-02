@@ -1,5 +1,6 @@
 import {
   hart,
+  addPropCheck,
   app,
   appSync,
   subapp,

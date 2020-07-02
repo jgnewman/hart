@@ -1,5 +1,6 @@
 import {
   CHILD_PACK,
+  COMPARE,
   DOC_FRAG,
   EMPTY,
   LAZY,
@@ -90,8 +91,9 @@ function hasBeenOptimized(fn) {
   return typeof fn === "function" && fn[OPTIM] === OPTIM
 }
 
-function optimizedFunction(userFn, customCompare, updater) {
-  const assertEqualProps = customCompare ? customCompare : propsEqual
+function optimizedFunction(userFn, updater) {
+  const customCompare = userFn[COMPARE]
+  const assertEqualProps = customCompare || propsEqual
 
   function output(props, children) {
     const prevCache = assertCache(updater)
@@ -128,7 +130,13 @@ function optimizedFunction(userFn, customCompare, updater) {
   return output
 }
 
+function addPropCheck(userFn, customCompare) {
+  userFn[COMPARE] = customCompare
+  return userFn
+}
+
 export {
+  addPropCheck,
   childPack,
   hasBeenOptimized,
   isChildPack,
