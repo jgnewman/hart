@@ -109,7 +109,6 @@ export class CacheObject {
     }
 
     if (updater) {
-      console.log("got here")
       this.effects.update = updater
     }
 
