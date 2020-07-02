@@ -17,7 +17,6 @@ export {
 
 export {
   app,
-  appSync,
   subapp,
 } from "./apps"
 

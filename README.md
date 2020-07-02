@@ -343,6 +343,8 @@ export default withPropCheck(MyComponent, (prevProps, nextProps) => {
 })
 ```
 
+> **NOTE:** If a given component has children, it will always re-render, regardless of whether or not props have changed. Due to the fact that components have the access to and can therefore modify their children (especially via side-effects), it is too dangerous to skip re-rendering components that have them.
+
 > **NOTE:** Allowing Hart to cache props and optimize _almost always_ the right course of action. If you think you might want to disable this, think twice, and make sure you are absolutely sure you know what you're doing. If you are following good practices and aren't trying to hack things in some weird way, you should almost never need to do it.
 
 ### Shadow DOM
@@ -565,7 +567,6 @@ The first thing to notice here is that we are wrapping our component in a call t
 
 Subapps are also highly customizable via a `settings` object passed in as a second argument to `subapp`. Here are your available options:
 
-- `compareProps`: A custom function for determining whether or not props have changed. Defaults to basic shallow comparison.
 - `init`: An initial value to be passed to your reducer. Defaults to `null`.
 - `options`: An app options object as described above. Defaults to `{ id: id + "-subapp" }`.
 - `reducer`: A function for generating new state from an update value. Defaults to `change => ({ current: change })`.

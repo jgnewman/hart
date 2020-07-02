@@ -1,6 +1,5 @@
 import {
   app,
-  appSync,
   hart,
   subapp,
   useAfterEffect,
@@ -309,19 +308,6 @@ reducer.update({
   },
 })
 
-/*******************/
-
-const App2Root = props => {
-  if (props.showDiv) return <div>Showing Div</div>
-  return <span>Showing Span</span>
-}
-
-const app2 = appSync(App2Root, document.getElementById("app2"))
-app2.update({ showDiv: true })
-app2.update({ showDiv: false })
-
-/*******************/
-
 /*
 
 
@@ -331,7 +317,7 @@ app2.update({ showDiv: false })
       return <input type="text" value={props.value} onkeyup={(evt) => renderer.update({ value: evt.target.value })} />
     }
 
-    const renderer = app(Root, document.getElementById("app")) // or appSync
+    const renderer = app(Root, document.getElementById("app"))
 
     renderer.update({ value: "foo" })
 

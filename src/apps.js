@@ -16,7 +16,6 @@ import {
 } from "./vdom"
 
 import {
-  observable,
   observableAsync,
 } from "./observables"
 
@@ -108,9 +107,9 @@ function render(ioFn, props={}, appOptions) {
   }
 }
 
-function createObserver(rootUserFn, outputElem, options={}, isAsync) {
+function createObserver(rootUserFn, outputElem, options={}) {
   const observerCalc = outputElem ? null : rootUserFn
-  const observer = isAsync ? observableAsync(observerCalc) : observable(observerCalc)
+  const observer = observableAsync(observerCalc)
 
   if (outputElem) {
     const realNode = typeof outputElem === "string" ? document.querySelector(outputElem) : outputElem
@@ -122,18 +121,12 @@ function createObserver(rootUserFn, outputElem, options={}, isAsync) {
 }
 
 function app(rootUserFn, outputElem, options) {
-  return createObserver(rootUserFn, outputElem, options, true)
-}
-
-function appSync(rootUserFn, outputElem, options) {
-  return createObserver(rootUserFn, outputElem, options, false)
+  return createObserver(rootUserFn, outputElem, options)
 }
 
 function subapp(userFn, settings = {}) {
   const appOptions = settings.options || {}
-  const appFn = settings.sync ? appSync : app
-
-  const RootOptimizedFn = optimizedFunction(withPropCheck(userFn, settings.compareProps))
+  const RootOptimizedFn = optimizedFunction(userFn)
 
   const AppGenerator = optimizedFunction((userProps, childPack) => {
     const subrootRef = useRef()
@@ -145,9 +138,9 @@ function subapp(userFn, settings = {}) {
       const { current: elem } = subrootRef
       const { current: props } = propsRef
 
-      const Reducer = appFn(settings.reducer || (change => ({ current: change })))
+      const Reducer = app(settings.reducer || (change => ({ current: change })))
 
-      const Renderer = appFn(RootOptimizedFn, elem, {
+      const Renderer = app(RootOptimizedFn, elem, {
         ...appOptions,
         id: currentHash + "-subapp",
         [CHILD_PACK_REF]: childRef,
@@ -174,6 +167,5 @@ function subapp(userFn, settings = {}) {
 
 export {
   app,
-  appSync,
   subapp,
 }
