@@ -143,11 +143,14 @@ Phase 2
 - [x] Combine fragment and fragment.optim into fragment where we always return an optimized component.
 - [x] Figure out how to remove the fragment function and just use normal functions.
 - [x] Remove reliance on ids and rely solely on tracking hash.
+- [x] Since we no longer call fragment, update JSX pragma system.
 - [x] Make sure this works.
 
 Phase 3
 
+- [ ] Make sure users can add their own custom prop compare functions
 - [ ] Dump injected effects and make them global.
 - [ ] Whenever an effect call is made, check the tracker to determine which cell in memory to use.
 - [ ] As we generate a tree, give every component an unmount function associated with its ID that removes its hooks from the global effects memory.
 - [ ] Continue to call unmounters as we already do.
+- [ ] Update the readme

@@ -1,7 +1,8 @@
 import {
-  fragment,
+  hart,
   app,
   appSync,
+  subapp,
 } from "../src/index"
 
 const randomItem = items => {
@@ -211,7 +212,7 @@ const PassedChild = ({ effects, name }) => {
   return out
 }
 
-const AppGen = fragment.subapp(({ effects, localData, extra }, children) => {
+const AppGen = subapp(({ effects, localData, extra }, children) => {
   const { count } = localData
 
   effects.afterEffect(() => {

@@ -61,8 +61,8 @@ To configure JSX, just pick a transpiler (such as [@babel/plugin-transform-react
       loader: "babel-loader",
       options: {
         plugins: [["@babel/plugin-transform-react-jsx", {
-          pragma: "fragment.elem",
-          pragmaFrag: "fragment.docFrag"
+          pragma: "hart.elem",
+          pragmaFrag: "hart.docFrag"
         }]]
       }
     },

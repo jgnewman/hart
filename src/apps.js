@@ -124,7 +124,7 @@ function appSync(fn, outputElem, options) {
   return createObserver(fn, outputElem, options, false)
 }
 
-function subappFragment(userFn, settings = {}) {
+function subapp(userFn, settings = {}) {
   const appOptions = settings.options || {}
   const appFn = settings.sync ? appSync : app
   let updateReducer
@@ -167,9 +167,9 @@ function subappFragment(userFn, settings = {}) {
   return AppGenerator
 }
 
-fragment.subapp = subappFragment
 
 export {
   app,
   appSync,
+  subapp,
 }

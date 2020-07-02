@@ -132,15 +132,12 @@ function fragment(userFn, customCompare) {
   return optimizedFunction({ userFn, customCompare })
 }
 
-fragment.elem = vNode
-fragment.docFrag = DOC_FRAG
-
 export {
-  optimizedFunction,
   childPack,
   fragment,
   hasBeenOptimized,
   isChildPack,
+  optimizedFunction,
   vNode,
   vNodeObject,
 }
