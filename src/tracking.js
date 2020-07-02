@@ -1,4 +1,6 @@
-const FRAG_ID = Symbol.for("FRAG_id")
+import {
+  FRAG_ID,
+} from "./constants"
 
 let fragCounter = 0
 function createFragId() {

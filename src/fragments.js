@@ -3,14 +3,10 @@ import {
   DOC_FRAG,
   EMPTY,
   FRAG,
+  OPTIM,
 } from "./constants"
 
 import {
-  nodeTracker,
-} from "./tracking"
-
-import {
-  CacheObject,
   assertCache,
 } from "./effects"
 
@@ -22,7 +18,7 @@ function childPack(children=null) {
 }
 
 function isChildPack(object) {
-  return object[CHILD_PACK] === CHILD_PACK
+  return typeof object === "object" && object[CHILD_PACK] === CHILD_PACK
 }
 
 function vNodeObject(tag, attrs, children) {
@@ -48,20 +44,18 @@ function vNode(tag, attrs, ...children) {
   }
 
   if (typeof tag === "function") {
+    const wrappedTag = fragment(tag)
+
     const out = function () {
-      const out = tag(attrs, childPack(children))
+      const out = wrappedTag(attrs, childPack(children))
 
       if (attrs.hasOwnProperty("key")) {
         out.attrs.key = attrs.key
       }
 
-      // TODO: Delete this
-      if (attrs.hasOwnProperty("id")) {
-        out.attrs.id = out.attrs.id || attrs.id
-      }
-
       return out
     }
+
     out[FRAG] = { frag: tag, attrs }
     return out
   }
@@ -92,24 +86,15 @@ function propsEqual(a, b) {
   return true
 }
 
-function fragment(userFn) {
-  function output(props, children) {
-    return userFn(props, children) || vNode(EMPTY)
-  }
-  return output
+function hasBeenOptimized(fn) {
+  return typeof fn === "function" && fn[OPTIM] === OPTIM
 }
 
-function createOptimizedVNodeFactory({ userFn, customCompare, updater }) {
+function optimizedFunction({ userFn, customCompare, updater }) {
   const assertEqualProps = customCompare ? customCompare : propsEqual
 
   function output(props, children) {
-    const id = props.id
-
-    if (!id) {
-      throw new Error("Optimized fragment is missing an `id` attribute.")
-    }
-
-    const prevCache = assertCache(id, updater)
+    const prevCache = assertCache(updater)
 
     const prevProps = prevCache.props
     const prevNode = prevCache.node
@@ -138,24 +123,24 @@ function createOptimizedVNodeFactory({ userFn, customCompare, updater }) {
     prevCache.childLength = nextChildLength
     return nextNode
   }
+  output[OPTIM] = OPTIM
 
   return output
 }
 
-function optimizedFragment(userFn, customCompare) {
-  return createOptimizedVNodeFactory({ userFn, customCompare })
+function fragment(userFn, customCompare) {
+  return optimizedFunction({ userFn, customCompare })
 }
 
 fragment.elem = vNode
 fragment.docFrag = DOC_FRAG
-fragment.optim = optimizedFragment
 
 export {
-  createOptimizedVNodeFactory,
+  optimizedFunction,
   childPack,
   fragment,
+  hasBeenOptimized,
   isChildPack,
-  optimizedFragment,
   vNode,
   vNodeObject,
 }

@@ -4,13 +4,15 @@ import {
 
 export const globalEffectCache = new Map()
 
-export function assertCache(id, updater) {
+export function assertCache(updater) {
   const currentHash = nodeTracker.getHash()
   let cell = globalEffectCache.get(currentHash)
+
   if (!cell) {
-    cell = new CacheObject(id, currentHash, updater)
+    cell = new CacheObject(currentHash, updater)
     globalEffectCache.set(currentHash, cell)
   }
+
   return cell
 }
 
@@ -91,12 +93,11 @@ function createRefTracker(cacheObject) {
 }
 
 export class CacheObject {
-  constructor(id, currentHash, updater) {
+  constructor(currentHash, updater) {
     this.childLength = 0
     this.cleanups = []
     this.effectCount = -1
     this.effectMem = []
-    this.id = id
     this.node = null
     this.props = null
 
@@ -108,6 +109,7 @@ export class CacheObject {
     }
 
     if (updater) {
+      console.log("got here")
       this.effects.update = updater
     }
 

@@ -10,6 +10,8 @@ import {
 } from "./tracking"
 
 import {
+  fragment,
+  hasBeenOptimized,
   isChildPack,
   vNode,
   vNodeObject,
@@ -53,10 +55,12 @@ function buildVNodeFromWrapper(wrapper, trackKeys) {
   const mappedChildren = []
 
   out.children.forEach(child => {
+
     if (isChildPack(child)) {
       child.nodes && child.nodes.forEach(cpChild => {
         mappedChildren.push(addParent(buildTree(cpChild, out, shouldTrackChildKeys), out))
       })
+
     } else if (Array.isArray(child)) {
       mappedChildren.push(buildListVNode(child, out, shouldTrackChildKeys))
 
@@ -118,7 +122,9 @@ function buildTree(value, parent, trackKeys) {
 function generateVDom(appId, rootTarget, rootFragmentFn, fragProps, parentAppChildPack) {
   nodeTracker.trackApp(appId, rootFragmentFn)
 
-  const nextTreeFragFn = rootFragmentFn(fragProps, parentAppChildPack)
+  const rootFragment = hasBeenOptimized(rootFragmentFn) ? rootFragmentFn : fragment(rootFragmentFn)
+  const nextTreeFragFn = rootFragment(fragProps, parentAppChildPack)
+
   const nextTree = buildTree(nextTreeFragFn)
   const nextParent = nextTree.parent = { html:rootTarget }
 

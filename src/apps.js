@@ -20,10 +20,6 @@ import {
 } from "./tracking"
 
 import {
-  globalEffectCache,
-} from "./effects"
-
-import {
   changeObject,
   diff,
 } from "./diffing"
@@ -38,9 +34,8 @@ import {
 
 import {
   childPack,
-  createOptimizedVNodeFactory,
+  optimizedFunction,
   fragment,
-  optimizedFragment,
   vNode,
 } from "./fragments"
 
@@ -56,8 +51,6 @@ function genAppId() {
 
 function createApp(rootFragmentFn, target, options) {
   let prevTree = null
-
-  console.log("CREATING APP", nodeTracker._getCurId())
 
   let rootTarget = target
   if (options.useShadowRoot) {
@@ -78,14 +71,13 @@ function createApp(rootFragmentFn, target, options) {
 
 function render(appFn, props={}, appOptions) {
   const { appId, rootTarget, rootFragmentFn, prevTree, setPrevTree } = appFn()
-  const fragProps = !appOptions.id ? props : { ...props, id: appOptions.id }
   const parentAppChildPack = appOptions[CHILD_PACK_REF] ? appOptions[CHILD_PACK_REF].current : childPack()
 
   const [nextTree, nextParent] = generateVDom(
     appId,
     rootTarget,
     rootFragmentFn,
-    fragProps,
+    props,
     parentAppChildPack,
   )
 
@@ -137,13 +129,13 @@ function subappFragment(userFn, settings = {}) {
   const appFn = settings.sync ? appSync : app
   let updateReducer
 
-  const RootFragment = createOptimizedVNodeFactory({
+  const RootFragment = optimizedFunction({
     userFn,
     customCompare: settings.compareProps,
     updater: change => updateReducer && updateReducer(change)
   })
 
-  const AppGenerator = optimizedFragment(({ effects, id,...rest }, childPack) => {
+  const AppGenerator = fragment(({ effects, id,...rest }, childPack) => {
     const subrootRef = effects.ref()
     const propsRef = effects.ref({ ...rest })
     const childRef = effects.ref(childPack)
