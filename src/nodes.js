@@ -45,10 +45,10 @@ function vNode(tag, attrs, ...children) {
   }
 
   if (typeof tag === "function") {
-    const wrappedTag = optimizedFunction(tag)
+    const optimizedFn = optimizedFunction(tag)
 
     const out = function () {
-      const out = wrappedTag(attrs, childPack(children))
+      const out = optimizedFn(attrs, childPack(children))
 
       if (attrs.hasOwnProperty("key")) {
         out.attrs.key = attrs.key
