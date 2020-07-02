@@ -170,3 +170,7 @@ Phase 3
 - [x] Whenever an effect call is made, check the tracker to determine which cell in memory to use.
 - [x] Give users a way to disable caching and effects for a given function.
 - [ ] Update the readme
+      - Can we just wrap subapps in `withPropCheck` and not have `compareProps` be a subapp setting?
+- [ ] Dump synchronous apps bc they're unnecessary and update the readme accordingly
+- [ ] Update the benchmarks readme
+- [ ] Fix all the tests haha
