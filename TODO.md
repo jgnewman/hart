@@ -172,4 +172,6 @@ Phase 3
 - [x] Update the readme
 - [x] Dump synchronous apps bc they're unnecessary and update the readme accordingly
 - [ ] Update the benchmarks readme
+- [ ] Document how node tracking works
+- [ ] Document the rules of side effects
 - [ ] Fix all the tests haha
