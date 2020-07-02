@@ -132,6 +132,8 @@ Phase 1
       - Function: fn[FRAG_ID] + childPosition
 - [x] As we generate a tree, update the ID tracker
 - [x] Make sure we don't actually call function components before updating the tracker
+- [x] As we generate a tree, give every component an unmount function associated with its ID that removes its hooks from the global effects memory.
+- [x] Continue to call unmounters as we already do.
 - [x] Make sure this works
 
 Phase 2
@@ -153,9 +155,17 @@ Phase 3
       - We have a concept of a `userFn` which is provided by the user and an `optimizedFn`
         which is our wrapped version.
 
+- [x] ISSUE: With the new additions, the force benchmarks are now slower than Vue.
+      - Is it possible we shouldn't try to cache everything? What happens when we disable caching?
+      - Yes this did indeed solve the problem. Having tracking in place doesn't seem to do much
+        damage but checking all the hashes slows us down a little. Also, Vue appears to not be able
+        to reliably clean up after itself and slows down over time. It would be interesting to test
+        it again with an updated version.
+      - Solution: Add a way for users to decide to **disable** _all side effects_ (including caching)
+        for a given fragment. Caching will still be done by default.
+
 - [ ] Make sure users can add their own custom prop compare functions
 - [ ] Dump injected effects and make them global.
 - [ ] Whenever an effect call is made, check the tracker to determine which cell in memory to use.
-- [ ] As we generate a tree, give every component an unmount function associated with its ID that removes its hooks from the global effects memory.
-- [ ] Continue to call unmounters as we already do.
+- [ ] Give users a way to disable caching and effects for a given function.
 - [ ] Update the readme

@@ -1,4 +1,4 @@
-import { fragment, app } from "../src/index"
+import { hart, app } from "../src/index"
 import SvelteApp from "./svelte-benchmark"
 import SvelteAppForce from "./svelte-benchmark-force"
 import {
@@ -13,7 +13,7 @@ import {
   init
 } from "./setup"
 
-const hCreate = fragment.elem
+const hCreate = hart.elem
 const rCreate = React.createElement
 const pCreate = preact.createElement
 
@@ -68,15 +68,15 @@ function goHart() {
 
   populateOutput(output)
 
-  const Li = fragment(props => {
+  const Li = props => {
     return hCreate("li", null, props.key)
-  })
+  }
 
-  const RootFrag = fragment(props => {
+  const RootFrag = props => {
     return hCreate("ul", null, props.lis.map(item => {
       return hCreate(Li, { key: item })
     }))
-  })
+  }
 
   const Renderer = app(RootFrag, rootNode)
 
@@ -127,15 +127,15 @@ function goHartForce() {
 
   populateOutput(output)
 
-  const Li = fragment(props => {
+  const Li = props => {
     return hCreate("li", null, props.key)
-  })
+  }
 
-  const RootFrag = fragment(props => {
+  const RootFrag = props => {
     return hCreate("ul", null, props.lis.map(item => {
       return hCreate(Li, { key: item })
     }))
-  })
+  }
 
   const Renderer = app(RootFrag, rootNode)
 
