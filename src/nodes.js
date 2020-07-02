@@ -5,6 +5,7 @@ import {
   EMPTY,
   LAZY,
   OPTIM,
+  CACHELESS,
 } from "./constants"
 
 import {
@@ -92,6 +93,15 @@ function hasBeenOptimized(fn) {
 }
 
 function optimizedFunction(userFn) {
+
+  if (userFn[CACHELESS]) {
+    const quickOut = function (props, children) {
+      return userFn(props, children) || vNode(EMPTY)
+    }
+    quickOut[OPTIM] = OPTIM
+    return quickOut
+  }
+
   const customCompare = userFn[COMPARE]
   const assertEqualProps = customCompare || propsEqual
 
@@ -129,17 +139,29 @@ function optimizedFunction(userFn) {
   return output
 }
 
+function throwFnTypeConflict() {
+  throw new Error("You can not add prop checks to cacheless functions.")
+}
+
 function withPropCheck(userFn, customCompare) {
   userFn[COMPARE] = customCompare
+  userFn[CACHELESS] && throwFnTypeConflict()
+  return userFn
+}
+
+function withoutCache(userFn) {
+  userFn[CACHELESS] = CACHELESS
+  userFn[COMPARE] && throwFnTypeConflict()
   return userFn
 }
 
 export {
-  withPropCheck,
   childPack,
   hasBeenOptimized,
   isChildPack,
   optimizedFunction,
   vNode,
   vNodeObject,
+  withoutCache,
+  withPropCheck,
 }

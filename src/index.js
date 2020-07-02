@@ -3,8 +3,9 @@ import {
 } from "./constants"
 
 import {
-  withPropCheck,
   vNode,
+  withoutCache,
+  withPropCheck,
 } from "./nodes"
 
 export {
@@ -27,5 +28,6 @@ const hart = {
 
 export {
   hart,
+  withoutCache,
   withPropCheck,
 }

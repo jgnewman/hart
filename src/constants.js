@@ -8,6 +8,7 @@ export const FN_ID = Symbol.for("FN_ID")
 export const LAZY = Symbol()
 export const LIST = Symbol.for("LIST")
 export const OPTIM = Symbol()
+export const CACHELESS = Symbol()
 export const REMOVE = "REMOVE"
 export const REORDER = "REORDER"
 export const REPLACE = "REPLACE"

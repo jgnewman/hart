@@ -1,4 +1,4 @@
-import { hart, app } from "../src/index"
+import { hart, app, withoutCache } from "../src/index"
 import SvelteApp from "./svelte-benchmark"
 import SvelteAppForce from "./svelte-benchmark-force"
 import {
@@ -68,15 +68,15 @@ function goHart() {
 
   populateOutput(output)
 
-  const Li = props => {
+  const Li = withoutCache(props => {
     return hCreate("li", null, props.key)
-  }
+  })
 
-  const RootFrag = props => {
+  const RootFrag = withoutCache(props => {
     return hCreate("ul", null, props.lis.map(item => {
       return hCreate(Li, { key: item })
     }))
-  }
+  })
 
   const Renderer = app(RootFrag, rootNode)
 
@@ -127,15 +127,15 @@ function goHartForce() {
 
   populateOutput(output)
 
-  const Li = props => {
+  const Li = withoutCache(props => {
     return hCreate("li", null, props.key)
-  }
+  })
 
-  const RootFrag = props => {
+  const RootFrag = withoutCache(props => {
     return hCreate("ul", null, props.lis.map(item => {
       return hCreate(Li, { key: item })
     }))
-  }
+  })
 
   const Renderer = app(RootFrag, rootNode)
 

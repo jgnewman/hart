@@ -54,7 +54,7 @@ function genAppId() {
   return String(Date.now()).slice(0, 6) + (appIdCounter += 1)
 }
 
-function createApp(rootUserFn, target, options) {
+function createIo(rootUserFn, target, options) {
   let prevTree = null
 
   let rootTarget = target
@@ -74,8 +74,8 @@ function createApp(rootUserFn, target, options) {
   }
 }
 
-function render(appFn, props={}, appOptions) {
-  const { appId, rootTarget, rootUserFn, prevTree, setPrevTree } = appFn()
+function render(ioFn, props={}, appOptions) {
+  const { appId, rootTarget, rootUserFn, prevTree, setPrevTree } = ioFn()
   const parentAppChildPack = appOptions[CHILD_PACK_REF] ? appOptions[CHILD_PACK_REF].current : childPack()
 
   const [nextTree, nextParent] = generateVDom(
@@ -114,8 +114,8 @@ function createObserver(rootUserFn, outputElem, options={}, isAsync) {
 
   if (outputElem) {
     const realNode = typeof outputElem === "string" ? document.querySelector(outputElem) : outputElem
-    const app = createApp(rootUserFn, realNode, options)
-    observer.watch(newVal => render(app, newVal, options))
+    const io = createIo(rootUserFn, realNode, options)
+    observer.watch(newVal => render(io, newVal, options))
   }
 
   return observer

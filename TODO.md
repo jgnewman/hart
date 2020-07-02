@@ -168,5 +168,5 @@ Phase 3
 - [x] Dump injected effects and make them global.
 - [x] Subapps should still get two extra props: localData, update
 - [x] Whenever an effect call is made, check the tracker to determine which cell in memory to use.
-- [ ] Give users a way to disable caching and effects for a given function.
+- [x] Give users a way to disable caching and effects for a given function.
 - [ ] Update the readme
