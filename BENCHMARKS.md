@@ -1,6 +1,6 @@
 # Hart Informal Benchmarks
 
-To help you understand what kind of performance Hart delivers, I've put together some informal benchmarks that you can read and run yourself by cloning this repo, installing dependencies, and running `yarn benchmark`.
+To help you understand what kind of performance Hart delivers, I've put together some informal benchmarks that you can read and run yourself by cloning this repo, installing dependencies, and running `npm run benchmark`.
 
 There are two tests (Internal Optimization and Render Efficiency) that stack Hart up against the following popular frameworks:
 
