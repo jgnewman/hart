@@ -1,6 +1,5 @@
-import {
+import hart, {
   app,
-  hart,
   subapp,
   useAfterEffect,
   useMemo,

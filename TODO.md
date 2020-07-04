@@ -171,7 +171,7 @@ Phase 3
 - [x] Give users a way to disable caching and effects for a given function.
 - [x] Update the readme
 - [x] Dump synchronous apps bc they're unnecessary and update the readme accordingly
+- [x] Refactor tests
+- [x] Document the rules of side effects
+- [x] Document how node tracking works
 - [ ] Update the benchmarks readme
-- [ ] Document how node tracking works
-- [ ] Document the rules of side effects
-- [ ] Fix all the tests haha

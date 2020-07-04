@@ -25,6 +25,7 @@ Though tiny (**~11.5kB minified** and **~4kB gzipped/compressed**), Hart is gear
   - [Memoized Values](#usememo)
   - [Memoized Functions](#usememofn)
   - [Accessing Real DOM Nodes](#useref)
+  - [Rules of Side Effects](#rules-of-side-effects)
 - [There must be some way to use local state](#there-must-be-some-way-to-use-local-state)
 
 ## Getting set up
@@ -35,7 +36,7 @@ Secondly, you'll probably want to configure it to work with JSX. You don't have 
 
 **With JSX**
 ```javascript
-import { hart } from "hart"
+import hart from "hart"
 
 export default props => {
   return <div id="foo">Hello, world!</div>
@@ -44,7 +45,7 @@ export default props => {
 
 **Without JSX**
 ```javascript
-import { hart } from "hart"
+import hart from "hart"
 
 export default props => {
   return hart.elem("div", { id: "foo" }, "Hello, world!")
@@ -79,7 +80,7 @@ Once you have JSX configured, you are ready to start building!
 A Hart app in its simplest form is a glorified recursive function. You start with a top-level component function that generates some HTML, then you call that function with any dynamic data you need to craft the output properly. When it's time to update the DOM (such as when an event handler fires), you call the function again with _new_ data and Hart takes care of diffing and updating the DOM. Here's an example of a minimal Hart app:
 
 ```javascript
-import { hart, app } from "hart"
+import hart, { app } from "hart"
 
 const Root = (props) => {
   return (
@@ -116,7 +117,7 @@ Counter.update({ value: 0 })
 The counter we've written may not seem very useful on its own. But, what makes it powerful is the fact that you can set up a watcher function that runs whenever one of your apps is updated, thus allowing you to link 2 Hart apps together and have them to work together toward a common goal:
 
 ```javascript
-import { hart, app } from "hart"
+import hart, { app } from "hart"
 
 const Renderer = app(
   (data) => <div>{data.value}</div>,
@@ -143,7 +144,7 @@ We'll come back to this pattern shortly. For now, let's dig into more of the bas
 As you might expect, components can be rendered as children of other components. When using JSX, the nested component's props are written as HTML attributes. Keep in mind that JSX requires components to have capitalized names to distinguish them from native HTML elements.
 
 ```javascript
-import { hart, app } from "hart"
+import hart, { app } from "hart"
 
 const NestedComponent = (props) => (
   <p>Hart is {props.adjective}!</p>
@@ -159,6 +160,20 @@ const RootComponent = (props) => (
 const Renderer = app(RootComponent, document.getElementById("root"))
 Renderer.update({ name: "new Hart user" })
 ```
+
+### Lists
+
+Sometimes you may need to include an array of elements in your JSX. For example:
+
+```javascript
+const Component = ({ personList }) => (
+  <div>
+    {personList.map(person => <span key={person.id}>{person.name}</span>)}
+  </div>
+)
+```
+
+In this case, note the use of the `key` prop on each span we generate in our iteration. Giving each item in your list a unique key is something Hart requires you to do so that it can optimize diffing an array across renders. It will not actually appear in the item's `props` object, but Hart _will_ throw an error if you forget to include keys.
 
 ### Children
 
@@ -218,7 +233,7 @@ export const handleButtonClick = () => {
 }
 
 // index.js
-import { hart, app } from "hart"
+import hart, { app } from "hart"
 import { Reducer } from "./Reducer"
 import { handleButtonClick } from "./Handlers
 
@@ -250,7 +265,7 @@ This pattern makes it extremely easy to build Hart applications, no fancy middle
 Applications created with the `app` function are asynchronous. In other words, whenever you call `update`, your app function doesn't immediately run. Instead, new data is generated from the update and your app function is _queued_ to run. This allows you to trigger multiple updates in a single native event loop resulting in only a single update to the DOM once that data reaches its final form. Consider the following:
 
 ```javascript
-import { hart, app } from "hart"
+import hart, { app } from "hart"
 
 // Create a Reducer
 const Reducer = app((change, prev) => {
@@ -343,7 +358,7 @@ export default withPropCheck(MyComponent, (prevProps, nextProps) => {
 })
 ```
 
-> **NOTE:** If a given component has children, it will always re-render, regardless of whether or not props have changed. Due to the fact that components have the access to and can therefore modify their children (especially via side-effects), it is too dangerous to skip re-rendering components that have them.
+> **NOTE:** If a given component has children, it will always re-render, regardless of whether or not props have changed. Due to the fact that components have the access to and can therefore modify their children (especially via side effects), it is too dangerous to skip re-rendering components that have them.
 
 > **NOTE:** Allowing Hart to cache props and optimize _almost always_ the right course of action. If you think you might want to disable this, think twice, and make sure you are absolutely sure you know what you're doing. If you are following good practices and aren't trying to hack things in some weird way, you should almost never need to do it.
 
@@ -359,11 +374,11 @@ const Renderer = app(Root, "#app", { useShadowRoot: true })
 
 ## Side Effects
 
-As much as Hart would like you to build purely functional apps, there are actually a few instances in which it allows you to bend the paradigm just a little bit in order to memoize things, get access to real DOM nodes, and trigger side effects under certain conditions. You can do these things with side-effect functions, which are nearly exactly the same as [React's "hooks"](https://reactjs.org/docs/hooks-intro.html). In fact, they are so similar that existing linters for React hooks will be compatible with Hart side-effects.
+As much as Hart would like you to build purely functional apps, there are actually a few instances in which it allows you to bend the paradigm just a little bit in order to memoize things, get access to real DOM nodes, and trigger side effects under certain conditions. You can do these things with side effect functions, which are nearly exactly the same as [React's "hooks"](https://reactjs.org/docs/hooks-intro.html). In fact, they are so similar that existing linters for React hooks will be compatible with Hart side effects.
 
-Side-effect functions are called within the body of your components, and some of them require you to pass in dependency arrays. Dependency arrays determine when an effect should make use of a cached value, or migrate to a new one. If all dependencies in a given render remain the same since the last render, cached values and effects will be used.
+Side effect functions are called within the body of your components, and some of them require you to pass in dependency arrays. Dependency arrays determine when an effect should make use of a cached value, or migrate to a new one. If all dependencies in a given render remain the same since the last render, cached values and effects will be used.
 
-Here are your available side-effects:
+Here are your available side effects:
 
 ### `useAfterEffect`
 
@@ -372,7 +387,7 @@ This allows you to run a function on the next event loop after a component has r
 In the following example we define two after-effects. The first one has no dependency array so there is nothing to compare and it runs on every render. The second one uses an empty dependency array, meaning that dependencies will be considered the same from render to render. It will therefore only run on the first render, and it's cleanup function will only run when it unmounts from the DOM.
 
 ```javascript
-import { hart, useAfterEffect } from "hart"
+import hart, { useAfterEffect } from "hart"
 
 const MyComponent = () => {
 
@@ -397,7 +412,7 @@ This function allows you to memoize a value across renders. It takes in a functi
 In the following example, the `fullName` will only be recalculated if the `firstName` or the `lastName` has changed since the previous render. Otherwise, it will not recalculate.
 
 ```javascript
-import { hart, useMemo } from "hart"
+import hart, { useMemo } from "hart"
 
 const MyComponent = ({ firstName, lastName }) => {
   const fullName = useMemo(() => `${firstName} ${lastName}`, [firstName, lastName])
@@ -413,7 +428,7 @@ This function behaves like `useMemo`, but it returns a cached function rather th
 The following example shows a component built in two different ways — one with `useMemoFn` and one without. When `useMemoFn` is not used, the sub-component always re-renders because it is called with a new handler function. When `useMemoFn` is used, the sub-component does not needlessly re-render.
 
 ```javascript
-import { hart, useMemoFn } from "hart"
+import hart, { useMemoFn } from "hart"
 
 // Without memoFn, SubComponent always re-renders.
 const MyComponent = () => {
@@ -436,7 +451,7 @@ const MyComponent = () => {
 This function takes in an initial value, and returns a cached object with a property called `current`, containing the object's _current_ value. This is useful for wrapping frequently-changing values in an object that never changes. It can also be used to get a reference to a real DOM node as shown in the following example:
 
 ```javascript
-import { hart, useMemoFn, useRef } from "hart"
+import hart, { useMemoFn, useRef } from "hart"
 
 const MyComponent = () => {
   const buttonRef = useRef(null)
@@ -452,6 +467,51 @@ const MyComponent = () => {
 
 In this example, we pass the `buttonRef` into our jsx as an attribute called `ref`. By doing this, Hart will automatically keep the ref up to date with the actual DOM node associated with the button. When we click the button, we will get a console log showing us that node.
 
+### Rules of Side Effects
+
+Side effects only work because Hart algorithmically keeps track of which component is rendering at any given time. Because of this, you need to call them at the "top level" of your functions. They won't work if you try to call them within any kind of context that isn't always guaranteed to be the same all the time, for example within conditions or within nested iterator functions. So the following would be bad:
+
+```javascript
+// BAD EXAMPLE 1
+const Component = ({ foo }) => {
+
+  if (foo) {
+    useAfterEffect(() => foo(), [foo]) // <- DO NOT DO THIS
+  }
+
+  return <div></div>
+}
+
+// BAD EXAMPLE 2
+const Component = ({ foo }) => {
+
+  const memoFn = useMemoFn(() => {
+    const ref = useRef(foo) // <- DO NOT DO THIS
+    doSomethingWith(ref)
+  })
+
+  return <div></div>
+}
+```
+
+However, if you can guarantee that your side effects will always be called in the same way every time your function is called, then it's actually safe to start building your own side effects and breaking them out into other functions. For example:
+
+```javascript
+function usePreviousValue(next) {
+  const ref = useRef()
+  const { current: previous } = ref
+  ref.current = next
+  return previous
+}
+
+const Component = ({ foo }) => {
+  const prevFoo = usePreviousValue(foo)
+  return <div>{prevFoo !== foo ? "Prop changed!" : "Prop did not change!"}</div>
+}
+```
+
+The above example is safe because all side effects are always called the same way every time the component renders.
+
 ## There must be some way to use local state
 
 Ok, fine. You got me. There technically _is_ a way to do this. After all, how else are you going to build cool, prefab components with sweet, built-in behaviors without any local state?
@@ -461,7 +521,7 @@ If you're clever, you may have begun to wonder whether or not you could use effe
 To help you make sense of it, here's the basic gist of how you would mount an app inside another app if you were to do it manually:
 
 ```javascript
-import { hart, useAfterEffect, useRef } from "hart"
+import hart { useAfterEffect, useRef } from "hart"
 
 // This component will get mounted into our subapp.
 // We want it to use a number called `count` as local
@@ -540,12 +600,12 @@ This POC _should_ work though! And because of this, Hart provides an easier way 
 
 1. To use local state, you have to create a subapp within your app.
 2. Subapps mount during after-effects, so they always render after the parent app has finished rendering.
-3. A subapp is, itself, a side-effect, meaning that although it mounts and unmounts correctly, and can take in values from the parent app, the parent app will have _no knowledge of its existence._
+3. A subapp is, itself, a side effect, meaning that although it mounts and unmounts correctly, and can take in values from the parent app, the parent app will have _no knowledge of its existence._
 
 Here's how you do it:
 
 ```javascript
-import { hart, subapp, useAfterEffect } from "hart"
+import hart, { subapp, useAfterEffect } from "hart"
 
 const SubApp = subapp(({ localData, update ...props }, children) => {
   const { count } = localData

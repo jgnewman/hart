@@ -8,6 +8,7 @@ function store(val = {}) {
 function observable(calculator) {
   const calc = calculator ? calculator : x => x
   const watchers = []
+
   let curVal = store()
   let loopRunning = false
 
@@ -27,7 +28,7 @@ function observable(calculator) {
   return {
     watch: (watcher) => watchers.push(watcher),
 
-    update: (change) => {
+    update: (change = {}) => {
       curVal.set({ ...calc(change, curVal.get()) })
       assertRunLoop()
     },

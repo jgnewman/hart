@@ -38,20 +38,26 @@ describe("Build", function () {
   })
 
   it("exports all expected values", async function () {
+    const expectedValues = [
+      "app",
+      "default",
+      "docFrag",
+      "elem",
+      "subapp",
+      "useAfterEffect",
+      "useMemo",
+      "useMemoFn",
+      "useRef",
+      "withoutCache",
+      "withPropCheck",
+    ]
+
     const result = await this.page.evaluate(() => {
       const hart = window.hart || {}
-      const out = {}
-      for (let i in hart) {
-        if (hart.hasOwnProperty(i)) {
-          out[i] = !!hart[i]
-        }
-      }
-      return out
+      return Object.keys(hart)
     })
 
-    assert.ok(result.fragment, "Exports the `fragment` function")
-    assert.ok(result.app, "Exports the `app` function")
-    assert.ok(result.appSync, "Exports the `app` function")
+    assert.deepEqual(expectedValues.sort(), result.sort())
   })
 
 })

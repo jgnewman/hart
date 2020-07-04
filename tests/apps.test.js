@@ -105,4 +105,58 @@ describe("Apps", function () {
       assert.equal(result, "John")
     })
   })
+
+  describe("subapp", function () {
+    it("mounts subapps", async function () {
+      const result = await this.page.evaluate(async () => {
+
+        const Nested = hart.subapp(() => {
+          return hart.elem("div", { id: "subapp-id" })
+        })
+
+        const Root = () => {
+          return hart.elem("div", {}, hart.elem(Nested))
+        }
+
+        const app = hart.app(Root, "#root")
+        app.update()
+
+        await new Promise(resolve => setTimeout(resolve, 10))
+
+        const div = document.querySelector("#subapp-id")
+        return !!div
+
+      })
+
+      assert.ok(result, "Found mounted subapp")
+    })
+
+    it("rerenders subapps with changes to local data", async function () {
+      const result = await this.page.evaluate(async () => {
+
+        const Nested = hart.subapp(({ update, localData }) => {
+          const { foo } = localData
+          hart.useAfterEffect(() => update({ foo: "baz" }), [update])
+          return hart.elem("div", { id: "subapp-id" }, foo)
+        }, {
+          init: { foo: "bar" },
+          reducer: (next, prev) => ({ ...prev, ...next }),
+        })
+
+        const Root = () => {
+          return hart.elem("div", {}, hart.elem(Nested))
+        }
+
+        const app = hart.app(Root, "#root")
+        app.update()
+
+        await new Promise(resolve => setTimeout(resolve, 10))
+
+        const div = document.querySelector("#subapp-id")
+        return div.innerHTML.trim()
+      })
+
+      assert.equal(result, "baz", "Subapp re-rendered")
+    })
+  })
 })

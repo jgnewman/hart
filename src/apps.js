@@ -55,8 +55,11 @@ function genAppId() {
 
 function createIo(rootUserFn, target, options) {
   let prevTree = null
+  const appId = options.id || genAppId()
 
   let rootTarget = target
+  rootTarget.innerHTML = ""
+
   if (options.useShadowRoot) {
     target.attachShadow({ mode: "open" })
     rootTarget = target.shadowRoot
@@ -64,7 +67,7 @@ function createIo(rootUserFn, target, options) {
 
   return () => {
     return {
-      appId: options.id || genAppId(),
+      appId,
       rootTarget,
       rootUserFn,
       prevTree,

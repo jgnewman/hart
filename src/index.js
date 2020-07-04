@@ -4,6 +4,14 @@ import {
 
 import {
   vNode,
+} from "./nodes"
+
+export default {
+  docFrag: DOC_FRAG,
+  elem: vNode,
+}
+
+export {
   withoutCache,
   withPropCheck,
 } from "./nodes"
@@ -19,14 +27,3 @@ export {
   app,
   subapp,
 } from "./apps"
-
-const hart = {
-  elem: vNode,
-  docFrag: DOC_FRAG,
-}
-
-export {
-  hart,
-  withoutCache,
-  withPropCheck,
-}
