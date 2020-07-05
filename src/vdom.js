@@ -82,7 +82,9 @@ function execOptimizedFn(optimizedFn, trackKeys) {
   const userFn = optimizedFn[LAZY].userFn
 
   nodeTracker.trackTag(userFn, trackingKey)
+  nodeTracker.nest()
   const out = buildTree(optimizedFn())
+  nodeTracker.unnest()
   nodeTracker.untrackTag()
 
   return out
