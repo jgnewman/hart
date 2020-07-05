@@ -135,7 +135,7 @@ function subapp(userFn, settings = {}) {
     const subrootRef = useRef()
     const propsRef = useRef({ ...userProps })
     const childRef = useRef(childPack)
-    const currentHash = nodeTracker.getHash()
+    const currentHash = nodeTracker.hashCode()
 
     useAfterEffect(() => {
       const { current: elem } = subrootRef

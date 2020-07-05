@@ -5,7 +5,7 @@ import {
 export const globalEffectCache = new Map()
 
 export function assertCache() {
-  const currentHash = nodeTracker.getHash()
+  const currentHash = nodeTracker.hashCode()
   let cell = globalEffectCache.get(currentHash)
 
   if (!cell) {

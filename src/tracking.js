@@ -29,16 +29,13 @@ class NodeTracker {
     return this.ids.join(" ")
   }
 
-  getHash() {
+  hashCode() {
     const source = this._getCurId()
-    let hash = 0
-    if (!source.length) return hash
-    for (let i = 0; i < source.length; i++) {
-      const char = source.charCodeAt(i)
-      hash = hash * 31 + char
-      hash = hash & hash // Convert to 32bit integer
+    let h
+    for(let i = 0; i < source.length; i++) {
+      h = Math.imul(31, h) + source.charCodeAt(i) | 0;
     }
-    return hash
+    return h
   }
 
   trackApp(appId, rootUserFn) {

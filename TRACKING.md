@@ -119,7 +119,9 @@ Instead, it holds on to a single array that tracks these ID chunks piece by piec
 
 Sometimes we do need to store IDs though. For example, Hart automatically caches the previous set of props for every component and compares them to new props on every render to determine whether it should (A) actually invoke the component function and build its whole subtree, or (B) simply return the previous subtree (which is often _much_ faster.)
 
-This means Hart has to store the positional ID of every component call, but none of the basic elements like `div` or `span`. In order to avoid the possibility of storing tons of inordinately huge strings, however, Hart performs a quick join on the array and a quick, non-encryption-grade hash of the resulting string for every ID it needs to store. Thus the stored ID ends up looking a lot more like `721963694` instead of some super long string of nested element names and positions.
+This means Hart has to store the positional ID of every component call, but none of the basic elements like `div` or `span`. In order to avoid the possibility of storing tons of inordinately huge strings, however, Hart performs a quick join on the array and a quick, non-encryption-grade transformation of the resulting string for every ID it needs to store. Thus the stored ID ends up looking a lot more like `721963694` instead of some super long string of nested element names and positions.
+
+> If you're curious, the transformation done on the position ID is a JavaScript implementation of Java's `hashCode` method for strings.
 
 ## Applying Side Effects
 
