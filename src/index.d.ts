@@ -55,7 +55,7 @@ export type EffectFn = () => void | VoidFn;
 export function useAfterEffect(effectFn: EffectFn, deps: any[]): void;
 export function useMemo<T>(memFn: () => T, deps: any[]): T;
 export function useMemoFn<T>(calculator: T, deps: any[]): T;
-export function useRef<T>(initVal?: T): { current: T | undefined };
+export function useRef<T>(initVal?: T): Ref<T | undefined>;
 
 export function withoutCache(userFn: Component): Component;
 export function withPropCheck(userFn: Component, customCompare: (a: unknown, b: unknown) => boolean): Component;
