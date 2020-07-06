@@ -141,7 +141,7 @@ function subapp(userFn, settings = {}) {
       const { current: elem } = subrootRef
       const { current: props } = propsRef
 
-      const Reducer = app(settings.reducer || (change => ({ current: change })))
+      const Reducer = app(settings.reducer || ((newVals, prevVals) => ({ ...prevVals, ...newVals })))
 
       const Renderer = app(RootOptimizedFn, elem, {
         ...appOptions,
@@ -155,7 +155,7 @@ function subapp(userFn, settings = {}) {
         update: Reducer.update,
       }))
 
-      Reducer.update(settings.hasOwnProperty("init") ? settings.init : null)
+      Reducer.update(settings.hasOwnProperty("init") ? settings.init : {})
     }, [propsRef, childRef, subrootRef, currentHash])
 
     const wrapper = settings.wrapper || vNode("div")

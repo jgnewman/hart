@@ -71,4 +71,4 @@ const Root = ({ counter }: RootProps) => {
 
 const App = app(Root, "#app")
 
-App.update({ counter: 0 })
+App.update({ counter: 2 })

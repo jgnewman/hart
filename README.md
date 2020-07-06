@@ -629,6 +629,6 @@ Subapps are also highly customizable via a `settings` object passed in as a seco
 
 - `init`: An initial value to be passed to your reducer. Defaults to `null`.
 - `options`: An app options object as described above. Defaults to `{ id: id + "-subapp" }`.
-- `reducer`: A function for generating new state from an update value. Defaults to `change => ({ current: change })`.
+- `reducer`: A function for generating new state from an update value. Defaults to `(newVals, prevVals) => ({ ...prevVals, ...newVals })` (which functions very much like `setState` in React).
 - `wrapper`: JSX specifying the node that the subapp will mount itself to. Defaults to `<div></div>`.
 
