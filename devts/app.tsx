@@ -9,7 +9,7 @@ import hart, {
   useRef,
   withoutCache,
   withPropCheck,
-} from "../src/index"
+} from "../index"
 
 interface NestedProps {
   counter: number

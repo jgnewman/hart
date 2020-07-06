@@ -6,7 +6,7 @@ import hart, {
   useMemoFn,
   useRef,
   withPropCheck,
-} from "../src/index"
+} from "../index"
 
 const randomItem = items => {
   return items[Math.floor(Math.random()*items.length)]

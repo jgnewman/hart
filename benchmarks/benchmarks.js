@@ -1,4 +1,4 @@
-import hart, { app, withoutCache } from "../src/index"
+import hart, { app, withoutCache } from "../index"
 import SvelteApp from "./svelte-benchmark"
 import SvelteAppForce from "./svelte-benchmark-force"
 import {

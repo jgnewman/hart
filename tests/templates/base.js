@@ -1,5 +1,5 @@
-import hart from "../../src/index"
-import * as library from "../../src/index"
+import hart from "../../index"
+import * as library from "../../index"
 
 import * as constants from "../../src/constants"
 import { observable } from "../../src/observables"

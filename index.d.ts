@@ -1,7 +1,6 @@
 import {
   CHILD_PACK,
   CHILD_PACK_REF,
-  LAZY,
 } from "./constants"
 
 declare namespace JSX {

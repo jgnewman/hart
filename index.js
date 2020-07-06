@@ -1,10 +1,10 @@
 import {
   DOC_FRAG,
-} from "./constants"
+} from "./src/constants"
 
 import {
   vNode,
-} from "./nodes"
+} from "./src/nodes"
 
 export default {
   docFrag: DOC_FRAG,
@@ -14,16 +14,16 @@ export default {
 export {
   withoutCache,
   withPropCheck,
-} from "./nodes"
+} from "./src/nodes"
 
 export {
   useAfterEffect,
   useMemo,
   useMemoFn,
   useRef,
-} from "./effects"
+} from "./src/effects"
 
 export {
   app,
   subapp,
-} from "./apps"
+} from "./src/apps"
