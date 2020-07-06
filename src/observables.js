@@ -26,7 +26,9 @@ function observable(calculator) {
   }
 
   return {
-    watch: (watcher) => watchers.push(watcher),
+    watch: (watcher) => {
+      watchers.push(watcher)
+    },
 
     update: (change = {}) => {
       curVal.set({ ...calc(change, curVal.get()) })

@@ -39,7 +39,7 @@ function getEffectUsage(cacheObject) {
   return [cacheObject.effectMem, (cacheObject.effectCount += 1)]
 }
 
-function useMemo(calculator, newDeps = []) {
+function useMemo(calculator, newDeps) {
   const [effectMem, position] = getEffectUsage(assertCache())
   const [prevVal, prevDeps] = effectMem[position] || []
   const newVal = depsDidChange(prevDeps, newDeps) ? calculator() : prevVal
@@ -48,7 +48,7 @@ function useMemo(calculator, newDeps = []) {
   return newVal
 }
 
-function useMemoFn(newCb, newDeps = []) {
+function useMemoFn(newCb, newDeps) {
   const [effectMem, position] = getEffectUsage(assertCache())
   const [prevCb, prevDeps] = effectMem[position] = effectMem[position] || []
   const callback = depsDidChange(prevDeps, newDeps) ? newCb : prevCb

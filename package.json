@@ -28,6 +28,7 @@
   ],
   "scripts": {
     "dev": "NODE_ENV=development webpack-dev-server --mode development --progress --inline",
+    "devts": "NODE_ENV=ts-development webpack-dev-server --mode development --progress --inline",
     "measure": "NODE_ENV=production webpack --mode production --progress --inline",
     "test": "NODE_ENV=test webpack --mode development && mocha tests/${FILE:='*.test.js'} --timeout 10000",
     "benchmark": "NODE_ENV=benchmark webpack-dev-server --mode production --progress --inline"
@@ -43,6 +44,8 @@
     "mocha": "^6.2.2",
     "svelte": "^3.23.2",
     "svelte-loader": "^2.13.6",
+    "ts-loader": "^7.0.5",
+    "typescript": "^3.9.6",
     "webpack": "^4.41.2",
     "webpack-cli": "^3.3.9",
     "webpack-dev-server": "^3.9.0"

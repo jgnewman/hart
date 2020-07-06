@@ -60,6 +60,39 @@ if (process.env.NODE_ENV === "development") {
   }))
 }
 
+if (process.env.NODE_ENV === "ts-development") {
+  config.entry.dev = "./devts/app.tsx"
+
+  config.devtool = "source-map"
+
+  config.plugins.push(new HtmlWebPackPlugin({
+    template: "./dev/index.html",
+    filename: "./index.html",
+    vars: {}
+  }))
+
+  config.module.rules = [
+    {
+      test: /\.(js|ts)x?$/,
+      include: path.resolve(__dirname, "./devts"),
+      use: [
+        {
+          loader: "babel-loader",
+          options: {
+            plugins: [["@babel/plugin-transform-react-jsx", {
+              pragma: "hart.elem",
+              pragmaFrag: "hart.docFrag",
+            }]],
+          },
+        },
+        {
+          loader: "ts-loader",
+        },
+      ],
+    },
+  ]
+}
+
 if (process.env.NODE_ENV === "benchmark") {
   config.entry.benchmark = "./benchmarks/benchmarks.js"
 
