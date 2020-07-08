@@ -1,3 +1,21 @@
+import {
+  nodeTracker,
+} from "./tracking"
+
+export const globalEffectCache = new Map()
+
+export function assertCache() {
+  const currentHash = nodeTracker.hashCode()
+  let cell = globalEffectCache.get(currentHash)
+
+  if (!cell) {
+    cell = new CacheObject(currentHash)
+    globalEffectCache.set(currentHash, cell)
+  }
+
+  return cell
+}
+
 function depsDidChange(prevDeps, newDeps) {
   let changed = false
 
@@ -21,81 +39,61 @@ function getEffectUsage(cacheObject) {
   return [cacheObject.effectMem, (cacheObject.effectCount += 1)]
 }
 
-function createMemoTracker(cacheObject) {
-  return function (calculator, newDeps=[]) {
-    const [effectMem, position] = getEffectUsage(cacheObject)
-    const [prevVal, prevDeps] = effectMem[position] || []
-    const newVal = depsDidChange(prevDeps, newDeps) ? calculator() : prevVal
+function useMemo(calculator, newDeps) {
+  const [effectMem, position] = getEffectUsage(assertCache())
+  const [prevVal, prevDeps] = effectMem[position] || []
+  const newVal = depsDidChange(prevDeps, newDeps) ? calculator() : prevVal
 
-    effectMem[position] = [newVal, newDeps]
-    return newVal
+  effectMem[position] = [newVal, newDeps]
+  return newVal
+}
+
+function useMemoFn(newCb, newDeps) {
+  const [effectMem, position] = getEffectUsage(assertCache())
+  const [prevCb, prevDeps] = effectMem[position] = effectMem[position] || []
+  const callback = depsDidChange(prevDeps, newDeps) ? newCb : prevCb
+
+  effectMem[position] = [callback, newDeps]
+  return callback
+}
+
+function useAfterEffect(newEffect, newDeps) {
+  const cacheObject = assertCache()
+  const [effectMem, position] = getEffectUsage(cacheObject)
+  const [prevCleanup, prevDeps] = effectMem[position] || []
+  const prevCleanupIsFn = typeof prevCleanup === "function"
+
+  if (depsDidChange(prevDeps, newDeps)) {
+    prevCleanupIsFn && cacheObject.unregisterCleanup(prevCleanup)
+
+    setTimeout(() => {
+      prevCleanupIsFn && prevCleanup()
+      const newCleanup = newEffect()
+      effectMem[position] = [newCleanup, newDeps]
+      typeof newCleanup === "function" && cacheObject.registerCleanup(newCleanup)
+    }, 0)
   }
 }
 
-function createMemoFnTracker(cacheObject) {
-  return function (newCb, newDeps=[]) {
-    const [effectMem, position] = getEffectUsage(cacheObject)
-    const [prevCb, prevDeps] = effectMem[position] = effectMem[position] || []
-    const callback = depsDidChange(prevDeps, newDeps) ? newCb : prevCb
-
-    effectMem[position] = [callback, newDeps]
-    return callback
-  }
+function useRef(initVal) {
+  const [effectMem, position] = getEffectUsage(assertCache())
+  const ref = effectMem[position] = effectMem[position] || { current: initVal }
+  return ref
 }
 
-function createAfterEffectTracker(cacheObject) {
-  return function (newEffect, newDeps) {
-    const [effectMem, position] = getEffectUsage(cacheObject)
-    const [prevCleanup, prevDeps] = effectMem[position] || []
-    const prevCleanupIsFn = typeof prevCleanup === "function"
-
-    if (depsDidChange(prevDeps, newDeps)) {
-      prevCleanupIsFn && cacheObject.unregisterCleanup(prevCleanup)
-
-      setTimeout(() => {
-        prevCleanupIsFn && prevCleanup()
-        const newCleanup = newEffect()
-        effectMem[position] = [newCleanup, newDeps]
-        typeof newCleanup === "function" && cacheObject.registerCleanup(newCleanup)
-      }, 0)
-    }
-  }
-}
-
-function createRefTracker(cacheObject) {
-  return function (initVal) {
-    const [effectMem, position] = getEffectUsage(cacheObject)
-    const ref = effectMem[position] = effectMem[position] || { current: initVal }
-    return ref
-  }
-}
-
-export class CacheObject {
-  constructor(id, parentMap, updater) {
+class CacheObject {
+  constructor(currentHash) {
     this.childLength = 0
     this.cleanups = []
     this.effectCount = -1
     this.effectMem = []
-    this.id = id
     this.node = null
-    this.parentMap = parentMap
     this.props = null
-
-    this.effects = {
-      afterEffect: createAfterEffectTracker(this),
-      memo: createMemoTracker(this),
-      memoFn: createMemoFnTracker(this),
-      ref: createRefTracker(this),
-    }
-
-    if (updater) {
-      this.effects.update = updater
-    }
 
     this.onunmount = () => {
       this.cleanups.forEach(callback => callback())
       this.cleanups = []
-      this.parentMap.delete(this.id)
+      globalEffectCache.delete(currentHash)
     }
   }
 
@@ -110,4 +108,12 @@ export class CacheObject {
   resetCounts() {
     this.effectCount = -1
   }
+}
+
+export {
+  CacheObject,
+  useAfterEffect,
+  useMemo,
+  useMemoFn,
+  useRef,
 }

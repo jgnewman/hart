@@ -40,28 +40,29 @@ describe("DOM Updates", function () {
 
   it("appends items", async function () {
     const result = await this.page.evaluate(async () => {
-      const fragment = hart.fragment
-      const node = hart.fragment.elem
+      const node = hart.elem
       const divId = "a" + Math.random().toString().slice(2)
       const spanId = "a" + Math.random().toString().slice(2)
 
       let div
       let span
 
-      const NestedFrag = fragment(() => {
+      const Nested = () => {
         return node("div", { id: divId },
           node("span", { id: spanId }, "Hello, world!")
         )
-      })
+      }
 
-      const Frag = fragment((props) => {
-        if (props.showNested) return node("div", null, node(NestedFrag))
+      const Root = (props) => {
+        if (props.showNested) return node("div", null, node(Nested))
         return node("div")
-      })
+      }
 
-      const app = hart.appSync(Frag, document.querySelector("#root"))
+      const app = hart.app(Root, document.querySelector("#root"))
+
       app.update({ showNested: false })
       app.update({ showNested: true })
+      await new Promise(resolve => setTimeout(resolve, 10))
 
       div = document.querySelector("#" + divId)
       span = document.querySelector("#" + spanId)
@@ -73,28 +74,29 @@ describe("DOM Updates", function () {
 
   it("removes items", async function () {
     const result = await this.page.evaluate(async () => {
-      const fragment = hart.fragment
-      const node = hart.fragment.elem
+      const node = hart.elem
       const divId = "a" + Math.random().toString().slice(2)
       const spanId = "a" + Math.random().toString().slice(2)
 
       let div
       let span
 
-      const NestedFrag = fragment(() => {
+      const Nested = () => {
         return node("div", { id: divId },
           node("span", { id: spanId }, "Hello, world!")
         )
-      })
+      }
 
-      const Frag = fragment((props) => {
-        if (props.showNested) return node("div", null, node(NestedFrag))
+      const Root = (props) => {
+        if (props.showNested) return node("div", null, node(Nested))
         return node("div")
-      })
+      }
 
-      const app = hart.appSync(Frag, document.querySelector("#root"))
+      const app = hart.app(Root, document.querySelector("#root"))
+
       app.update({ showNested: true })
       app.update({ showNested: false })
+      await new Promise(resolve => setTimeout(resolve, 10))
 
       div = document.querySelector("#" + divId)
       span = document.querySelector("#" + spanId)
@@ -106,22 +108,23 @@ describe("DOM Updates", function () {
 
   it("replaces items", async function () {
     const result = await this.page.evaluate(async () => {
-      const fragment = hart.fragment
-      const node = hart.fragment.elem
+      const node = hart.elem
       const divId = "a" + Math.random().toString().slice(2)
       const spanId = "a" + Math.random().toString().slice(2)
 
       let div
       let span
 
-      const Frag = fragment((props) => {
+      const Root = (props) => {
         if (props.showDiv) return node("div", { id: divId })
         return node("span", { id: spanId })
-      })
+      }
 
-      const app = hart.appSync(Frag, document.querySelector("#root"))
+      const app = hart.app(Root, document.querySelector("#root"))
+
       app.update({ showDiv: true })
       app.update({ showDiv: false })
+      await new Promise(resolve => setTimeout(resolve, 10))
 
       div = document.querySelector("#" + divId)
       span = document.querySelector("#" + spanId)
@@ -133,17 +136,18 @@ describe("DOM Updates", function () {
 
   it("updates item attributes", async function () {
     const result = await this.page.evaluate(async () => {
-      const fragment = hart.fragment
-      const node = hart.fragment.elem
+      const node = hart.elem
       const divId = "a" + Math.random().toString().slice(2)
 
-      const Frag = fragment((props) => {
+      const Root = (props) => {
         return node("div", { id: divId, class: props.class })
-      })
+      }
 
-      const app = hart.appSync(Frag, document.querySelector("#root"))
+      const app = hart.app(Root, document.querySelector("#root"))
+
       app.update({ class: "foo" })
       app.update({ class: "bar" })
+      await new Promise(resolve => setTimeout(resolve, 10))
 
       div = document.querySelector("#" + divId)
       return div.className
@@ -153,16 +157,16 @@ describe("DOM Updates", function () {
 
   it("translates certain camel-cased attributes", async function () {
     const result = await this.page.evaluate(async () => {
-      const fragment = hart.fragment
-      const node = hart.fragment.elem
+      const node = hart.elem
       const divId = "a" + Math.random().toString().slice(2)
 
-      const Frag = fragment((props) => {
+      const Root = (props) => {
         return node("div", { id: divId, ...props })
-      })
+      }
 
-      const app = hart.appSync(Frag, document.querySelector("#root"))
+      const app = hart.app(Root, document.querySelector("#root"))
       app.update({ className: "foo", htmlFor: "bar" })
+      await new Promise(resolve => setTimeout(resolve, 10))
 
       div = document.querySelector("#" + divId)
       return {
@@ -175,19 +179,20 @@ describe("DOM Updates", function () {
 
   it("reorders items", async function () {
     const result = await this.page.evaluate(async () => {
-      const fragment = hart.fragment
-      const node = hart.fragment.elem
+      const node = hart.elem
       const divId = "a" + Math.random().toString().slice(2)
 
-      const Frag = fragment((props) => {
+      const Root = (props) => {
         return node("div", { id: divId }, props.spans.map(spanId => (
           node("span", { id: spanId, key: spanId }, spanId)
         )))
-      })
+      }
 
-      const app = hart.appSync(Frag, document.querySelector("#root"))
+      const app = hart.app(Root, document.querySelector("#root"))
+
       app.update({ spans: ["baz", "bar", "foo"] })
       app.update({ spans: ["foo", "bar", "baz"] })
+      await new Promise(resolve => setTimeout(resolve, 10))
 
       const div = document.querySelector("#" + divId)
       const spans = Array.prototype.slice.call(div.querySelectorAll("span"))

@@ -29,8 +29,8 @@ const config = {
             loader: "babel-loader",
             options: {
               plugins: [["@babel/plugin-transform-react-jsx", {
-                pragma: "fragment.elem",
-                pragmaFrag: "fragment.docFrag",
+                pragma: "hart.elem",
+                pragmaFrag: "hart.docFrag",
               }]],
             },
           },
@@ -60,6 +60,39 @@ if (process.env.NODE_ENV === "development") {
   }))
 }
 
+if (process.env.NODE_ENV === "ts-development") {
+  config.entry.dev = "./devts/app.tsx"
+
+  config.devtool = "source-map"
+
+  config.plugins.push(new HtmlWebPackPlugin({
+    template: "./dev/index.html",
+    filename: "./index.html",
+    vars: {}
+  }))
+
+  config.module.rules = [
+    {
+      test: /\.(js|ts)x?$/,
+      include: path.resolve(__dirname, "./devts"),
+      use: [
+        {
+          loader: "babel-loader",
+          options: {
+            plugins: [["@babel/plugin-transform-react-jsx", {
+              pragma: "hart.elem",
+              pragmaFrag: "hart.docFrag",
+            }]],
+          },
+        },
+        {
+          loader: "ts-loader",
+        },
+      ],
+    },
+  ]
+}
+
 if (process.env.NODE_ENV === "benchmark") {
   config.entry.benchmark = "./benchmarks/benchmarks.js"
 
@@ -71,7 +104,7 @@ if (process.env.NODE_ENV === "benchmark") {
 }
 
 if (process.env.NODE_ENV === "production") {
-  config.entry.hart = "./src/index.js"
+  config.entry.hart = "./index.js"
 
   config.plugins.push(new CompressionPlugin({
     algorithm: "brotliCompress",

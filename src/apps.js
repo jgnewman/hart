@@ -7,9 +7,24 @@ import {
 } from "./constants"
 
 import {
+  useRef,
+  useAfterEffect,
+} from "./effects"
+
+import {
+  generateVDom,
+} from "./vdom"
+import {
+  CHILD_PACK_REF,
+} from "./constants"
+
+import {
   observable,
-  observableAsync,
 } from "./observables"
+
+import {
+  nodeTracker,
+} from "./tracking"
 
 import {
   changeObject,
@@ -25,21 +40,26 @@ import {
 } from "./dom"
 
 import {
-  assertPureFragment,
   childPack,
-  createOptimizedVNodeFactory,
-  fragment,
-  optimizedFragment,
+  optimizedFunction,
   vNode,
-} from "./fragments"
+} from "./nodes"
 
-const CHILD_PACK_REF = Symbol()
+let appIdCounter = 0
+function genAppId() {
+  if (appIdCounter > 10000) {
+    appIdCounter = 0
+  }
+  return String(Date.now()).slice(0, 6) + (appIdCounter += 1)
+}
 
-function createApp(rootFragmentFn, target, options) {
-  assertPureFragment(rootFragmentFn)
+function createIo(rootUserFn, target, options) {
   let prevTree = null
+  const appId = options.id || genAppId()
 
   let rootTarget = target
+  rootTarget.innerHTML = ""
+
   if (options.useShadowRoot) {
     target.attachShadow({ mode: "open" })
     rootTarget = target.shadowRoot
@@ -47,23 +67,27 @@ function createApp(rootFragmentFn, target, options) {
 
   return () => {
     return {
+      appId,
       rootTarget,
-      rootFragmentFn,
+      rootUserFn,
       prevTree,
       setPrevTree: (vTree) => prevTree = vTree,
     }
   }
 }
 
-function render(appFn, props={}, appOptions) {
-  const { rootTarget, rootFragmentFn, prevTree, setPrevTree } = appFn()
-  const fragProps = !appOptions.id ? props : { ...props, id: appOptions.id }
+function render(ioFn, props={}, appOptions) {
+  const { appId, rootTarget, rootUserFn, prevTree, setPrevTree } = ioFn()
+  const parentAppChildPack = appOptions[CHILD_PACK_REF] ? appOptions[CHILD_PACK_REF].current : childPack()
 
-  const nextChildren = appOptions[CHILD_PACK_REF] ? appOptions[CHILD_PACK_REF].current : childPack()
-  const nextTree = rootFragmentFn(fragProps, nextChildren)
-  const nextParent = { html:rootTarget }
+  const [nextTree, nextParent] = generateVDom(
+    appId,
+    rootTarget,
+    rootUserFn,
+    props,
+    parentAppChildPack,
+  )
 
-  nextTree.parent = nextParent
   setPrevTree(nextTree)
 
   if (!prevTree) {
@@ -86,60 +110,53 @@ function render(appFn, props={}, appOptions) {
   }
 }
 
-function createObserver(fn, outputElem, options={}, isAsync) {
-  const observerCalc = outputElem ? null : fn
-  const observer = isAsync ? observableAsync(observerCalc) : observable(observerCalc)
+function createObserver(rootUserFn, outputElem, options={}) {
+  const observerCalc = outputElem ? null : rootUserFn
+  const observer = observable(observerCalc)
 
   if (outputElem) {
     const realNode = typeof outputElem === "string" ? document.querySelector(outputElem) : outputElem
-    const app = createApp(fn, realNode, options)
-    observer.watch(newVal => render(app, newVal, options))
+    const io = createIo(rootUserFn, realNode, options)
+    observer.watch(newVal => render(io, newVal, options))
   }
 
   return observer
 }
 
-function app(fn, outputElem, options) {
-  return createObserver(fn, outputElem, options, true)
+function app(rootUserFn, outputElem, options) {
+  return createObserver(rootUserFn, outputElem, options)
 }
 
-function appSync(fn, outputElem, options) {
-  return createObserver(fn, outputElem, options, false)
-}
-
-function subappFragment(userFn, settings = {}) {
+function subapp(userFn, settings = {}) {
   const appOptions = settings.options || {}
-  const appFn = settings.sync ? appSync : app
-  let updateReducer
+  const RootOptimizedFn = optimizedFunction(userFn)
 
-  const RootFragment = createOptimizedVNodeFactory({
-    userFn,
-    customCompare: settings.compareProps,
-    updater: change => updateReducer && updateReducer(change)
-  })
+  const AppGenerator = optimizedFunction((userProps, childPack) => {
+    const subrootRef = useRef()
+    const propsRef = useRef({ ...userProps })
+    const childRef = useRef(childPack)
+    const currentHash = nodeTracker.hashCode()
 
-  const AppGenerator = optimizedFragment(({ effects, id,...rest }, childPack) => {
-    const subrootRef = effects.ref()
-    const propsRef = effects.ref({ ...rest })
-    const childRef = effects.ref(childPack)
-
-    effects.afterEffect(() => {
+    useAfterEffect(() => {
       const { current: elem } = subrootRef
       const { current: props } = propsRef
 
-      const Reducer = appFn(settings.reducer || (change => ({ current: change })))
-      updateReducer = Reducer.update
+      const Reducer = app(settings.reducer || ((newVals, prevVals) => ({ ...prevVals, ...newVals })))
 
-      const Renderer = appFn(RootFragment, elem, {
+      const Renderer = app(RootOptimizedFn, elem, {
         ...appOptions,
-        id: appOptions.id || id + "-subapp",
+        id: currentHash + "-subapp",
         [CHILD_PACK_REF]: childRef,
       })
 
-      Reducer.watch((newData) => Renderer.update({ ...props, localData: newData }))
-      Reducer.update(settings.hasOwnProperty("init") ? settings.init : null)
+      Reducer.watch((newData) => Renderer.update({
+        ...props,
+        localData: newData,
+        update: Reducer.update,
+      }))
 
-    }, [propsRef, childRef, subrootRef])
+      Reducer.update(settings.hasOwnProperty("init") ? settings.init : {})
+    }, [propsRef, childRef, subrootRef, currentHash])
 
     const wrapper = settings.wrapper || vNode("div")
     wrapper.attrs.ref = subrootRef
@@ -150,9 +167,8 @@ function subappFragment(userFn, settings = {}) {
   return AppGenerator
 }
 
-fragment.subapp = subappFragment
 
 export {
   app,
-  appSync,
+  subapp,
 }

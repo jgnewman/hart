@@ -1,59 +1,42 @@
-function observable(calculator) {
-  const calc = calculator ? calculator : x => x
-  const watchers = []
-  let val = {}
-
+function store(val = {}) {
   return {
-    get: () => {
-      return { ...val }
-    },
-
-    update: (change) => {
-      const oldVal = { ...val }
-      val = { ...calc(change, oldVal) }
-      watchers.forEach(watcher => watcher(val, oldVal))
-    },
-
-    watch: (watcher) => {
-      watchers.push(watcher)
-    }
+    get: () => ({ ...val }),
+    set: newVal => (val = newVal),
   }
 }
 
-function observableAsync(calculator) {
+function observable(calculator) {
+  const calc = calculator ? calculator : x => x
   const watchers = []
-  const observed = observable(calculator)
 
-  let prevVal = observed.get()
-  observed.watch((_, prevObservedVal) => prevVal = prevObservedVal)
-
+  let curVal = store()
   let loopRunning = false
+
+  function endLoop() {
+    loopRunning = false
+    const next = curVal.get()
+    watchers.forEach(watcher => watcher(next))
+  }
 
   function assertRunLoop() {
     if (!loopRunning) {
       loopRunning = true
-
-      Promise.resolve().then(function () {
-        loopRunning = false
-        const nextVal = observed.get()
-        watchers.forEach(watcher => watcher(nextVal, prevVal))
-      })
+      Promise.resolve().then(endLoop)
     }
   }
 
   return {
-    update: (change) => {
-      observed.update(change)
-      assertRunLoop()
-    },
-
     watch: (watcher) => {
       watchers.push(watcher)
-    }
+    },
+
+    update: (change = {}) => {
+      curVal.set({ ...calc(change, curVal.get()) })
+      assertRunLoop()
+    },
   }
 }
 
 export {
   observable,
-  observableAsync,
 }
