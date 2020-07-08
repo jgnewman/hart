@@ -104,7 +104,7 @@ if (process.env.NODE_ENV === "benchmark") {
 }
 
 if (process.env.NODE_ENV === "production") {
-  config.entry.hart = "./src/index.js"
+  config.entry.hart = "./index.js"
 
   config.plugins.push(new CompressionPlugin({
     algorithm: "brotliCompress",
