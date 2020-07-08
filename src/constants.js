@@ -1,5 +1,6 @@
 export const ADD = "ADD"
 export const CHILD_PACK = Symbol()
+export const CHILD_PACK_REF = Symbol()
 export const COMPARE = Symbol()
 export const DELETE = "DELETE"
 export const DOC_FRAG = Symbol.for("DOC_FRAG")

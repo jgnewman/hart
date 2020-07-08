@@ -14,6 +14,9 @@ import {
 import {
   generateVDom,
 } from "./vdom"
+import {
+  CHILD_PACK_REF,
+} from "./constants"
 
 import {
   observable,
@@ -37,13 +40,10 @@ import {
 } from "./dom"
 
 import {
-  withPropCheck,
   childPack,
   optimizedFunction,
   vNode,
 } from "./nodes"
-
-const CHILD_PACK_REF = Symbol()
 
 let appIdCounter = 0
 function genAppId() {
