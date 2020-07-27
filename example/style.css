@@ -1,0 +1,113 @@
+@keyframes spin {
+  0% {transform:rotate(0deg);}
+  50% {transform:rotate(180deg);}
+  100% {transform:rotate(360deg);}
+}
+
+@keyframes spin-back {
+  0% {transform:rotate(0deg);}
+  50% {transform:rotate(-180deg);}
+  100% {transform:rotate(-360deg);}
+}
+
+@keyframes glide {
+  0% {top:-2.5%; left:-2.5%;}
+  25% {top:0%; left:0;}
+  50% {top:-2.5%; left:-2.5%;}
+  75% {top:-5%; left:0;}
+  100% {top:-2.5%; left:-2.5%}
+}
+
+@keyframes glide-less {
+  0% {top:-2.5%; left:-2.5%;}
+  25% {top:-1.5%; left:1;}
+  50% {top:-2.5%; left:-2.5%;}
+  75% {top:-3.5%; left:1;}
+  100% {top:-2.5%; left:-2.5%}
+}
+
+body {
+  background: #0D121E;
+  min-height: 100vh;
+  margin: 0;
+}
+
+.wrapper {
+  position: relative;
+  top: 0;
+  left: 0;
+  min-height: 100vh;
+}
+
+.background-stars,
+.foreground-stars {
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  min-width: 105%;
+  height: 105%;
+}
+
+.background-stars {
+  animation-name: glide-less;
+  animation-duration: 10s;
+  animation-iteration-count: infinite;
+  animation-timing-function: linear;
+}
+
+.foreground-stars {
+  animation-name: glide;
+  animation-duration: 10s;
+  animation-iteration-count: infinite;
+  animation-timing-function: linear;
+}
+
+.center-content {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translateX(-50%) translateY(-50%);
+  width: 506px;
+  height: 506px;
+}
+
+.hart-icon {
+  display: block;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translateX(-50%) translateY(-50%);
+}
+
+.inner-circle,
+.middle-circle,
+.outer-circle {
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.inner-circle {
+  animation-name: spin;
+  animation-duration: 30s;
+  animation-iteration-count: infinite;
+  animation-timing-function: linear;
+}
+
+.middle-circle {
+  animation-name: spin-back;
+  animation-duration: 45s;
+  animation-iteration-count: infinite;
+  animation-timing-function: linear;
+}
+
+.outer-circle {
+  animation-name: spin;
+  animation-duration: 60s;
+  animation-iteration-count: infinite;
+  animation-timing-function: linear;
+}

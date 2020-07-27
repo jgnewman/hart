@@ -41,7 +41,7 @@ function append(target, nodes) {
   }
 }
 
-function attachAttr(target, isSVG, attrName, attrVal) {
+function attachAttr(target, attrName, attrVal) {
   attrName = attrMap[attrName] || attrName
   if (attrName === "children") return
 
@@ -53,15 +53,15 @@ function attachAttr(target, isSVG, attrName, attrVal) {
   } else if (isInputValue || /^on/.test(attrName)) {
     target[attrName] = attrVal
 
-  } else if (isSVG) {
-    target.setAttributeNS(null, attrName, attrVal)
+  } else if (attrName.indexOf(":") > -1) {
+    target.setAttributeNS(SVG_NS, attrName, attrVal)
 
   } else {
     target.setAttribute(attrName, attrVal)
   }
 }
 
-function detachAttr(target, isSVG, attrName) {
+function detachAttr(target, attrName) {
   attrName = attrMap[attrName] || attrName
   if (attrName === "children") return
 
@@ -73,8 +73,8 @@ function detachAttr(target, isSVG, attrName) {
   } else if (/^on/.test(attrName)) {
     target[attrName] = null
 
-  } else if (isSVG) {
-    target.removeAttributeNS(null, attrName)
+  } else if (attrName.indexOf(":") > -1) {
+    target.removeAttributeNS(SVG_NS, attrName)
 
   } else {
     target.removeAttribute(attrName)
@@ -96,7 +96,7 @@ function buildHTML(vTree) {
     })
 
   } else {
-    const isSVG = vTree.tag === "svg"
+    const isSVG = vTree.parent.html.hartSVG || vTree.tag === "svg"
     const tag = isSVG ? document.createElementNS(SVG_NS, vTree.tag) : document.createElement(vTree.tag)
 
     vTree.html = tag
@@ -105,8 +105,12 @@ function buildHTML(vTree) {
       vTree.html.hartUnmount = vTree.onunmount
     }
 
+    if (isSVG) {
+      vTree.html.hartSVG = true
+    }
+
     const attrKeys = Object.keys(vTree.attrs)
-    attrKeys.forEach(name => attachAttr(tag, isSVG, name, vTree.attrs[name]))
+    attrKeys.forEach(name => attachAttr(tag, name, vTree.attrs[name]))
 
     if (vTree.children.length) {
       const docFrag = document.createDocumentFragment()
@@ -182,14 +186,12 @@ function replaceHTML(change) {
 
 function updateHTML(change) {
   const { prev, next, options } = change
-  const isSVG = next.tag === "svg"
-
   next.html = next.html || prev.html
 
   options.forEach(([type, attrName, value]) => {
     switch (type) {
-      case DELETE: return detachAttr(next.html, isSVG, attrName)
-      case SET: return attachAttr(next.html, isSVG, attrName, value)
+      case DELETE: return detachAttr(next.html, attrName)
+      case SET: return attachAttr(next.html, attrName, value)
       default:
         throw new Error(`Attribute change type ${type} does not exist.`)
     }

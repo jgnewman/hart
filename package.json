@@ -31,7 +31,8 @@
     "devts": "NODE_ENV=ts-development webpack-dev-server --mode development --progress --inline",
     "measure": "NODE_ENV=production webpack --mode production --progress --inline",
     "test": "NODE_ENV=test webpack --mode development && mocha tests/${FILE:='*.test.js'} --timeout 10000",
-    "benchmark": "NODE_ENV=benchmark webpack-dev-server --mode production --progress --inline"
+    "benchmark": "NODE_ENV=benchmark webpack-dev-server --mode production --progress --inline",
+    "example": "NODE_ENV=example webpack-dev-server --mode production --progress --inline"
   },
   "devDependencies": {
     "@babel/core": "^7.6.4",
@@ -40,7 +41,10 @@
     "chromatica": "^0.1.3",
     "clean-webpack-plugin": "2.0.1",
     "compression-webpack-plugin": "^3.0.0",
+    "copy-webpack-plugin": "^6.0.3",
+    "css-loader": "^4.0.0",
     "html-webpack-plugin": "^3.2.0",
+    "mini-css-extract-plugin": "^0.9.0",
     "mocha": "^6.2.2",
     "svelte": "^3.23.2",
     "svelte-loader": "^2.13.6",

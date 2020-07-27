@@ -2,6 +2,8 @@ const path = require("path")
 const CleanWebpackPlugin = require("clean-webpack-plugin")
 const HtmlWebPackPlugin = require("html-webpack-plugin")
 const CompressionPlugin = require('compression-webpack-plugin')
+const MiniCssExtractPlugin = require("mini-css-extract-plugin")
+const CopyWebpackPlugin = require("copy-webpack-plugin")
 
 const config = {
   entry: { /* See prod and dev config */ },
@@ -22,7 +24,7 @@ const config = {
   module: {
     rules: [
       {
-        test: /\.js?$/,
+        test: /\.jsx?$/,
         include: path.resolve(__dirname, "./dev"),
         use: [
           {
@@ -58,6 +60,44 @@ if (process.env.NODE_ENV === "development") {
     filename: "./index.html",
     vars: {}
   }))
+}
+
+if (process.env.NODE_ENV === "example") {
+  config.entry.dev = "./example/app.js"
+
+  config.devtool = "source-map"
+
+  config.plugins.push(new HtmlWebPackPlugin({
+    template: "./example/index.html",
+    filename: "./index.html",
+    vars: {}
+  }))
+
+  config.plugins.push(new MiniCssExtractPlugin({
+    filename: "styles.css",
+  }))
+
+  config.plugins.push(new CopyWebpackPlugin({
+    patterns: [{
+      from: "./example/assets",
+      to: "assets",
+    }],
+  }))
+
+  config.module.rules[0].include = path.resolve(__dirname, "./example"),
+
+  config.module.rules.push({
+    test: /\.css$/,
+    use: [
+      {
+        loader: MiniCssExtractPlugin.loader,
+      },
+      {
+        loader: "css-loader",
+        options: {sourceMap: true},
+      },
+    ],
+  })
 }
 
 if (process.env.NODE_ENV === "ts-development") {
