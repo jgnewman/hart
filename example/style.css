@@ -1,3 +1,9 @@
+@font-face {
+  font-family: Mustache;
+  src: url(./assets/MustacheBrushScript.woff2);
+  font-weight: normal;
+}
+
 @keyframes spin {
   0% {transform:rotate(0deg);}
   50% {transform:rotate(180deg);}
@@ -10,20 +16,9 @@
   100% {transform:rotate(-360deg);}
 }
 
-@keyframes glide {
-  0% {top:-2.5%; left:-2.5%;}
-  25% {top:0%; left:0;}
-  50% {top:-2.5%; left:-2.5%;}
-  75% {top:-5%; left:0;}
-  100% {top:-2.5%; left:-2.5%}
-}
-
-@keyframes glide-less {
-  0% {top:-2.5%; left:-2.5%;}
-  25% {top:-1.5%; left:1;}
-  50% {top:-2.5%; left:-2.5%;}
-  75% {top:-3.5%; left:1;}
-  100% {top:-2.5%; left:-2.5%}
+@keyframes move-twinkle-bg {
+  from {background-position:0 0;}
+  to {background-position:-10000px 5000px;}
 }
 
 body {
@@ -39,28 +34,34 @@ body {
   min-height: 100vh;
 }
 
-.background-stars,
-.foreground-stars {
-  display: block;
-  position: absolute;
-  top: 0;
-  left: 0;
-  min-width: 105%;
-  height: 105%;
+.stars, .twinkling, .gradient {
+  position:absolute;
+  top:0;
+  left:0;
+  right:0;
+  bottom:0;
+  width:100%;
+  height:100%;
+  display:block;
 }
 
-.background-stars {
-  animation-name: glide-less;
-  animation-duration: 10s;
-  animation-iteration-count: infinite;
-  animation-timing-function: linear;
+.stars {
+  background: url(./assets/stars-compressed.png) repeat top center transparent;
+  background-size: 1000px 688px;
+  z-index: 0;
 }
 
-.foreground-stars {
-  animation-name: glide;
-  animation-duration: 10s;
-  animation-iteration-count: infinite;
-  animation-timing-function: linear;
+.twinkling{
+  background: transparent url(./assets/twinkling-compressed.png) repeat top center;
+  background-size: 50px 50px;
+  z-index: 1;
+  animation: move-twinkle-bg 500s linear infinite;
+}
+
+.gradient {
+  z-index: 2;
+  background: radial-gradient(ellipse at bottom, #0D121E 0%, #090A0F 100%);
+  mix-blend-mode: color;
 }
 
 .center-content {
@@ -70,14 +71,29 @@ body {
   transform: translateX(-50%) translateY(-50%);
   width: 506px;
   height: 506px;
+  z-index: 3;
+  font-family: Mustache;
 }
 
 .hart-icon {
   display: block;
   position: absolute;
-  top: 50%;
+  top: 32%;
   left: 50%;
   transform: translateX(-50%) translateY(-50%);
+}
+
+.main-title {
+  position: absolute;
+  margin: 0;
+  top: 40%;
+  left: 50%;
+  transform: translateX(-50%);
+  color: #ffffff;
+  font-size: 201px;
+  text-align: center;
+  font-weight: normal;
+  line-height: 1;
 }
 
 .inner-circle,
@@ -89,6 +105,7 @@ body {
   left: 0;
   width: 100%;
   height: 100%;
+  box-shadow: 0 0 50px rgba(255, 255, 255, 0.2);
 }
 
 .inner-circle {

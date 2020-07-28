@@ -87,6 +87,11 @@ if (process.env.NODE_ENV === "example") {
   config.module.rules[0].include = path.resolve(__dirname, "./example"),
 
   config.module.rules.push({
+    test: /\.(png|svg|jpg|gif|woff2)$/,
+    use: ['file-loader'],
+  })
+
+  config.module.rules.push({
     test: /\.css$/,
     use: [
       {
