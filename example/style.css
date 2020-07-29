@@ -127,3 +127,47 @@ body {
   animation-iteration-count: infinite;
   animation-timing-function: linear;
 }
+
+.menu-link {
+  padding: 0;
+  margin: 0;
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-end;
+  border: 0;
+  width: auto;
+  height: 15px;
+  position: absolute;
+  top: 2rem;
+  right: 2rem;
+  z-index: 3;
+  cursor: pointer;
+  border: 0;
+  outline: solid transparent !important;
+}
+
+.menu-link-top,
+.menu-link-bottom {
+  display: block;
+  height: 5px;
+  background: #ffffff;
+  transition: all .3s ease;
+}
+
+.menu-link-top {
+  width: 32px;
+}
+
+.menu-link-bottom {
+  width: 16px;
+}
+
+.menu-link:hover .menu-link-top {
+  width: 16px;
+}
+
+.menu-link:hover .menu-link-bottom {
+  width: 32px;
+}

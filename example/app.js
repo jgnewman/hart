@@ -14,6 +14,7 @@ import HartIcon from "./js/HartIcon"
 import InnerCircle from "./js/InnerCircle"
 import MiddleCircle from "./js/MiddleCircle"
 import OuterCircle from "./js/OuterCircle"
+import MenuLink from "./js/MenuLink"
 
 const Root = () => {
   return (
@@ -21,6 +22,8 @@ const Root = () => {
       <div class="stars"></div>
       <div class="twinkling"></div>
       <div class="gradient"></div>
+
+      <MenuLink />
 
       <div class="center-content">
         <HartIcon />
