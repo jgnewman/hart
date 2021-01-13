@@ -186,11 +186,11 @@ const NestedComponent = (props, children) => (
 
 const RootComponent = (props) => (
   <div>
-    <NestedFragment>
+    <NestedComponent>
       <span></span>
       <span></span>
       <span></span>
-    </NestedFragment>
+    </NestedComponent>
   </div>
 )
 ```
@@ -315,11 +315,11 @@ const Nested = withoutCache(props => (
   <span>{props.value}</span>
 ))
 
-const RootFrag = props => (
+const RootComponent = props => (
   <Nested value={props.value}/>
 )
 
-const Renderer = app(RootFrag, rootNode)
+const Renderer = app(RootComponent, rootNode)
 
 setInterval(() => {
   Renderer.update({ value: "Hello, world!" })
@@ -329,15 +329,15 @@ setInterval(() => {
 However, by allowing Hart to apply its default optimizations, `Nested` will only run when its props change. Since they never do, it will only run once.
 
 ```javascript
-const NestedFrag = props => (
+const NestedComponent = props => (
   <span>{props.value}</span>
 ))
 
-const RootFrag = props => (
-  <Nested value={props.value}/>
+const RootComponent = props => (
+  <NestedComponent value={props.value}/>
 ))
 
-const Renderer = app(RootFrag, rootNOde)
+const Renderer = app(RootComponent, rootNOde)
 
 setInterval(() => {
   Renderer.update({ value: "Hello, world!" })
@@ -358,9 +358,9 @@ export default withPropCheck(MyComponent, (prevProps, nextProps) => {
 })
 ```
 
-> **NOTE:** If a given component has children, it will always re-render, regardless of whether or not props have changed. Due to the fact that components have the access to and can therefore modify their children (especially via side effects), it is too dangerous to skip re-rendering components that have them.
+> **NOTE:** If a given component has children, it will always re-render, regardless of whether or not props have changed. Due to the fact that components can access and therefore modify their children (especially via side effects), it is too dangerous to skip re-rendering components that have them.
 
-> **NOTE:** Allowing Hart to cache props and optimize _almost always_ the right course of action. If you think you might want to disable this, think twice, and make sure you are absolutely sure you know what you're doing. If you are following good practices and aren't trying to hack things in some weird way, you should almost never need to do it.
+> **NOTE:** Allowing Hart to cache props and optimize is _almost always_ the right course of action. If you think you might want to disable this, think twice, and make sure you are absolutely sure you know what you're doing. If you are following good practices and aren't trying to hack things in some weird way, you should almost never need to do it.
 
 ### Shadow DOM
 
