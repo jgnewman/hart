@@ -594,7 +594,7 @@ const SubappWrapper = (nextProps, children) => {
 
 _Whew!_
 
-As I said before, this is ridiculously tedious. It also has the rather glaring problem that if you want to pass children down to a subapp, you have to pass them as a prop, which creates inconsistency in terms of how you would have to write fragments that served as subapp roots. Not only that, but this is just a proof-of-concept and in real life you will probably run into some interesting bugs that are hard to diagnose.
+As I said before, this is ridiculously tedious. It also has the rather glaring problem that if you want to pass children down to a subapp, you have to pass them as a prop, which creates inconsistency in terms of how you would have to write components that served as subapp roots. Not only that, but this is just a proof-of-concept and in real life you will probably run into some interesting bugs that are hard to diagnose.
 
 This POC _should_ work though! And because of this, Hart provides an easier way to accomplish the exact same thing, with the added benefit that children can be bassed down and accessed as a second argument to your component. So before we get into it, the important takeaways are:
 
